@@ -1,0 +1,9 @@
+karage: *.go go.mod
+	go mod tidy
+	go fmt ./...
+	go vet ./...
+	go build -o karage ./...
+
+.PHONY: run
+run: karage
+	./karage
