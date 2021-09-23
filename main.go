@@ -95,14 +95,13 @@ type State struct {
 	Map      *MapState
 }
 
-type States map[string]State
-
 type StateMachine struct {
 	Comment        string                 `json:"Comment"`
 	StartAt        string                 `json:"StartAt"`
 	TimeoutSeconds int64                  `json:"TimeoutSeconds"`
 	Version        int64                  `json:"Version"`
-	States         map[string]interface{} `json:"States"`
+	RawStates      map[string]interface{} `json:"States"`
+	States         map[string]State       `json:"-"`
 }
 
 func main() {
@@ -113,29 +112,20 @@ func main() {
 
 	dec := json.NewDecoder(f)
 
-	sm := StateMachine{}
-	if err := dec.Decode(&sm); err != nil {
+	sm := new(StateMachine)
+	if err := dec.Decode(sm); err != nil {
 		log.Panic("error:", err)
 	}
 
 	sm.PrintInfo()
 
-	states := sm.GenerateStates()
-	states.Print()
+	sm.SetStates()
+	sm.PrintStates()
 }
 
-func (sm StateMachine) PrintInfo() {
-	fmt.Println("====== StateMachine Info ======")
-	pp.Println("Comment", sm.Comment)
-	pp.Println("StartAt", sm.StartAt)
-	pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
-	pp.Println("Version", sm.Version)
-	fmt.Println("===============================")
-}
-
-func (sm StateMachine) GenerateStates() States {
+func (sm *StateMachine) SetStates() {
 	states := map[string]State{}
-	for name, state := range sm.States {
+	for name, state := range sm.RawStates {
 		s, ok := state.(map[string]interface{})
 		if !ok {
 			log.Println("invalid state definition:", name)
@@ -227,6 +217,9 @@ func (sm StateMachine) GenerateStates() States {
 				log.Println("error:", err)
 				continue
 			}
+			for i := range states[name].Parallel.Branches {
+				states[name].Parallel.Branches[i].SetStates()
+			}
 		case "Map":
 			states[name] = State{
 				Type: "Map",
@@ -236,6 +229,7 @@ func (sm StateMachine) GenerateStates() States {
 				log.Println("error:", err)
 				continue
 			}
+			states[name].Map.Iterator.SetStates()
 		default:
 			states[name] = State{
 				Type: t,
@@ -243,10 +237,20 @@ func (sm StateMachine) GenerateStates() States {
 		}
 	}
 
-	return states
+	sm.States = states
 }
 
-func (s States) Print() {
+func (sm StateMachine) PrintInfo() {
+	fmt.Println("====== StateMachine Info ======")
+	pp.Println("Comment", sm.Comment)
+	pp.Println("StartAt", sm.StartAt)
+	pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
+	pp.Println("Version", sm.Version)
+	fmt.Println("===============================")
+}
+
+func (sm StateMachine) PrintStates() {
+	s := sm.States
 	fmt.Println("=========== States  ===========")
 	for k, v := range s {
 		pp.Println(k)
