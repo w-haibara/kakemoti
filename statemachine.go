@@ -185,21 +185,21 @@ func (sm StateMachine) PrintStates() {
 
 		switch v.Type {
 		case "Pass":
-			pp.Println(v.Pass)
+			v.Pass.Print()
 		case "Task":
-			pp.Println(v.Task)
+			v.Task.Print()
 		case "Choice":
-			pp.Println(v.Choice)
+			v.Choice.Print()
 		case "Wait":
-			pp.Println(v.Wait)
+			v.Wait.Print()
 		case "Succeed":
-			pp.Println(v.Succeed)
+			v.Succeed.Print()
 		case "Fail":
-			pp.Println(v.Fail)
+			v.Fail.Print()
 		case "Parallel":
-			pp.Println(v.Parallel)
+			v.Parallel.Print()
 		case "Map":
-			pp.Println(v.Map)
+			v.Map.Print()
 		}
 
 		println()

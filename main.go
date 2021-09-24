@@ -10,8 +10,8 @@ func main() {
 		log.Panic("error:", err)
 	}
 
-	//sm.PrintInfo()
-	//sm.PrintStates()
+	sm.PrintInfo()
+	sm.PrintStates()
 
 	sm.Start()
 }

@@ -1,6 +1,8 @@
 package main
 
-import ()
+import (
+	"github.com/k0kubun/pp"
+)
 
 type CommonState struct {
 	Type       string `json:"Type"`
@@ -17,4 +19,8 @@ func (s CommonState) Transition() (next string, err error) {
 	}
 
 	return s.Next, nil
+}
+
+func (s CommonState) Print() {
+	pp.Println(s)
 }
