@@ -39,5 +39,5 @@ func (s State) Transition() (next string, err error) {
 		return s.Map.Transition()
 	}
 
-	return "", UnknownStateName
+	return "", UnknownStateType
 }

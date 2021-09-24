@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/k0kubun/pp"
 )
 
@@ -16,6 +18,10 @@ type CommonState struct {
 func (s CommonState) Transition() (next string, err error) {
 	if s.End {
 		return "", EndStateMachine
+	}
+
+	if strings.TrimSpace(s.Next) == "" {
+		return "", NextStateIsBrank
 	}
 
 	return s.Next, nil

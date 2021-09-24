@@ -13,6 +13,8 @@ import (
 var (
 	InvalidStartAtValue = fmt.Errorf("invalid StateAt value")
 	UnknownStateName    = fmt.Errorf("unknown state name")
+	UnknownStateType    = fmt.Errorf("unknown state type")
+	NextStateIsBrank    = fmt.Errorf("next state is brank")
 	EndStateMachine     = fmt.Errorf("end state machine")
 )
 
@@ -217,16 +219,28 @@ func (sm StateMachine) Start() error {
 	for {
 		s, ok := sm.States[next]
 		if !ok {
+			log.Println("UnknownStateName:", next)
 			return UnknownStateName
 		}
 
 		next, err = s.Transition()
-		if err == EndStateMachine {
-			break
-		} else if err != nil {
+		switch {
+		case err == UnknownStateType:
+			log.Println("UnknownStateType:", next)
+			goto End
+		case err == EndStateMachine:
+			log.Println("EndStateMachine")
+			goto End
+		case err != nil:
 			return err
+		}
+
+		if _, ok := sm.States[next]; !ok {
+			log.Println("UnknownStateName: [", next, "]")
+			goto End
 		}
 	}
 
+End:
 	return nil
 }
