@@ -33,9 +33,10 @@ type StateMachine struct {
 	Version        int64                  `json:"Version"`
 	RawStates      map[string]interface{} `json:"States"`
 	States         map[string]State       `json:"-"`
+	Logger         *log.Logger            `json:"-"`
 }
 
-func NewStateMachine(path string) (*StateMachine, error) {
+func NewStateMachine(path string, logger *log.Logger) (*StateMachine, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -50,6 +51,8 @@ func NewStateMachine(path string) (*StateMachine, error) {
 
 	sm.SetStates()
 
+	sm.Logger = logger
+
 	return sm, nil
 }
 
@@ -58,13 +61,13 @@ func (sm *StateMachine) SetStates() {
 	for name, state := range sm.RawStates {
 		s, ok := state.(map[string]interface{})
 		if !ok {
-			log.Println("invalid state definition:", name)
+			sm.Logger.Println("invalid state definition:", name)
 			continue
 		}
 
 		t, ok := s["Type"].(string)
 		if !ok {
-			log.Println("invalid type value:", s["Type"])
+			sm.Logger.Println("invalid type value:", s["Type"])
 			continue
 		}
 
@@ -91,7 +94,7 @@ func (sm *StateMachine) SetStates() {
 				Pass: &PassState{},
 			}
 			if err := convert(s, states[name].Pass); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Task":
@@ -101,7 +104,7 @@ func (sm *StateMachine) SetStates() {
 				Task: &TaskState{},
 			}
 			if err := convert(s, states[name].Task); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Choice":
@@ -111,7 +114,7 @@ func (sm *StateMachine) SetStates() {
 				Choice: &ChoiceState{},
 			}
 			if err := convert(s, states[name].Choice); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Wait":
@@ -121,7 +124,7 @@ func (sm *StateMachine) SetStates() {
 				Wait: &WaitState{},
 			}
 			if err := convert(s, states[name].Wait); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Succeed":
@@ -131,7 +134,7 @@ func (sm *StateMachine) SetStates() {
 				Succeed: &SucceedState{},
 			}
 			if err := convert(s, states[name].Succeed); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Fail":
@@ -141,7 +144,7 @@ func (sm *StateMachine) SetStates() {
 				Fail: &FailState{},
 			}
 			if err := convert(s, states[name].Fail); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Parallel":
@@ -151,7 +154,7 @@ func (sm *StateMachine) SetStates() {
 				Parallel: &ParallelState{},
 			}
 			if err := convert(s, states[name].Parallel); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 			for i := range states[name].Parallel.Branches {
@@ -164,7 +167,7 @@ func (sm *StateMachine) SetStates() {
 				Map:  &MapState{},
 			}
 			if err := convert(s, states[name].Map); err != nil {
-				log.Println("error:", err)
+				sm.Logger.Println("error:", err)
 				continue
 			}
 			states[name].Map.Iterator.SetStates()
@@ -243,50 +246,50 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 	for {
 		s, ok := sm.States[next]
 		if !ok {
-			log.Println("UnknownStateName:", next)
+			sm.Logger.Println("UnknownStateName:", next)
 			return ErrUnknownStateName
 		}
 
 		if ok := ValidateJSON(r); !ok {
-			log.Println("=== invalid json input ===", "\n"+r.String())
+			sm.Logger.Println("=== invalid json input ===", "\n"+r.String())
 			return ErrInvalidJSONInput
 		}
-		log.Println("State:", s.Name, "( Type =", s.Type, ")")
-		log.Println("=== input  ===", "\n"+r.String())
+		sm.Logger.Println("State:", s.Name, "( Type =", s.Type, ")")
+		sm.Logger.Println("=== input  ===", "\n"+r.String())
 
 		next, err = s.Transition(r, w)
 
 		if ok := ValidateJSON(w); !ok {
-			log.Println("=== invalid json output ===\n", "\n"+w.String())
+			sm.Logger.Println("=== invalid json output ===\n", "\n"+w.String())
 			return ErrInvalidJSONOutput
 		}
-		log.Println("=== output ===", "\n"+w.String())
+		sm.Logger.Println("=== output ===", "\n"+w.String())
 
 		switch {
 		case err == ErrUnknownStateType:
-			log.Println("UnknownStateType:", next)
+			sm.Logger.Println("UnknownStateType:", next)
 			return err
 		case err == ErrSucceededStateMachine:
-			log.Println(err)
+			sm.Logger.Println(err)
 			goto End
 		case err == ErrFailedStateMachine:
-			log.Println(err)
+			sm.Logger.Println(err)
 			goto End
 		case err == ErrEndStateMachine:
-			log.Println(err)
+			sm.Logger.Println(err)
 			goto End
 		case err != nil:
 			return err
 		}
 
 		if _, ok := sm.States[next]; !ok {
-			log.Println("UnknownStateName: [", next, "]")
+			sm.Logger.Println("UnknownStateName: [", next, "]")
 			return ErrUnknownStateName
 		}
 
 		r.Reset()
 		if _, err := w.WriteTo(r); err != nil {
-			log.Println("WriteTo error:", err)
+			sm.Logger.Println("WriteTo error:", err)
 			return err
 		}
 		w.Reset()

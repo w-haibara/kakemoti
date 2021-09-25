@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"log"
+	"os"
 )
 
 const (
@@ -16,7 +17,7 @@ const (
 )
 
 func main() {
-	sm, err := NewStateMachine("./workflow.asl.json")
+	sm, err := NewStateMachine("./workflow.asl.json", log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile))
 	if err != nil {
 		log.Panic("error:", err)
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/spyzhov/ajson"
@@ -45,8 +44,6 @@ func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 		switch {
 		case exist(choice, "And"):
 		case exist(choice, "BooleanEquals"):
-			log.Println("Choice: BooleanEquals")
-
 			equals, ok := choice["BooleanEquals"]
 			if !ok {
 				return "", fmt.Errorf("choice rule error: BooleanEquals is blank")
@@ -78,7 +75,6 @@ func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 				}
 
 				if v == equals {
-					log.Println("BooleanEquals:", variable, "==", equals)
 					return next, nil
 				}
 			}
