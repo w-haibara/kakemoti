@@ -40,7 +40,7 @@ func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 			sm.CompleteStateMachine(logger)
 			r2 := new(bytes.Buffer)
 			w2 := new(bytes.Buffer)
-			if _, err := r.WriteTo(r2); err != nil {
+			if _, err := r2.Write(r.Bytes()); err != nil {
 				return err
 			}
 
