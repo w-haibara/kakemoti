@@ -5,11 +5,19 @@ import (
 	"log"
 )
 
-const input = `
+const (
+	input1 = `
 {
-	"key": "value"
+	"IsHelloWorldExample": true
 }
 `
+
+	input2 = `
+{
+	"IsHelloWorldExample": false
+}
+`
+)
 
 func main() {
 	sm, err := NewStateMachine("./workflow.json")
@@ -22,7 +30,7 @@ func main() {
 
 	r := new(bytes.Buffer)
 	w := new(bytes.Buffer)
-	if _, err := r.WriteString(input); err != nil {
+	if _, err := r.WriteString(input1); err != nil {
 		log.Panic("error:", err)
 	}
 

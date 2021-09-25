@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/spyzhov/ajson"
 )
 
 type Choice map[string]interface{}
@@ -43,23 +45,45 @@ func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 		switch {
 		case exist(choice, "And"):
 		case exist(choice, "BooleanEquals"):
-			//TODO: tempolary implement
 			log.Println("Choice: BooleanEquals")
 
-			v, ok := choice.variable()
+			equals, ok := choice["BooleanEquals"]
+			if !ok {
+				return "", fmt.Errorf("choice rule error: BooleanEquals is blank")
+			}
+
+			variable, ok := choice.variable()
 			if !ok {
 				return "", fmt.Errorf("choice rule error: Variable is blank")
 			}
 
-			n, ok := choice.next()
+			next, ok := choice.next()
 			if !ok {
 				return "", fmt.Errorf("choice rule error: Next is blank")
 			}
 
-			log.Println("	Variable", v)
-			log.Println("	Next", n)
+			nodes, err := ajson.JSONPath(r.Bytes(), variable)
+			if err != nil {
+				return "", fmt.Errorf("choice rule error: JSONPath error")
+			}
 
-			return n, nil
+			for _, node := range nodes {
+				if !node.IsBool() {
+					continue
+				}
+
+				v, err := node.GetBool()
+				if err != nil {
+					continue
+				}
+
+				if v == equals {
+					log.Println("BooleanEquals:", variable, "==", equals)
+					return next, nil
+				}
+			}
+
+			continue
 
 		case exist(choice, "BooleanEqualsPath"):
 		case exist(choice, "IsBoolean"):
