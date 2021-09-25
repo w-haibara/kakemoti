@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"strings"
 
 	"github.com/k0kubun/pp"
@@ -15,7 +16,7 @@ type CommonState struct {
 	OutputPath string `json:"OutputPath"`
 }
 
-func (s CommonState) Transition() (next string, err error) {
+func (s CommonState) Transition(r io.Reader, w io.Writer) (next string, err error) {
 	if s.End {
 		return "", EndStateMachine
 	}

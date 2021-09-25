@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -209,7 +210,7 @@ func (sm StateMachine) PrintStates() {
 	fmt.Println("===============================")
 }
 
-func (sm StateMachine) Start() error {
+func (sm StateMachine) Start(r io.Reader, w io.Writer) error {
 	if _, ok := sm.States[sm.StartAt]; !ok {
 		return InvalidStartAtValue
 	}
@@ -223,7 +224,7 @@ func (sm StateMachine) Start() error {
 			return UnknownStateName
 		}
 
-		next, err = s.Transition()
+		next, err = s.Transition(r, w)
 		switch {
 		case err == UnknownStateType:
 			log.Println("UnknownStateType:", next)
@@ -238,6 +239,11 @@ func (sm StateMachine) Start() error {
 		if _, ok := sm.States[next]; !ok {
 			log.Println("UnknownStateName: [", next, "]")
 			goto End
+		}
+
+		if _, err := io.Copy(w, r); err != nil {
+			log.Fatal("io.Copy error:", err)
+			return err
 		}
 	}
 

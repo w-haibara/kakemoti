@@ -1,8 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"log"
 )
+
+const input = `
+{
+	"key": "value"
+}
+`
 
 func main() {
 	sm, err := NewStateMachine("./workflow.json")
@@ -13,7 +20,15 @@ func main() {
 	//sm.PrintInfo()
 	//sm.PrintStates()
 
-	if err := sm.Start(); err != nil {
+	r := new(bytes.Buffer)
+	w := new(bytes.Buffer)
+	if _, err := r.WriteString(input); err != nil {
 		log.Panic("error:", err)
 	}
+
+	if err := sm.Start(r, w); err != nil {
+		log.Panic("error:", err)
+	}
+
+	log.Println("=== Finaly output ===\n", w.String())
 }
