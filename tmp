@@ -1,0 +1,46 @@
+2021/09/25 18:51:35 ===  First input  ===
+ 
+{
+	"key": "value"
+}
+
+2021/09/25 18:51:35 State: Pass ( Type = Pass )
+2021/09/25 18:51:35 === input  ===
+ 
+{
+	"key": "value"
+}
+
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 State: Hello World example? ( Type = Choice )
+2021/09/25 18:51:35 === input  ===
+ 
+2021/09/25 18:51:35 Choice: BooleanEquals
+2021/09/25 18:51:35 	Variable $.IsHelloWorldExample
+2021/09/25 18:51:35 	Next Yes
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 State: Yes ( Type = Pass )
+2021/09/25 18:51:35 === input  ===
+ 
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 State: Wait 3 sec ( Type = Wait )
+2021/09/25 18:51:35 === input  ===
+ 
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 State: Parallel State ( Type = Parallel )
+2021/09/25 18:51:35 === input  ===
+ 
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 State: Hello World ( Type = Pass )
+2021/09/25 18:51:35 === input  ===
+ 
+2021/09/25 18:51:35 === output ===
+ 
+2021/09/25 18:51:35 EndStateMachine
+2021/09/25 18:51:35 === Finaly output ===
+ 

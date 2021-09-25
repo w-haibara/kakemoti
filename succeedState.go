@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"bytes"
 
 	"github.com/k0kubun/pp"
 )
@@ -9,7 +9,7 @@ import (
 type SucceedState struct {
 }
 
-func (s SucceedState) Transition(r io.Reader, w io.Writer) (next string, err error) {
+func (s SucceedState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	return "", EndStateMachine
 }
 

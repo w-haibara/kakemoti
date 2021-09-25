@@ -26,6 +26,8 @@ func main() {
 		log.Panic("error:", err)
 	}
 
+	log.Println("===  First input  ===\n", r.String())
+
 	if err := sm.Start(r, w); err != nil {
 		log.Panic("error:", err)
 	}

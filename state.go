@@ -1,8 +1,7 @@
 package main
 
 import (
-	"io"
-	"log"
+	"bytes"
 )
 
 type State struct {
@@ -18,9 +17,7 @@ type State struct {
 	Map      *MapState
 }
 
-func (s State) Transition(r io.Reader, w io.Writer) (next string, err error) {
-	log.Println("State:", s.Name, "( Type =", s.Type, ")")
-
+func (s State) Transition(r, w *bytes.Buffer) (next string, err error) {
 	switch s.Type {
 	case "Pass":
 		return s.Pass.Transition(r, w)

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"strings"
 )
@@ -33,7 +33,7 @@ type ChoiceState struct {
 	Default string   `json:"Default"`
 }
 
-func (s ChoiceState) Transition(r io.Reader, w io.Writer) (next string, err error) {
+func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	exist := func(m map[string]interface{}, k string) bool {
 		_, ok := m[k]
 		return ok
