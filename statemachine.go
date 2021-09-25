@@ -11,11 +11,13 @@ import (
 )
 
 var (
-	InvalidStartAtValue = fmt.Errorf("invalid StateAt value")
-	UnknownStateName    = fmt.Errorf("unknown state name")
-	UnknownStateType    = fmt.Errorf("unknown state type")
-	NextStateIsBrank    = fmt.Errorf("next state is brank")
-	EndStateMachine     = fmt.Errorf("end state machine")
+	InvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
+	UnknownStateName      = fmt.Errorf("unknown state name")
+	UnknownStateType      = fmt.Errorf("unknown state type")
+	NextStateIsBrank      = fmt.Errorf("next state is brank")
+	SucceededStateMachine = fmt.Errorf("state machine stopped successfully")
+	FailedSateMachine     = fmt.Errorf("state machine stopped unsuccessfully")
+	EndStateMachine       = fmt.Errorf("end state machine")
 )
 
 type StateMachine struct {
@@ -232,8 +234,14 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 		case err == UnknownStateType:
 			log.Println("UnknownStateType:", next)
 			return err
+		case err == SucceededStateMachine:
+			log.Println(err)
+			goto End
+		case err == FailedSateMachine:
+			log.Println(err)
+			goto End
 		case err == EndStateMachine:
-			log.Println("EndStateMachine")
+			log.Println(err)
 			goto End
 		case err != nil:
 			return err

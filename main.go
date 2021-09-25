@@ -30,7 +30,7 @@ func main() {
 
 	r := new(bytes.Buffer)
 	w := new(bytes.Buffer)
-	if _, err := r.WriteString(input1); err != nil {
+	if _, err := r.WriteString(input2); err != nil {
 		log.Panic("error:", err)
 	}
 
