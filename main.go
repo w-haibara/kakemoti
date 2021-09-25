@@ -10,10 +10,18 @@ const (
 	input1 = `{
 	"IsHelloWorldExample": true
 }`
-
 	input2 = `{
 	"IsHelloWorldExample": false
 }`
+	input3 = `{
+	"IsHelloWorldExample": true,
+	"Seconds": 5
+}`
+
+	input4 = `{
+		"IsHelloWorldExample": true,
+		"Timestamp": "2021-09-25T21:14:10Z"
+	}`
 )
 
 func main() {

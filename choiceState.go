@@ -35,6 +35,10 @@ type ChoiceState struct {
 }
 
 func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if _, err := w.Write(r.Bytes()); err != nil {
+		return "", err
+	}
+
 	exist := func(m map[string]interface{}, k string) bool {
 		_, ok := m[k]
 		return ok
