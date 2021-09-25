@@ -49,11 +49,14 @@ func NewStateMachine(path string, logger *log.Logger) (*StateMachine, error) {
 		return nil, err
 	}
 
-	sm.SetStates()
-
-	sm.Logger = logger
+	sm.CompleteStateMachine(logger)
 
 	return sm, nil
+}
+
+func (sm *StateMachine) CompleteStateMachine(logger *log.Logger) {
+	sm.Logger = logger
+	sm.SetStates()
 }
 
 func (sm *StateMachine) SetStates() {
@@ -160,6 +163,7 @@ func (sm *StateMachine) SetStates() {
 			for i := range states[name].Parallel.Branches {
 				states[name].Parallel.Branches[i].SetStates()
 			}
+			states[name].Parallel.Logger = sm.Logger
 		case "Map":
 			states[name] = State{
 				Type: "Map",
