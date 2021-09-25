@@ -16,7 +16,7 @@ var (
 	UnknownStateType      = fmt.Errorf("unknown state type")
 	NextStateIsBrank      = fmt.Errorf("next state is brank")
 	SucceededStateMachine = fmt.Errorf("state machine stopped successfully")
-	FailedSateMachine     = fmt.Errorf("state machine stopped unsuccessfully")
+	FailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
 	EndStateMachine       = fmt.Errorf("end state machine")
 )
 
@@ -237,7 +237,7 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 		case err == SucceededStateMachine:
 			log.Println(err)
 			goto End
-		case err == FailedSateMachine:
+		case err == FailedStateMachine:
 			log.Println(err)
 			goto End
 		case err == EndStateMachine:
