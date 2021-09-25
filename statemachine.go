@@ -12,12 +12,18 @@ import (
 
 var (
 	ErrInvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
+	ErrInvalidJSONInput      = fmt.Errorf("invalid json input")
+	ErrInvalidJSONOutput     = fmt.Errorf("invalid json output")
 	ErrUnknownStateName      = fmt.Errorf("unknown state name")
 	ErrUnknownStateType      = fmt.Errorf("unknown state type")
 	ErrNextStateIsBrank      = fmt.Errorf("next state is brank")
 	ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
 	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
 	ErrEndStateMachine       = fmt.Errorf("end state machine")
+)
+
+var (
+	EmptyJSON = []byte("{}")
 )
 
 type StateMachine struct {
@@ -211,6 +217,22 @@ func (sm StateMachine) PrintStates() {
 	fmt.Println("===============================")
 }
 
+func ValidateJSON(j *bytes.Buffer) bool {
+	b := j.Bytes()
+
+	if len(bytes.TrimSpace(b)) == 0 {
+		j.Reset()
+		j.Write(EmptyJSON)
+		return true
+	}
+
+	if !json.Valid(b) {
+		return false
+	}
+
+	return true
+}
+
 func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 	if _, ok := sm.States[sm.StartAt]; !ok {
 		return ErrInvalidStartAtValue
@@ -225,10 +247,20 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 			return ErrUnknownStateName
 		}
 
+		if ok := ValidateJSON(r); !ok {
+			log.Println("=== invalid json input ===", "\n"+r.String())
+			return ErrInvalidJSONInput
+		}
 		log.Println("State:", s.Name, "( Type =", s.Type, ")")
-		log.Println("=== input  ===\n", r)
+		log.Println("=== input  ===", "\n"+r.String())
+
 		next, err = s.Transition(r, w)
-		log.Println("=== output ===\n", w)
+
+		if ok := ValidateJSON(w); !ok {
+			log.Println("=== invalid json output ===\n", "\n"+w.String())
+			return ErrInvalidJSONOutput
+		}
+		log.Println("=== output ===", "\n"+w.String())
 
 		switch {
 		case err == ErrUnknownStateType:
@@ -249,7 +281,7 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 
 		if _, ok := sm.States[next]; !ok {
 			log.Println("UnknownStateName: [", next, "]")
-			return err
+			return ErrUnknownStateName
 		}
 
 		r.Reset()

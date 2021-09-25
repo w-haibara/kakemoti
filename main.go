@@ -6,17 +6,13 @@ import (
 )
 
 const (
-	input1 = `
-{
+	input1 = `{
 	"IsHelloWorldExample": true
-}
-`
+}`
 
-	input2 = `
-{
+	input2 = `{
 	"IsHelloWorldExample": false
-}
-`
+}`
 )
 
 func main() {
@@ -34,11 +30,11 @@ func main() {
 		log.Panic("error:", err)
 	}
 
-	log.Println("===  First input  ===\n", r.String())
+	log.Println("===  First input  ===", "\n"+r.String())
 
 	if err := sm.Start(r, w); err != nil {
 		log.Panic("error:", err)
 	}
 
-	log.Println("=== Finaly output ===\n", w.String())
+	log.Println("=== Finaly output ===", "\n"+w.String())
 }
