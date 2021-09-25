@@ -37,5 +37,5 @@ func (s State) Transition(r, w *bytes.Buffer) (next string, err error) {
 		return s.Map.Transition(r, w)
 	}
 
-	return "", UnknownStateType
+	return "", ErrUnknownStateType
 }

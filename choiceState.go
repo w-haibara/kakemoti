@@ -128,5 +128,5 @@ func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 		println()
 	}
 
-	return "", EndStateMachine
+	return "", ErrEndStateMachine
 }

@@ -10,7 +10,7 @@ type SucceedState struct {
 }
 
 func (s SucceedState) Transition(r, w *bytes.Buffer) (next string, err error) {
-	return "", SucceededStateMachine
+	return "", ErrSucceededStateMachine
 }
 
 func (s SucceedState) Print() {

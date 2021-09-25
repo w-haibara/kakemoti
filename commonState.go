@@ -18,11 +18,11 @@ type CommonState struct {
 
 func (s CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	if s.End {
-		return "", EndStateMachine
+		return "", ErrEndStateMachine
 	}
 
 	if strings.TrimSpace(s.Next) == "" {
-		return "", NextStateIsBrank
+		return "", ErrNextStateIsBrank
 	}
 
 	return s.Next, nil

@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	InvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
-	UnknownStateName      = fmt.Errorf("unknown state name")
-	UnknownStateType      = fmt.Errorf("unknown state type")
-	NextStateIsBrank      = fmt.Errorf("next state is brank")
-	SucceededStateMachine = fmt.Errorf("state machine stopped successfully")
-	FailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
-	EndStateMachine       = fmt.Errorf("end state machine")
+	ErrInvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
+	ErrUnknownStateName      = fmt.Errorf("unknown state name")
+	ErrUnknownStateType      = fmt.Errorf("unknown state type")
+	ErrNextStateIsBrank      = fmt.Errorf("next state is brank")
+	ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
+	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
+	ErrEndStateMachine       = fmt.Errorf("end state machine")
 )
 
 type StateMachine struct {
@@ -213,7 +213,7 @@ func (sm StateMachine) PrintStates() {
 
 func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 	if _, ok := sm.States[sm.StartAt]; !ok {
-		return InvalidStartAtValue
+		return ErrInvalidStartAtValue
 	}
 
 	next := sm.StartAt
@@ -222,7 +222,7 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 		s, ok := sm.States[next]
 		if !ok {
 			log.Println("UnknownStateName:", next)
-			return UnknownStateName
+			return ErrUnknownStateName
 		}
 
 		log.Println("State:", s.Name, "( Type =", s.Type, ")")
@@ -231,16 +231,16 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 		log.Println("=== output ===\n", w)
 
 		switch {
-		case err == UnknownStateType:
+		case err == ErrUnknownStateType:
 			log.Println("UnknownStateType:", next)
 			return err
-		case err == SucceededStateMachine:
+		case err == ErrSucceededStateMachine:
 			log.Println(err)
 			goto End
-		case err == FailedStateMachine:
+		case err == ErrFailedStateMachine:
 			log.Println(err)
 			goto End
-		case err == EndStateMachine:
+		case err == ErrEndStateMachine:
 			log.Println(err)
 			goto End
 		case err != nil:
