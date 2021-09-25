@@ -228,7 +228,7 @@ func (sm StateMachine) Start(r io.Reader, w io.Writer) error {
 		switch {
 		case err == UnknownStateType:
 			log.Println("UnknownStateType:", next)
-			goto End
+			return err
 		case err == EndStateMachine:
 			log.Println("EndStateMachine")
 			goto End
@@ -238,7 +238,7 @@ func (sm StateMachine) Start(r io.Reader, w io.Writer) error {
 
 		if _, ok := sm.States[next]; !ok {
 			log.Println("UnknownStateName: [", next, "]")
-			goto End
+			return err
 		}
 
 		if _, err := io.Copy(w, r); err != nil {
