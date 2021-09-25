@@ -16,7 +16,7 @@ const (
 )
 
 func main() {
-	sm, err := NewStateMachine("./workflow.json")
+	sm, err := NewStateMachine("./workflow.asl.json")
 	if err != nil {
 		log.Panic("error:", err)
 	}
@@ -26,7 +26,7 @@ func main() {
 
 	r := new(bytes.Buffer)
 	w := new(bytes.Buffer)
-	if _, err := r.WriteString(input2); err != nil {
+	if _, err := r.WriteString(input1); err != nil {
 		log.Panic("error:", err)
 	}
 
