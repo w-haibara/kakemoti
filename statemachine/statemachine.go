@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/k0kubun/pp"
 )
@@ -36,13 +35,8 @@ type StateMachine struct {
 	Logger         *log.Logger            `json:"-"`
 }
 
-func NewStateMachine(path string, logger *log.Logger) (*StateMachine, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	dec := json.NewDecoder(f)
+func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, error) {
+	dec := json.NewDecoder(asl)
 
 	sm := new(StateMachine)
 	if err := dec.Decode(sm); err != nil {
