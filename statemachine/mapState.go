@@ -1,6 +1,4 @@
-package main
-
-import ()
+package statemachine
 
 type MapState struct {
 	CommonState

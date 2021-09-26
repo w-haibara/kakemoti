@@ -1,6 +1,4 @@
-package main
-
-import ()
+package statemachine
 
 type TaskState struct {
 	CommonState
