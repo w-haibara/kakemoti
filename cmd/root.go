@@ -6,18 +6,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRoot() *cobra.Command {
+func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "karage",
 		Short: "Orchestration tool for scripts",
 	}
 
-	cmd.AddCommand(NewCmdRun())
+	cmd.AddCommand(NewStartExecutionCmd())
 	return cmd
 }
 
 func Execute() {
-	cmd := NewCmdRoot()
+	cmd := NewRootCmd()
 	cmd.SetOutput(os.Stdout)
 	if err := cmd.Execute(); err != nil {
 		cmd.SetOutput(os.Stderr)

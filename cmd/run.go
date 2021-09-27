@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewCmdRun() *cobra.Command {
+func NewStartExecutionCmd() *cobra.Command {
 	type Options struct {
 		Input string
 		ASL   string
@@ -30,9 +30,6 @@ func NewCmdRun() *cobra.Command {
 			if strings.TrimSpace(o.ASL) == "" {
 				log.Panic("ASL option value is empty")
 			}
-
-			//			inputFIle := "./workflow/HelloWorld/input1.json"
-			//			aslFile := "./workflow/HelloWorld/statemachine.asl.json"
 
 			r, err := readFile(o.Input)
 			if err != nil {
