@@ -67,8 +67,8 @@ func NewStartExecutionCmd() *cobra.Command {
 	return cmd
 }
 
-func readFile(name string) (*bytes.Buffer, error) {
-	f, err := os.Open(name)
+func readFile(path string) (*bytes.Buffer, error) {
+	f, err := os.Open(path) // #nosec G304
 	if err != nil {
 		return nil, err
 	}
