@@ -73,7 +73,10 @@ func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	w.WriteString("[\n")
 	for i, output := range outputs.v {
 		w.WriteString("	")
-		output.WriteTo(w)
+		if _, err := output.WriteTo(w); err != nil {
+			return "", err
+		}
+
 		if i < len(outputs.v)-1 {
 			w.WriteString(",\n")
 		}
