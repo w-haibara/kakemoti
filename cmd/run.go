@@ -31,15 +31,17 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Panic("ASL option value is empty")
 			}
 
-			r, err := readFile(o.Input)
+			f1, r, err := readFile(o.Input)
 			if err != nil {
 				log.Panic(err.Error())
 			}
+			defer f1.Close()
 
-			asl, err := readFile(o.ASL)
+			f2, asl, err := readFile(o.ASL)
 			if err != nil {
 				log.Panic(err.Error())
 			}
+			defer f2.Close()
 
 			sm, err := statemachine.NewStateMachine(asl, log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile))
 			if err != nil {
@@ -67,16 +69,16 @@ func NewStartExecutionCmd() *cobra.Command {
 	return cmd
 }
 
-func readFile(path string) (*bytes.Buffer, error) {
+func readFile(path string) (*os.File, *bytes.Buffer, error) {
 	f, err := os.Open(path) // #nosec G304
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	b := new(bytes.Buffer)
 	if _, err := b.ReadFrom(f); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return b, nil
+	return f, b, nil
 }
