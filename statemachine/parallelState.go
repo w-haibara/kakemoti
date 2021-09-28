@@ -26,7 +26,7 @@ type outputs struct {
 	v  []*bytes.Buffer
 }
 
-func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	var eg errgroup.Group
 	var outputs outputs
 	for _, sm := range s.Branches {

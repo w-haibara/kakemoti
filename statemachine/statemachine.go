@@ -140,7 +140,7 @@ func (sm *StateMachine) SetStates() {
 	sm.States = states
 }
 
-func (sm StateMachine) PrintInfo() {
+func (sm *StateMachine) PrintInfo() {
 	fmt.Println("====== StateMachine Info ======")
 	_, _ = pp.Println("Comment", sm.Comment)
 	_, _ = pp.Println("StartAt", sm.StartAt)
@@ -149,7 +149,7 @@ func (sm StateMachine) PrintInfo() {
 	fmt.Println("===============================")
 }
 
-func (sm StateMachine) PrintStates() {
+func (sm *StateMachine) PrintStates() {
 	s := sm.States
 	fmt.Println("=========== States  ===========")
 	for k, v := range s {
@@ -174,7 +174,7 @@ func ValidateJSON(j *bytes.Buffer) bool {
 	return true
 }
 
-func (sm StateMachine) Start(r, w *bytes.Buffer) error {
+func (sm *StateMachine) Start(r, w *bytes.Buffer) error {
 	if _, ok := sm.States[sm.StartAt]; !ok {
 		return ErrInvalidStartAtValue
 	}

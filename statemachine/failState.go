@@ -10,6 +10,6 @@ type FailState struct {
 	Error string `json:"Error"`
 }
 
-func (s FailState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *FailState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	return "", ErrFailedStateMachine
 }

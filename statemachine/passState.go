@@ -12,7 +12,7 @@ type PassState struct {
 	Parameters string `json:"Parameters"`
 }
 
-func (s PassState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *PassState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	if _, err := r.WriteTo(w); err != nil {
 		return "", err
 	}

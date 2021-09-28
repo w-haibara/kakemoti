@@ -16,15 +16,15 @@ type CommonState struct {
 	OutputPath string `json:"OutputPath"`
 }
 
-func (s CommonState) StateType() string {
+func (s *CommonState) StateType() string {
 	return s.Type
 }
 
-func (s CommonState) String() string {
+func (s *CommonState) String() string {
 	return pp.Sprintln(s)
 }
 
-func (s CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	if s.End {
 		return "", ErrEndStateMachine
 	}

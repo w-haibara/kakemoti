@@ -10,8 +10,8 @@ import (
 
 type Choice map[string]interface{}
 
-func (c Choice) next() (string, bool) {
-	v, ok := c["Next"].(string)
+func (c *Choice) next() (string, bool) {
+	v, ok := (*c)["Next"].(string)
 	if !ok || strings.TrimSpace(v) == "" {
 		return "", false
 	}
@@ -19,8 +19,8 @@ func (c Choice) next() (string, bool) {
 	return v, true
 }
 
-func (c Choice) variable() (string, bool) {
-	v, ok := c["Variable"].(string)
+func (c *Choice) variable() (string, bool) {
+	v, ok := (*c)["Variable"].(string)
 	if !ok || strings.TrimSpace(v) == "" {
 		return "", false
 	}
@@ -34,7 +34,7 @@ type ChoiceState struct {
 	Default string   `json:"Default"`
 }
 
-func (s ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	if _, err := w.Write(r.Bytes()); err != nil {
 		return "", err
 	}
