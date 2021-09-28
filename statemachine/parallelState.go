@@ -1,7 +1,9 @@
 package statemachine
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"log"
 	"strings"
 	"sync"
@@ -70,18 +72,43 @@ func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 		return "", err
 	}
 
-	w.WriteString("[\n")
-	for i, output := range outputs.v {
-		w.WriteString("	")
-		if _, err := output.WriteTo(w); err != nil {
-			return "", err
+	if err := func() error {
+		buf := bufio.NewWriter(w)
+		if _, err := buf.WriteRune('['); err != nil {
+			return err
 		}
 
-		if i < len(outputs.v)-1 {
-			w.WriteString(",\n")
+		for i, output := range outputs.v {
+			if _, err := output.WriteTo(buf); err != nil {
+				return err
+			}
+
+			if i < len(outputs.v)-1 {
+				if _, err := buf.WriteRune(','); err != nil {
+					return err
+				}
+			}
 		}
+
+		if _, err := buf.WriteRune(']'); err != nil {
+			return err
+		}
+
+		if err := buf.Flush(); err != nil {
+			return err
+		}
+
+		w1 := new(bytes.Buffer)
+		if err := json.Indent(w1, w.Bytes(), "", "\t"); err != nil {
+			return err
+		}
+
+		w = w1
+
+		return nil
+	}(); err != nil {
+		return "", err
 	}
-	w.WriteString("\n]")
 
 	if s.End {
 		return "", ErrEndStateMachine
