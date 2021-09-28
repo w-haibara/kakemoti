@@ -181,10 +181,10 @@ func (sm *StateMachine) SetStates() {
 
 func (sm StateMachine) PrintInfo() {
 	fmt.Println("====== StateMachine Info ======")
-	pp.Println("Comment", sm.Comment)
-	pp.Println("StartAt", sm.StartAt)
-	pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
-	pp.Println("Version", sm.Version)
+	_, _ = pp.Println("Comment", sm.Comment)
+	_, _ = pp.Println("StartAt", sm.StartAt)
+	_, _ = pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
+	_, _ = pp.Println("Version", sm.Version)
 	fmt.Println("===============================")
 }
 
@@ -192,7 +192,7 @@ func (sm StateMachine) PrintStates() {
 	s := sm.States
 	fmt.Println("=========== States  ===========")
 	for k, v := range s {
-		pp.Println(k)
+		_, _ = pp.Println(k)
 
 		switch v.Type {
 		case "Pass":

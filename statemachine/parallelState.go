@@ -122,5 +122,5 @@ func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 }
 
 func (s ParallelState) Print() {
-	pp.Println(s)
+	_, _ = pp.Println(s)
 }

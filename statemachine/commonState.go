@@ -29,5 +29,5 @@ func (s CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
 }
 
 func (s CommonState) Print() {
-	pp.Println(s)
+	_, _ = pp.Println(s)
 }

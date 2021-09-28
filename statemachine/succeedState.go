@@ -14,5 +14,5 @@ func (s SucceedState) Transition(r, w *bytes.Buffer) (next string, err error) {
 }
 
 func (s SucceedState) Print() {
-	pp.Print(s)
+	_, _ = pp.Println(s)
 }
