@@ -85,93 +85,54 @@ func (sm *StateMachine) SetStates() {
 
 		switch t {
 		case "Pass":
-			states[name] = State{
-				Type: "Pass",
-				Name: name,
-				Pass: &PassState{},
-			}
-			if err := convert(s, states[name].Pass); err != nil {
+			states[name] = new(PassState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Task":
-			states[name] = State{
-				Type: "Task",
-				Name: name,
-				Task: &TaskState{},
-			}
-			if err := convert(s, states[name].Task); err != nil {
+			states[name] = new(TaskState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Choice":
-			states[name] = State{
-				Type:   "Choice",
-				Name:   name,
-				Choice: &ChoiceState{},
-			}
-			if err := convert(s, states[name].Choice); err != nil {
+			states[name] = new(ChoiceState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Wait":
-			states[name] = State{
-				Type: "Wait",
-				Name: name,
-				Wait: &WaitState{},
-			}
-			if err := convert(s, states[name].Wait); err != nil {
+			states[name] = new(WaitState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Succeed":
-			states[name] = State{
-				Type:    "Succeed",
-				Name:    name,
-				Succeed: &SucceedState{},
-			}
-			if err := convert(s, states[name].Succeed); err != nil {
+			states[name] = new(SucceedState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Fail":
-			states[name] = State{
-				Type: "Fail",
-				Name: name,
-				Fail: &FailState{},
-			}
-			if err := convert(s, states[name].Fail); err != nil {
+			states[name] = new(FailState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
 		case "Parallel":
-			states[name] = State{
-				Type:     "Parallel",
-				Name:     name,
-				Parallel: &ParallelState{},
-			}
-			if err := convert(s, states[name].Parallel); err != nil {
+			v := new(ParallelState)
+			if err := convert(s, v); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
 			}
-			for i := range states[name].Parallel.Branches {
-				states[name].Parallel.Branches[i].SetStates()
-			}
-			states[name].Parallel.Logger = sm.Logger
+			v.Logger = sm.Logger
+			states[name] = v
 		case "Map":
-			states[name] = State{
-				Type: "Map",
-				Name: name,
-				Map:  &MapState{},
-			}
-			if err := convert(s, states[name].Map); err != nil {
+			states[name] = new(MapState)
+			if err := convert(s, states[name]); err != nil {
 				sm.Logger.Println("error:", err)
 				continue
-			}
-			states[name].Map.Iterator.SetStates()
-		default:
-			states[name] = State{
-				Type: t,
 			}
 		}
 	}
@@ -192,28 +153,7 @@ func (sm StateMachine) PrintStates() {
 	s := sm.States
 	fmt.Println("=========== States  ===========")
 	for k, v := range s {
-		_, _ = pp.Println(k)
-
-		switch v.Type {
-		case "Pass":
-			v.Pass.Print()
-		case "Task":
-			v.Task.Print()
-		case "Choice":
-			v.Choice.Print()
-		case "Wait":
-			v.Wait.Print()
-		case "Succeed":
-			v.Succeed.Print()
-		case "Fail":
-			v.Fail.Print()
-		case "Parallel":
-			v.Parallel.Print()
-		case "Map":
-			v.Map.Print()
-		}
-
-		println()
+		_, _ = pp.Println(k, "\n", v, "\n")
 	}
 	fmt.Println("===============================")
 }
@@ -239,12 +179,12 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 		return ErrInvalidStartAtValue
 	}
 
-	next := sm.StartAt
+	cur := sm.StartAt
 	var err error
 	for {
-		s, ok := sm.States[next]
+		s, ok := sm.States[cur]
 		if !ok {
-			sm.Logger.Println("UnknownStateName:", next)
+			sm.Logger.Println("UnknownStateName:", cur)
 			return ErrUnknownStateName
 		}
 
@@ -252,10 +192,10 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 			sm.Logger.Println("=== invalid json input ===", "\n"+r.String())
 			return ErrInvalidJSONInput
 		}
-		sm.Logger.Println("State:", s.Name, "( Type =", s.Type, ")")
+		sm.Logger.Println("State:", cur, "( Type =", s.StateType(), ")")
 		sm.Logger.Println("=== input  ===", "\n"+r.String())
 
-		next, err = s.Transition(r, w)
+		cur, err = s.Transition(r, w)
 
 		if ok := ValidateJSON(w); !ok {
 			sm.Logger.Println("=== invalid json output ===\n", "\n"+w.String())
@@ -265,7 +205,7 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 
 		switch {
 		case err == ErrUnknownStateType:
-			sm.Logger.Println("UnknownStateType:", next)
+			sm.Logger.Println("UnknownStateType:", cur)
 			return err
 		case err == ErrSucceededStateMachine:
 			sm.Logger.Println(err)
@@ -280,8 +220,8 @@ func (sm StateMachine) Start(r, w *bytes.Buffer) error {
 			return err
 		}
 
-		if _, ok := sm.States[next]; !ok {
-			sm.Logger.Println("UnknownStateName: [", next, "]")
+		if _, ok := sm.States[cur]; !ok {
+			sm.Logger.Println("UnknownStateName: [", cur, "]")
 			return ErrUnknownStateName
 		}
 

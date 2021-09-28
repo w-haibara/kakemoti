@@ -2,17 +2,12 @@ package statemachine
 
 import (
 	"bytes"
-
-	"github.com/k0kubun/pp"
 )
 
 type SucceedState struct {
+	CommonState
 }
 
 func (s SucceedState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	return "", ErrSucceededStateMachine
-}
-
-func (s SucceedState) Print() {
-	_, _ = pp.Println(s)
 }

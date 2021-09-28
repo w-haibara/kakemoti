@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/k0kubun/pp"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -119,8 +118,4 @@ func (s ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
 	}
 
 	return s.Next, nil
-}
-
-func (s ParallelState) Print() {
-	_, _ = pp.Println(s)
 }
