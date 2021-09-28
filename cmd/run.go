@@ -35,13 +35,21 @@ func NewStartExecutionCmd() *cobra.Command {
 			if err != nil {
 				log.Panic(err.Error())
 			}
-			defer f1.Close()
+			defer func() {
+				if err := f1.Close(); err != nil {
+					log.Panic(err.Error())
+				}
+			}()
 
 			f2, asl, err := readFile(o.ASL)
 			if err != nil {
 				log.Panic(err.Error())
 			}
-			defer f2.Close()
+			defer func() {
+				if err := f2.Close(); err != nil {
+					log.Panic(err.Error())
+				}
+			}()
 
 			sm, err := statemachine.NewStateMachine(asl, log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile))
 			if err != nil {
