@@ -17,14 +17,26 @@ type CommonState struct {
 }
 
 func (s *CommonState) StateType() string {
+	if s == nil {
+		return ""
+	}
+
 	return s.Type
 }
 
 func (s *CommonState) String() string {
+	if s == nil {
+		return ""
+	}
+
 	return pp.Sprintln(s)
 }
 
 func (s *CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	if s.End {
 		return "", ErrEndStateMachine
 	}

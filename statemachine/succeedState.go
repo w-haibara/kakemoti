@@ -9,5 +9,9 @@ type SucceedState struct {
 }
 
 func (s *SucceedState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	return "", ErrSucceededStateMachine
 }

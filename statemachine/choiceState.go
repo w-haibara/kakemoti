@@ -11,6 +11,10 @@ import (
 type Choice map[string]interface{}
 
 func (c *Choice) next() (string, bool) {
+	if c == nil {
+		return "", false
+	}
+
 	v, ok := (*c)["Next"].(string)
 	if !ok || strings.TrimSpace(v) == "" {
 		return "", false
@@ -20,6 +24,10 @@ func (c *Choice) next() (string, bool) {
 }
 
 func (c *Choice) variable() (string, bool) {
+	if c == nil {
+		return "", false
+	}
+
 	v, ok := (*c)["Variable"].(string)
 	if !ok || strings.TrimSpace(v) == "" {
 		return "", false
@@ -35,6 +43,10 @@ type ChoiceState struct {
 }
 
 func (s *ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	if _, err := w.Write(r.Bytes()); err != nil {
 		return "", err
 	}

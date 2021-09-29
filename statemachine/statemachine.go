@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	ErrRecieverIsNil         = fmt.Errorf("receiver is nil")
 	ErrInvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
 	ErrInvalidJSONInput      = fmt.Errorf("invalid json input")
 	ErrInvalidJSONOutput     = fmt.Errorf("invalid json output")
@@ -49,11 +50,19 @@ func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, erro
 }
 
 func (sm *StateMachine) CompleteStateMachine(logger *log.Logger) {
+	if sm == nil {
+		return
+	}
+
 	sm.Logger = logger
 	sm.SetStates()
 }
 
 func (sm *StateMachine) SetStates() {
+	if sm == nil {
+		return
+	}
+
 	states := map[string]State{}
 	for name, state := range sm.RawStates {
 		s, ok := state.(map[string]interface{})
@@ -141,6 +150,10 @@ func (sm *StateMachine) SetStates() {
 }
 
 func (sm *StateMachine) PrintInfo() {
+	if sm == nil {
+		return
+	}
+
 	fmt.Println("====== StateMachine Info ======")
 	_, _ = pp.Println("Comment", sm.Comment)
 	_, _ = pp.Println("StartAt", sm.StartAt)
@@ -150,6 +163,10 @@ func (sm *StateMachine) PrintInfo() {
 }
 
 func (sm *StateMachine) PrintStates() {
+	if sm == nil {
+		return
+	}
+
 	s := sm.States
 	fmt.Println("=========== States  ===========")
 	for k, v := range s {
@@ -175,6 +192,10 @@ func ValidateJSON(j *bytes.Buffer) bool {
 }
 
 func (sm *StateMachine) Start(r, w *bytes.Buffer) error {
+	if sm == nil {
+		return ErrRecieverIsNil
+	}
+
 	if _, ok := sm.States[sm.StartAt]; !ok {
 		return ErrInvalidStartAtValue
 	}

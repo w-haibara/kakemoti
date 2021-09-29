@@ -13,6 +13,10 @@ type PassState struct {
 }
 
 func (s *PassState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	if _, err := r.WriteTo(w); err != nil {
 		return "", err
 	}

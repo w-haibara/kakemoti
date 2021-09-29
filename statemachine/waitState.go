@@ -27,6 +27,10 @@ func parseTimestamp(timestamp string) (time.Duration, error) {
 }
 
 func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
+	if s == nil {
+		return time.Duration(0), nil
+	}
+
 	if s.Seconds > 0 {
 		return time.Duration(s.Seconds) * time.Second, nil
 	}
@@ -81,6 +85,10 @@ func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
 }
 
 func (s *WaitState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	d, err := s.Dulation(r)
 	if err != nil {
 		return "", err

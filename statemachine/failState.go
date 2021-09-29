@@ -11,5 +11,9 @@ type FailState struct {
 }
 
 func (s *FailState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	return "", ErrFailedStateMachine
 }

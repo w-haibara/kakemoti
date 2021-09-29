@@ -27,6 +27,10 @@ type outputs struct {
 }
 
 func (s *ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
+	if s == nil {
+		return "", nil
+	}
+
 	var eg errgroup.Group
 	var outputs outputs
 	for _, sm := range s.Branches {
