@@ -33,36 +33,36 @@ func NewStartExecutionCmd() *cobra.Command {
 			defer cancel()
 
 			if strings.TrimSpace(o.Input) == "" {
-				log.Panic("input option value is empty")
+				log.Fatalln("input option value is empty")
 			}
 
 			if strings.TrimSpace(o.ASL) == "" {
-				log.Panic("ASL option value is empty")
+				log.Fatalln("ASL option value is empty")
 			}
 
 			f1, r, err := readFile(o.Input)
 			if err != nil {
-				log.Panic(err.Error())
+				log.Fatalln(err.Error())
 			}
 			defer func() {
 				if err := f1.Close(); err != nil {
-					log.Panic(err.Error())
+					log.Fatalln(err.Error())
 				}
 			}()
 
 			f2, asl, err := readFile(o.ASL)
 			if err != nil {
-				log.Panic(err.Error())
+				log.Fatalln(err.Error())
 			}
 			defer func() {
 				if err := f2.Close(); err != nil {
-					log.Panic(err.Error())
+					log.Fatalln(err.Error())
 				}
 			}()
 
 			sm, err := statemachine.NewStateMachine(asl, log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile))
 			if err != nil {
-				log.Panic(err.Error())
+				log.Fatalln(err.Error())
 			}
 
 			//sm.PrintInfo()
@@ -72,7 +72,7 @@ func NewStartExecutionCmd() *cobra.Command {
 
 			w := new(bytes.Buffer)
 			if err := sm.Start(ctx, r, w); err != nil {
-				log.Panic(err.Error())
+				log.Fatalln(err.Error())
 			}
 
 			log.Println("=== Finaly output ===", "\n"+w.String())
