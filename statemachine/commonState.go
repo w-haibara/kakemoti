@@ -17,6 +17,18 @@ type CommonState struct {
 	OutputPath string `json:"OutputPath"`
 }
 
+func (s CommonState) Log(v interface{}) {
+	_, _ = pp.Println(v)
+}
+
+func (s CommonState) StateStartLog(name string) {
+	s.Log("State Start: " + s.Type + ", " + name)
+}
+
+func (s CommonState) StateEndLog(name string) {
+	s.Log("State End  : " + s.Type + ", " + name)
+}
+
 func (s *CommonState) StateType() string {
 	if s == nil {
 		return ""

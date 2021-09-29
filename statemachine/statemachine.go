@@ -189,7 +189,6 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 	}
 
 	cur := sm.StartAt
-	var err error
 	for {
 		s, ok := sm.States[cur]
 		if !ok {
@@ -200,7 +199,9 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 			return ErrInvalidJSONInput
 		}
 
-		cur, err = s.Transition(ctx, r, w)
+		s.StateStartLog(cur)
+		next, err := s.Transition(ctx, r, w)
+		s.StateEndLog(cur)
 
 		if ok := ValidateJSON(w); !ok {
 			return ErrInvalidJSONOutput
@@ -219,7 +220,7 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 			return err
 		}
 
-		if _, ok := sm.States[cur]; !ok {
+		if _, ok := sm.States[next]; !ok {
 			return ErrUnknownStateName
 		}
 
@@ -228,6 +229,8 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 			return err
 		}
 		w.Reset()
+
+		cur = next
 	}
 
 End:
