@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"karage/statemachine"
 
@@ -13,11 +14,10 @@ import (
 )
 
 func NewStartExecutionCmd() *cobra.Command {
-	ctx := context.Background()
-
 	type Options struct {
-		Input string
-		ASL   string
+		Input   string
+		ASL     string
+		Timeout int64
 	}
 
 	o := new(Options)
@@ -26,6 +26,12 @@ func NewStartExecutionCmd() *cobra.Command {
 		Use:   "start-execution",
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
+			ctx, cancel := context.WithCancel(context.Background())
+			if o.Timeout > 0 {
+				ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
+			}
+			defer cancel()
+
 			if strings.TrimSpace(o.Input) == "" {
 				log.Panic("input option value is empty")
 			}
@@ -76,6 +82,7 @@ func NewStartExecutionCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&o.Input, "input", "", "path of a input json file")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
+	cmd.Flags().Int64Var(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	return cmd
 }
