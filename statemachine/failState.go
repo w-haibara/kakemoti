@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"bytes"
+	"context"
 )
 
 type FailState struct {
@@ -10,9 +11,15 @@ type FailState struct {
 	Error string `json:"Error"`
 }
 
-func (s *FailState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *FailState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
 	if s == nil {
 		return "", nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return "", ErrStoppedStateMachine
+	default:
 	}
 
 	return "", ErrFailedStateMachine

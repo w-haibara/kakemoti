@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,6 +21,7 @@ var (
 	ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
 	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
 	ErrEndStateMachine       = fmt.Errorf("end state machine")
+	ErrStoppedStateMachine   = fmt.Errorf("stopped state machine")
 )
 
 var (
@@ -191,7 +193,7 @@ func ValidateJSON(j *bytes.Buffer) bool {
 	return true
 }
 
-func (sm *StateMachine) Start(r, w *bytes.Buffer) error {
+func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 	if sm == nil {
 		return ErrRecieverIsNil
 	}
@@ -216,7 +218,7 @@ func (sm *StateMachine) Start(r, w *bytes.Buffer) error {
 		sm.Logger.Println("State:", cur, "( Type =", s.StateType(), ")")
 		sm.Logger.Println("=== input  ===", "\n"+r.String())
 
-		cur, err = s.Transition(r, w)
+		cur, err = s.Transition(ctx, r, w)
 
 		if ok := ValidateJSON(w); !ok {
 			sm.Logger.Println("=== invalid json output ===\n", "\n"+w.String())

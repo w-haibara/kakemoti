@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"bytes"
+	"context"
 	"strings"
 
 	"github.com/k0kubun/pp"
@@ -32,9 +33,15 @@ func (s *CommonState) String() string {
 	return pp.Sprintln(s)
 }
 
-func (s *CommonState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *CommonState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
 	if s == nil {
 		return "", nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return "", ErrStoppedStateMachine
+	default:
 	}
 
 	if s.End {

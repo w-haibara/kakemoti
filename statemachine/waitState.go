@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -84,9 +85,15 @@ func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
 	return time.Duration(0), fmt.Errorf("wait dulation is not set")
 }
 
-func (s *WaitState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *WaitState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
 	if s == nil {
 		return "", nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return "", ErrStoppedStateMachine
+	default:
 	}
 
 	d, err := s.Dulation(r)

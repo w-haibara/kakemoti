@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"os"
 	"strings"
@@ -12,6 +13,8 @@ import (
 )
 
 func NewStartExecutionCmd() *cobra.Command {
+	ctx := context.Background()
+
 	type Options struct {
 		Input string
 		ASL   string
@@ -62,7 +65,7 @@ func NewStartExecutionCmd() *cobra.Command {
 			log.Println("===  First input  ===", "\n"+r.String())
 
 			w := new(bytes.Buffer)
-			if err := sm.Start(r, w); err != nil {
+			if err := sm.Start(ctx, r, w); err != nil {
 				log.Panic(err.Error())
 			}
 

@@ -3,6 +3,7 @@ package statemachine
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"strings"
@@ -26,9 +27,15 @@ type outputs struct {
 	v  []*bytes.Buffer
 }
 
-func (s *ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
 	if s == nil {
 		return "", nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return "", ErrStoppedStateMachine
+	default:
 	}
 
 	var eg errgroup.Group
@@ -55,7 +62,7 @@ func (s *ParallelState) Transition(r, w *bytes.Buffer) (next string, err error) 
 			}
 			logger.Println("===  First input  ===", "\n"+r2.String())
 
-			if err := sm.Start(r2, w2); err != nil {
+			if err := sm.Start(ctx, r2, w2); err != nil {
 				return err
 			}
 

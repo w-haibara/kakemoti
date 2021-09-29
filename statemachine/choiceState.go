@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 
@@ -42,9 +43,15 @@ type ChoiceState struct {
 	Default string   `json:"Default"`
 }
 
-func (s *ChoiceState) Transition(r, w *bytes.Buffer) (next string, err error) {
+func (s *ChoiceState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
 	if s == nil {
 		return "", nil
+	}
+
+	select {
+	case <-ctx.Done():
+		return "", ErrStoppedStateMachine
+	default:
 	}
 
 	if _, err := w.Write(r.Bytes()); err != nil {
