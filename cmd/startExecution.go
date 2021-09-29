@@ -60,7 +60,7 @@ func NewStartExecutionCmd() *cobra.Command {
 				}
 			}()
 
-			sm, err := statemachine.NewStateMachine(asl, log.New(os.Stderr, "", log.Ldate|log.Ltime|log.Lshortfile))
+			sm, err := statemachine.NewStateMachine(asl)
 			if err != nil {
 				log.Fatalln(err.Error())
 			}

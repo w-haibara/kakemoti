@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"log"
 	"strings"
 	"sync"
 
@@ -19,7 +18,6 @@ type ParallelState struct {
 	ResultSelector string         `json:"ResultSelector"`
 	Retry          string         `json:"Retry"`
 	Catch          string         `json:"Catch"`
-	Logger         *log.Logger    `json:"-"`
 }
 
 type outputs struct {
@@ -43,36 +41,24 @@ func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (nex
 	for _, sm := range s.Branches {
 		sm := sm
 		eg.Go(func() error {
-			var buf bytes.Buffer
-			defer s.Logger.Println(buf.String())
+			sm.SetStates()
 
-			logger := log.New(&buf, "	", log.Ldate|log.Ltime|log.Lshortfile)
-			logger.Println("=== parallel workflow ===")
-
-			sm.CompleteStateMachine(logger)
 			r2 := new(bytes.Buffer)
-			w2 := new(bytes.Buffer)
 			if _, err := r2.Write(r.Bytes()); err != nil {
 				return err
 			}
-
 			if ok := ValidateJSON(r2); !ok {
-				logger.Println("=== invalid json input ===", "\n"+r.String())
-				return err
-			}
-			logger.Println("===  First input  ===", "\n"+r2.String())
-
-			if err := sm.Start(ctx, r2, w2); err != nil {
 				return err
 			}
 
-			logger.Println("=== Finaly output ===", "\n"+w2.String())
+			w2 := new(bytes.Buffer)
+			if err := sm.start(ctx, r2, w2); err != nil {
+				return err
+			}
 
 			outputs.mu.Lock()
 			outputs.v = append(outputs.v, w2)
 			outputs.mu.Unlock()
-
-			s.Logger.Println("\n" + buf.String())
 
 			return nil
 		})
