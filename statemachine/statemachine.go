@@ -177,14 +177,6 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 		return ErrRecieverIsNil
 	}
 
-	return sm.start(ctx, r, w)
-}
-
-func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
-	if sm == nil {
-		return ErrRecieverIsNil
-	}
-
 	if _, ok := sm.States[sm.StartAt]; !ok {
 		return ErrInvalidStartAtValue
 	}
