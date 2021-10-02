@@ -28,105 +28,106 @@ var (
 )
 
 type StateMachine struct {
-	Comment        string                 `json:"Comment"`
-	StartAt        string                 `json:"StartAt"`
-	TimeoutSeconds int64                  `json:"TimeoutSeconds"`
-	Version        int64                  `json:"Version"`
-	RawStates      map[string]interface{} `json:"States"`
-	States         map[string]State       `json:"-"`
+	Comment        string                     `json:"Comment"`
+	StartAt        string                     `json:"StartAt"`
+	TimeoutSeconds int64                      `json:"TimeoutSeconds"`
+	Version        int64                      `json:"Version"`
+	RawStates      map[string]json.RawMessage `json:"States"`
+	States         States                     `json:"-"`
 }
+
+type States map[string]State
 
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
-
 	sm := new(StateMachine)
+
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
 	}
 
-	sm.SetStates()
+	var err error
+	sm.States, err = sm.decodeStates()
+	if err != nil {
+		return nil, err
+	}
 
 	return sm, nil
 }
 
-func (sm *StateMachine) SetStates() {
+func NewStates() map[string]State {
+	return map[string]State{}
+}
+
+func (sm *StateMachine) decodeStates() (States, error) {
 	if sm == nil {
-		return
+		return nil, ErrRecieverIsNil
 	}
 
-	states := map[string]State{}
-	for name, state := range sm.RawStates {
-		s, ok := state.(map[string]interface{})
-		if !ok {
-			continue
+	states := NewStates()
+
+	for name, raw := range sm.RawStates {
+		state, err := decodeState(raw)
+		if err != nil {
+			return nil, err
 		}
 
-		t, ok := s["Type"].(string)
-		if !ok {
-			continue
-		}
-
-		convert := func(src, dst interface{}) error {
-			var buf bytes.Buffer
-			enc := json.NewEncoder(&buf)
-			if err := enc.Encode(src); err != nil {
-				return err
-			}
-
-			dec := json.NewDecoder(&buf)
-			if err := dec.Decode(&dst); err != nil {
-				return err
-			}
-
-			return nil
-		}
-
-		switch t {
-		case "Pass":
-			states[name] = new(PassState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Task":
-			states[name] = new(TaskState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Choice":
-			states[name] = new(ChoiceState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Wait":
-			states[name] = new(WaitState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Succeed":
-			states[name] = new(SucceedState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Fail":
-			states[name] = new(FailState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		case "Parallel":
-			v := new(ParallelState)
-			if err := convert(s, v); err != nil {
-				continue
-			}
-			states[name] = v
-		case "Map":
-			states[name] = new(MapState)
-			if err := convert(s, states[name]); err != nil {
-				continue
-			}
-		}
+		states[name] = state
 	}
 
-	sm.States = states
+	return states, nil
+}
+
+func decodeState(raw json.RawMessage) (State, error) {
+	var t struct {
+		Type string `json:"Type"`
+	}
+
+	if err := json.Unmarshal(raw, &t); err != nil {
+		return nil, err
+	}
+
+	switch t.Type {
+	case "Parallel":
+		v := new(ParallelState)
+		if err := json.Unmarshal(raw, v); err != nil {
+			return nil, err
+		}
+
+		for k, sm := range v.Branches {
+			var err error
+			v.Branches[k].States, err = sm.decodeStates()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return v, nil
+	}
+
+	var state State
+	switch t.Type {
+	case "Pass":
+		state = new(PassState)
+	case "Task":
+		state = new(TaskState)
+	case "Choice":
+		state = new(ChoiceState)
+	case "Wait":
+		state = new(WaitState)
+	case "Succeed":
+		state = new(SucceedState)
+	case "Fail":
+		state = new(FailState)
+	case "Map":
+		state = new(MapState)
+	}
+
+	if err := json.Unmarshal(raw, state); err != nil {
+		return nil, err
+	}
+
+	return state, nil
 }
 
 func (sm *StateMachine) PrintInfo() {
