@@ -8,5 +8,5 @@ karage: *.go */*.go go.mod
 .PHONY: run
 run: karage
 	./karage start-execution \
-	--asl  "./workflow/HelloWorld/statemachine.asl.json" \
-	--input "./workflow/HelloWorld/input1.json"
+	--asl  "./workflow/HelloWorld2/statemachine.asl.json" \
+	--input "./workflow/HelloWorld2/input1.json"
