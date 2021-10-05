@@ -15,6 +15,7 @@ type Logger struct {
 	CH                 chan Message
 	LogDirPrefix       string
 	RootStateMachineID string
+	files              map[string]*os.File
 }
 
 type Message struct {
@@ -22,6 +23,7 @@ type Message struct {
 	StateName      string
 	StateType      string
 	Body           string
+	close          bool
 }
 
 func init() {
@@ -34,20 +36,20 @@ func NewLogger(rootStateMachineID string) *Logger {
 		CH:                 ch,
 		LogDirPrefix:       "logfiles",
 		RootStateMachineID: rootStateMachineID,
+		files:              make(map[string]*os.File),
 	}
 }
 
 func (l *Logger) Listen() {
 	dir := filepath.Join(l.LogDirPrefix, time.Now().Format("2006-01-02-03-04-")+l.RootStateMachineID+".log")
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		panic("mkdir failed: " + err.Error())
+		log.Panic("mkdir failed: ", err.Error())
 	}
 
-	files := make(map[string]*os.File)
 	defer func() {
-		for _, f := range files {
+		for _, f := range l.files {
 			if err := f.Close(); err != nil {
-				panic("file close failed: " + err.Error())
+				log.Panic("file close failed: ", err.Error())
 			}
 		}
 	}()
@@ -58,26 +60,48 @@ func (l *Logger) Listen() {
 			break
 		}
 
-		f, ok := files[v.StateMachineID]
+		f, ok := l.files[v.StateMachineID]
+		if ok && v.close {
+			if err := l.files[v.StateMachineID].Close(); err != nil {
+				log.Panic("file close failed:", err.Error())
+			}
+			delete(l.files, v.StateMachineID)
+			continue
+		}
 		if !ok {
 			if strings.TrimSpace(v.StateMachineID) == "" {
-				panic("statemachine ID is brank")
+				log.Panic("statemachine ID is brank")
 			}
 
-			var err error
-			f, err = os.Create(filepath.Join(dir, v.StateMachineID))
-			if err != nil {
-				panic("create file error: " + err.Error())
+			name := filepath.Join(dir, v.StateMachineID)
+
+			if _, err := os.Stat(name); err == nil { // if file exists
+				f, err = os.Open(name) // #nosec G304
+				if err != nil {
+					log.Panic("open file error:", err.Error())
+				}
+			} else {
+				f, err = os.Create(name)
+				if err != nil {
+					log.Panic("create file error:", err.Error())
+				}
 			}
 
-			files[v.StateMachineID] = f
+			l.files[v.StateMachineID] = f
 		}
 
 		//TODO: format with json
 		_, err := pp.Fprintln(f, v)
 		if err != nil {
-			log.Panic("can not write logs: ", err.Error())
+			log.Panic("can not write logs:", err.Error())
 		}
+	}
+}
+
+func (l *Logger) Close(id string) {
+	l.CH <- Message{
+		StateMachineID: id,
+		close:          true,
 	}
 }
 

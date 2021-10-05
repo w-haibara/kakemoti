@@ -190,6 +190,8 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 		}
 	}
 
+	defer sm.Logger.Close(sm.ID)
+
 	for i := range sm.States {
 		sm.States[i].SetID(sm.ID)
 	}
@@ -245,6 +247,7 @@ End:
 	sm.StateMachineEndLog()
 	return nil
 }
+
 func (sm *StateMachine) Log(v ...interface{}) {
 	log.Println(sm.ID, "", "", fmt.Sprint(v...))
 }
