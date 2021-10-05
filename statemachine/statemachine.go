@@ -46,7 +46,10 @@ type States map[string]State
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 	sm := new(StateMachine)
-	sm.Logger = log.NewLogger()
+	if err := sm.setID(); err != nil {
+		return nil, err
+	}
+	sm.Logger = log.NewLogger(sm.ID)
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -169,10 +172,7 @@ func (sm *StateMachine) setID() error {
 }
 
 func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
-
-	err := sm.start(ctx, r, w)
-
-	return err
+	return sm.start(ctx, r, w)
 }
 
 func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
@@ -184,8 +184,10 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 		return ErrInvalidStartAtValue
 	}
 
-	if err := sm.setID(); err != nil {
-		return err
+	if sm.ID == "" {
+		if err := sm.setID(); err != nil {
+			return err
+		}
 	}
 
 	for i := range sm.States {

@@ -11,7 +11,6 @@ import (
 
 	"karage/statemachine"
 
-	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 )
 
@@ -86,10 +85,6 @@ func NewStartExecutionCmd() *cobra.Command {
 
 			close(sm.Logger.CH)
 			wg.Wait()
-
-			for i, v := range sm.Logger.Que {
-				_, _ = pp.Println(i, v)
-			}
 
 			log.Println("=== Finaly output ===", "\n"+w.String())
 		},
