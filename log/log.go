@@ -35,6 +35,10 @@ func (l *Logger) Listen() {
 	}
 }
 
+func (l *Logger) FLush() {
+
+}
+
 func (l *Logger) Println(id, name, typ string, v ...interface{}) {
 	l.CH <- Message{
 		StateMachineID: id,
