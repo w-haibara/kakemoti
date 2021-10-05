@@ -52,7 +52,7 @@ func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (nex
 			}
 
 			w2 := new(bytes.Buffer)
-			if err := sm.Start(ctx, r2, w2); err != nil {
+			if err := sm.start(ctx, r2, w2); err != nil {
 				return err
 			}
 

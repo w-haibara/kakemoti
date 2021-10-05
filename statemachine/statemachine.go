@@ -141,32 +141,6 @@ func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
 	return state, nil
 }
 
-func (sm *StateMachine) PrintInfo() {
-	if sm == nil {
-		return
-	}
-
-	fmt.Println("====== StateMachine Info ======")
-	_, _ = pp.Println("Comment", sm.Comment)
-	_, _ = pp.Println("StartAt", sm.StartAt)
-	_, _ = pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
-	_, _ = pp.Println("Version", sm.Version)
-	fmt.Println("===============================")
-}
-
-func (sm *StateMachine) PrintStates() {
-	if sm == nil {
-		return
-	}
-
-	s := sm.States
-	fmt.Println("=========== States  ===========")
-	for k, v := range s {
-		_, _ = pp.Println(k, "\n", v, "\n")
-	}
-	fmt.Println("===============================")
-}
-
 func ValidateJSON(j *bytes.Buffer) bool {
 	b := j.Bytes()
 
@@ -183,7 +157,25 @@ func ValidateJSON(j *bytes.Buffer) bool {
 	return true
 }
 
+func (sm *StateMachine) setID() error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
+	sm.ID = id.String()
+
+	return nil
+}
+
 func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
+
+	err := sm.start(ctx, r, w)
+
+	return err
+}
+
+func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 	if sm == nil {
 		return ErrRecieverIsNil
 	}
@@ -199,6 +191,8 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 	for i := range sm.States {
 		sm.States[i].SetID(sm.ID)
 	}
+
+	sm.StateMachineStartLog()
 
 	cur := sm.StartAt
 	for {
@@ -246,16 +240,43 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 	}
 
 End:
+	sm.StateMachineEndLog()
 	return nil
 }
+func (sm *StateMachine) Log(v ...interface{}) {
+	log.Println(sm.ID, "", "", fmt.Sprint(v...))
+}
 
-func (sm *StateMachine) setID() error {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return err
+func (sm *StateMachine) StateMachineStartLog() {
+	sm.Log("START")
+}
+
+func (sm *StateMachine) StateMachineEndLog() {
+	sm.Log("END")
+}
+
+func (sm *StateMachine) PrintInfo() {
+	if sm == nil {
+		return
 	}
 
-	sm.ID = id.String()
+	fmt.Println("====== StateMachine Info ======")
+	_, _ = pp.Println("Comment", sm.Comment)
+	_, _ = pp.Println("StartAt", sm.StartAt)
+	_, _ = pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
+	_, _ = pp.Println("Version", sm.Version)
+	fmt.Println("===============================")
+}
 
-	return nil
+func (sm *StateMachine) PrintStates() {
+	if sm == nil {
+		return
+	}
+
+	s := sm.States
+	fmt.Println("=========== States  ===========")
+	for k, v := range s {
+		_, _ = pp.Println(k, "\n", v, "\n")
+	}
+	fmt.Println("===============================")
 }

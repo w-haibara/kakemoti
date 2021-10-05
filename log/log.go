@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"log"
 )
 
 type Logger struct {
@@ -46,4 +47,8 @@ func (l *Logger) Println(id, name, typ string, v ...interface{}) {
 		StateType:      typ,
 		Body:           fmt.Sprint(v...),
 	}
+}
+
+func Println(id string, v ...interface{}) {
+	log.Println(id+":", fmt.Sprint(v...))
 }
