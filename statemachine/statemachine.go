@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"karage/log"
+
+	"github.com/google/uuid"
 	"github.com/k0kubun/pp"
 )
 
@@ -28,12 +31,14 @@ var (
 )
 
 type StateMachine struct {
+	ID             string                     `json:"-"`
 	Comment        string                     `json:"Comment"`
 	StartAt        string                     `json:"StartAt"`
 	TimeoutSeconds int64                      `json:"TimeoutSeconds"`
 	Version        int64                      `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
+	Logger         *log.Logger                `json:"-"`
 }
 
 type States map[string]State
@@ -41,6 +46,7 @@ type States map[string]State
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 	sm := new(StateMachine)
+	sm.Logger = log.NewLogger()
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -67,10 +73,13 @@ func (sm *StateMachine) decodeStates() (States, error) {
 	states := NewStates()
 
 	for name, raw := range sm.RawStates {
-		state, err := decodeState(raw)
+		state, err := sm.decodeState(raw)
 		if err != nil {
 			return nil, err
 		}
+
+		state.SetName(name)
+		state.SetLogger(sm.Logger)
 
 		states[name] = state
 	}
@@ -78,7 +87,7 @@ func (sm *StateMachine) decodeStates() (States, error) {
 	return states, nil
 }
 
-func decodeState(raw json.RawMessage) (State, error) {
+func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
 	var t struct {
 		Type string `json:"Type"`
 	}
@@ -94,9 +103,11 @@ func decodeState(raw json.RawMessage) (State, error) {
 			return nil, err
 		}
 
-		for k, sm := range v.Branches {
+		for k := range v.Branches {
+			v.Branches[k].Logger = sm.Logger
+
 			var err error
-			v.Branches[k].States, err = sm.decodeStates()
+			v.Branches[k].States, err = v.Branches[k].decodeStates()
 			if err != nil {
 				return nil, err
 			}
@@ -181,6 +192,14 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 		return ErrInvalidStartAtValue
 	}
 
+	if err := sm.setID(); err != nil {
+		return err
+	}
+
+	for i := range sm.States {
+		sm.States[i].SetID(sm.ID)
+	}
+
 	cur := sm.StartAt
 	for {
 		s, ok := sm.States[cur]
@@ -192,9 +211,9 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 			return ErrInvalidJSONInput
 		}
 
-		s.StateStartLog(cur)
+		s.StateStartLog()
 		next, err := s.Transition(ctx, r, w)
-		s.StateEndLog(cur)
+		s.StateEndLog()
 
 		if ok := ValidateJSON(w); !ok {
 			return ErrInvalidJSONOutput
@@ -227,5 +246,16 @@ func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
 	}
 
 End:
+	return nil
+}
+
+func (sm *StateMachine) setID() error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
+	sm.ID = id.String()
+
 	return nil
 }

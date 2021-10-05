@@ -3,30 +3,32 @@ package statemachine
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"strings"
+
+	"karage/log"
 
 	"github.com/k0kubun/pp"
 )
 
 type CommonState struct {
-	Type       string `json:"Type"`
-	Next       string `json:"Next"`
-	End        bool   `json:"End"`
-	Comment    string `json:"Comment"`
-	InputPath  string `json:"InputPath"`
-	OutputPath string `json:"OutputPath"`
+	Name           string      `json:"-"`
+	StateMachineID string      `json:"-"`
+	Type           string      `json:"Type"`
+	Next           string      `json:"Next"`
+	End            bool        `json:"End"`
+	Comment        string      `json:"Comment"`
+	InputPath      string      `json:"InputPath"`
+	OutputPath     string      `json:"OutputPath"`
+	Logger         *log.Logger `json:"-"`
 }
 
-func (s CommonState) Log(v interface{}) {
-	_, _ = pp.Println(v)
+func (s *CommonState) SetName(name string) {
+	s.Name = name
 }
 
-func (s CommonState) StateStartLog(name string) {
-	s.Log("State Start: " + s.Type + ", " + name)
-}
-
-func (s CommonState) StateEndLog(name string) {
-	s.Log("State End  : " + s.Type + ", " + name)
+func (s *CommonState) SetID(id string) {
+	s.StateMachineID = id
 }
 
 func (s *CommonState) StateType() string {
@@ -65,4 +67,24 @@ func (s *CommonState) Transition(ctx context.Context, r, w *bytes.Buffer) (next 
 	}
 
 	return s.Next, nil
+}
+
+func (s *CommonState) SetLogger(l *log.Logger) {
+	s.Logger = l
+}
+
+func (s *CommonState) GetLogger() *log.Logger {
+	return s.Logger
+}
+
+func (s *CommonState) Log(v ...interface{}) {
+	s.Logger.Println(s.StateMachineID, s.Name, s.Type, fmt.Sprint(v...))
+}
+
+func (s *CommonState) StateStartLog() {
+	s.Log("START")
+}
+
+func (s *CommonState) StateEndLog() {
+	s.Log("END")
 }

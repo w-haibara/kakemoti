@@ -6,10 +6,12 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"karage/statemachine"
 
+	"github.com/k0kubun/pp"
 	"github.com/spf13/cobra"
 )
 
@@ -65,6 +67,13 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Fatalln(err.Error())
 			}
 
+			wg := &sync.WaitGroup{}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				sm.Logger.Listen()
+			}()
+
 			//sm.PrintInfo()
 			//sm.PrintStates()
 
@@ -75,8 +84,14 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Fatalln(err.Error())
 			}
 
-			log.Println("=== Finaly output ===", "\n"+w.String())
+			close(sm.Logger.CH)
+			wg.Wait()
 
+			for i, v := range sm.Logger.Que {
+				_, _ = pp.Println(i, v)
+			}
+
+			log.Println("=== Finaly output ===", "\n"+w.String())
 		},
 	}
 

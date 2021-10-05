@@ -3,6 +3,7 @@ module karage
 go 1.17
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/spf13/cobra v1.2.1
 	github.com/spyzhov/ajson v0.4.2
