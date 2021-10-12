@@ -41,6 +41,13 @@ type StateMachine struct {
 
 type States map[string]State
 
+func init() {
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		PrettyPrint: true,
+	})
+}
+
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 	sm := new(StateMachine)
@@ -203,6 +210,10 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 			return ErrUnknownStateName
 		}
 
+		l.WithFields(logrus.Fields{
+			"input": r.String(),
+		}).Debug("")
+
 		if ok := ValidateJSON(r); !ok {
 			return ErrInvalidJSONInput
 		}
@@ -210,6 +221,10 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 		s.Logger().Info("state start")
 		next, err := s.Transition(ctx, r, w)
 		s.Logger().Info("state end")
+
+		l.WithFields(logrus.Fields{
+			"output": w.String(),
+		}).Debug("")
 
 		if ok := ValidateJSON(w); !ok {
 			return ErrInvalidJSONOutput
@@ -247,9 +262,6 @@ End:
 }
 
 func (sm *StateMachine) logger() *logrus.Entry {
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: true,
-	})
 	return logrus.WithFields(logrus.Fields{
 		"id": sm.ID,
 	})
