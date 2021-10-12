@@ -302,6 +302,8 @@ End:
 
 func (sm *StateMachine) logger() *logrus.Entry {
 	return logrus.WithFields(logrus.Fields{
-		"id": sm.ID,
+		"id":      sm.ID,
+		"startat": sm.StartAt,
+		"timeout": sm.TimeoutSeconds,
 	})
 }

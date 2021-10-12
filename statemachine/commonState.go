@@ -71,6 +71,8 @@ func (s *CommonState) SetLogger(l *logrus.Entry) {
 	s.logger = l.WithFields(logrus.Fields{
 		"name": s.Name,
 		"type": s.Type,
+		"next": s.Next,
+		"end":  s.End,
 	})
 }
 
