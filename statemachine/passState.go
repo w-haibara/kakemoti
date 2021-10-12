@@ -1,9 +1,10 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
 	"strings"
+
+	"github.com/spyzhov/ajson"
 )
 
 type PassState struct {
@@ -13,28 +14,24 @@ type PassState struct {
 	Parameters string `json:"Parameters"`
 }
 
-func (s *PassState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *PassState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
-	if _, err := r.WriteTo(w); err != nil {
-		return "", err
-	}
-
 	if s.End {
-		return "", ErrEndStateMachine
+		return "", r, ErrEndStateMachine
 	}
 
 	if strings.TrimSpace(s.Next) == "" {
-		return "", ErrNextStateIsBrank
+		return "", nil, ErrNextStateIsBrank
 	}
 
-	return s.Next, nil
+	return s.Next, r, nil
 }

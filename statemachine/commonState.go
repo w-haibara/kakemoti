@@ -1,12 +1,12 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
 	"strings"
 
 	"github.com/k0kubun/pp"
 	"github.com/sirupsen/logrus"
+	"github.com/spyzhov/ajson"
 )
 
 type CommonState struct {
@@ -45,26 +45,26 @@ func (s *CommonState) String() string {
 	return pp.Sprintln(s)
 }
 
-func (s *CommonState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *CommonState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
 	if s.End {
-		return "", ErrEndStateMachine
+		return "", r, ErrEndStateMachine
 	}
 
 	if strings.TrimSpace(s.Next) == "" {
-		return "", ErrNextStateIsBrank
+		return "", nil, ErrNextStateIsBrank
 	}
 
-	return s.Next, nil
+	return s.Next, r, nil
 }
 
 func (s *CommonState) SetLogger(l *logrus.Entry) {

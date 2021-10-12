@@ -1,10 +1,10 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spyzhov/ajson"
 )
 
 type State interface {
@@ -12,7 +12,7 @@ type State interface {
 	SetID(id string)
 	StateType() string
 	String() string
-	Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error)
+	Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error)
 	SetLogger(l *logrus.Entry)
 	Logger() *logrus.Entry
 }

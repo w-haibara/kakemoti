@@ -1,7 +1,6 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -27,7 +26,7 @@ func parseTimestamp(timestamp string) (time.Duration, error) {
 	return time.Until(t), nil
 }
 
-func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
+func (s *WaitState) Dulation(r *ajson.Node) (time.Duration, error) {
 	if s == nil {
 		return time.Duration(0), nil
 	}
@@ -40,13 +39,8 @@ func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
 		return parseTimestamp(s.Timestamp)
 	}
 
-	root, err := ajson.Unmarshal(r.Bytes())
-	if err != nil {
-		return time.Duration(0), err
-	}
-
 	if s.SecondsPath != "" {
-		nodes, err := root.JSONPath(s.SecondsPath)
+		nodes, err := r.JSONPath(s.SecondsPath)
 		if err != nil {
 			return time.Duration(0), err
 		}
@@ -64,7 +58,7 @@ func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
 	}
 
 	if s.TimestampPath != "" {
-		nodes, err := root.JSONPath(s.TimestampPath)
+		nodes, err := r.JSONPath(s.TimestampPath)
 		if err != nil {
 			return time.Duration(0), err
 		}
@@ -85,34 +79,30 @@ func (s *WaitState) Dulation(r *bytes.Buffer) (time.Duration, error) {
 	return time.Duration(0), fmt.Errorf("wait dulation is not set")
 }
 
-func (s *WaitState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *WaitState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
 	d, err := s.Dulation(r)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	time.Sleep(d)
 
-	if _, err := r.WriteTo(w); err != nil {
-		return "", err
-	}
-
 	if s.End {
-		return "", ErrEndStateMachine
+		return "", r, ErrEndStateMachine
 	}
 
 	if strings.TrimSpace(s.Next) == "" {
-		return "", ErrNextStateIsBrank
+		return "", nil, ErrNextStateIsBrank
 	}
 
-	return s.Next, nil
+	return s.Next, r, nil
 }

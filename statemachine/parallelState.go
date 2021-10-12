@@ -1,13 +1,11 @@
 package statemachine
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"strings"
 	"sync"
 
+	"github.com/spyzhov/ajson"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,42 +20,36 @@ type ParallelState struct {
 
 type outputs struct {
 	mu sync.Mutex
-	v  []*bytes.Buffer
+	v  []*ajson.Node
 }
 
-func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *ParallelState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
 	var eg errgroup.Group
 	var outputs outputs
-	for _, sm := range s.Branches {
-		sm := sm
+	outputs.v = make([]*ajson.Node, len(s.Branches))
+
+	for i, sm := range s.Branches {
+		i, sm := i, sm
 		sm.Logger = s.logger
 
 		eg.Go(func() error {
-			r2 := new(bytes.Buffer)
-			if _, err := r2.Write(r.Bytes()); err != nil {
-				return err
-			}
-			if ok := ValidateJSON(r2); !ok {
-				return err
-			}
-
-			w2 := new(bytes.Buffer)
-			if err := sm.start(ctx, r2, w2); err != nil {
+			w, err := sm.start(ctx, r)
+			if err != nil {
 				return err
 			}
 
 			outputs.mu.Lock()
-			outputs.v = append(outputs.v, w2)
+			outputs.v[i] = w.Clone()
 			outputs.mu.Unlock()
 
 			return nil
@@ -65,54 +57,18 @@ func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (nex
 	}
 
 	if err := eg.Wait(); err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	if err := func() error {
-		buf := bufio.NewWriter(w)
-		if _, err := buf.WriteRune('['); err != nil {
-			return err
-		}
-
-		for i, output := range outputs.v {
-			if _, err := output.WriteTo(buf); err != nil {
-				return err
-			}
-
-			if i < len(outputs.v)-1 {
-				if _, err := buf.WriteRune(','); err != nil {
-					return err
-				}
-			}
-		}
-
-		if _, err := buf.WriteRune(']'); err != nil {
-			return err
-		}
-
-		if err := buf.Flush(); err != nil {
-			return err
-		}
-
-		w1 := new(bytes.Buffer)
-		if err := json.Indent(w1, w.Bytes(), "", "\t"); err != nil {
-			return err
-		}
-
-		w = w1
-
-		return nil
-	}(); err != nil {
-		return "", err
-	}
+	w = ajson.ArrayNode(s.StateMachineID, outputs.v)
 
 	if s.End {
-		return "", ErrEndStateMachine
+		return "", w, ErrEndStateMachine
 	}
 
 	if strings.TrimSpace(s.Next) == "" {
-		return "", ErrNextStateIsBrank
+		return "", nil, ErrNextStateIsBrank
 	}
 
-	return s.Next, nil
+	return s.Next, w, nil
 }

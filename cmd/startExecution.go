@@ -40,7 +40,7 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Fatalln("ASL option value is empty")
 			}
 
-			f1, r, err := readFile(o.Input)
+			f1, input, err := readFile(o.Input)
 			if err != nil {
 				log.Fatalln(err.Error())
 			}
@@ -65,8 +65,7 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Fatalln(err.Error())
 			}
 
-			w := new(bytes.Buffer)
-			if err := sm.Start(ctx, r, w); err != nil {
+			if _, err := sm.Start(ctx, input); err != nil {
 				log.Fatalln(err.Error())
 			}
 		},

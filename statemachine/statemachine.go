@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/spyzhov/ajson"
 )
 
 var (
@@ -176,22 +177,42 @@ func (sm *StateMachine) setID() error {
 	return nil
 }
 
-func (sm *StateMachine) Start(ctx context.Context, r, w *bytes.Buffer) error {
-	return sm.start(ctx, r, w)
+func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
+	r, err := ajson.Unmarshal(input.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := sm.start(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := w.Unpack()
+	if err != nil {
+		return nil, err
+	}
+
+	output, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return output, nil
 }
 
-func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
+func (sm *StateMachine) start(ctx context.Context, r *ajson.Node) (*ajson.Node, error) {
 	if sm == nil {
-		return ErrRecieverIsNil
+		return nil, ErrRecieverIsNil
 	}
 
 	if _, ok := sm.States[sm.StartAt]; !ok {
-		return ErrInvalidStartAtValue
+		return nil, ErrInvalidStartAtValue
 	}
 
 	if sm.ID == "" {
 		if err := sm.setID(); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -201,38 +222,54 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 
 	l := sm.logger()
 
-	l.Info("statemachine start")
+	if v, err := r.Unpack(); err != nil {
+		return nil, fmt.Errorf("invalid ajson.Node error: %v", err)
+	} else {
+		l.WithFields(logrus.Fields{
+			"output": v,
+		}).Info("statemachine start")
+	}
 
+	var w *ajson.Node
 	cur := sm.StartAt
 	for {
+		select {
+		case <-ctx.Done():
+			break
+		default:
+		}
+
 		s, ok := sm.States[cur]
 		if !ok {
-			return ErrUnknownStateName
+			return nil, ErrUnknownStateName
 		}
 
-		l.WithFields(logrus.Fields{
-			"input": r.String(),
-		}).Debug("")
-
-		if ok := ValidateJSON(r); !ok {
-			return ErrInvalidJSONInput
+		if v, err := r.Unpack(); err != nil {
+			return nil, fmt.Errorf("invalid ajson.Node error: %v", err)
+		} else {
+			s.Logger().WithFields(logrus.Fields{
+				"input": v,
+			}).Info("state start")
 		}
 
-		s.Logger().Info("state start")
-		next, err := s.Transition(ctx, r, w)
-		s.Logger().Info("state end")
+		var (
+			next string
+			err  error
+		)
+		next, w, err = s.Transition(ctx, r)
 
-		l.WithFields(logrus.Fields{
-			"output": w.String(),
-		}).Debug("")
-
-		if ok := ValidateJSON(w); !ok {
-			return ErrInvalidJSONOutput
+		if w == nil {
+			w = &ajson.Node{}
+		}
+		if v, err := w.Unpack(); err != nil {
+			return nil, fmt.Errorf("invalid ajson.Node error: %v", err)
+		} else {
+			s.Logger().WithFields(logrus.Fields{
+				"output": v,
+			}).Info("state end")
 		}
 
 		switch {
-		case err == ErrUnknownStateType:
-			return err
 		case err == ErrSucceededStateMachine:
 			goto End
 		case err == ErrFailedStateMachine:
@@ -240,25 +277,27 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 		case err == ErrEndStateMachine:
 			goto End
 		case err != nil:
-			return err
+			return nil, err
 		}
 
 		if _, ok := sm.States[next]; !ok {
-			return ErrUnknownStateName
+			return nil, ErrUnknownStateName
 		}
 
-		r.Reset()
-		if _, err := w.WriteTo(r); err != nil {
-			return err
-		}
-		w.Reset()
-
+		r = w
 		cur = next
 	}
 
 End:
-	l.Info("statemachine end")
-	return nil
+	if v, err := w.Unpack(); err != nil {
+		return nil, fmt.Errorf("invalid ajson.Node error: %v", err)
+	} else {
+		l.WithFields(logrus.Fields{
+			"output": v,
+		}).Info("statemachine end")
+	}
+
+	return w, nil
 }
 
 func (sm *StateMachine) logger() *logrus.Entry {

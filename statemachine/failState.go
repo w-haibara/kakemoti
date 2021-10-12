@@ -1,8 +1,9 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
+
+	"github.com/spyzhov/ajson"
 )
 
 type FailState struct {
@@ -11,16 +12,16 @@ type FailState struct {
 	Error string `json:"Error"`
 }
 
-func (s *FailState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *FailState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
-	return "", ErrFailedStateMachine
+	return "", r, ErrFailedStateMachine
 }

@@ -1,24 +1,25 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
+
+	"github.com/spyzhov/ajson"
 )
 
 type SucceedState struct {
 	CommonState
 }
 
-func (s *SucceedState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *SucceedState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
-	return "", ErrSucceededStateMachine
+	return "", r, ErrSucceededStateMachine
 }

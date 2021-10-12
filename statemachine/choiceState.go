@@ -1,7 +1,6 @@
 package statemachine
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -43,19 +42,15 @@ type ChoiceState struct {
 	Default string   `json:"Default"`
 }
 
-func (s *ChoiceState) Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error) {
+func (s *ChoiceState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	select {
 	case <-ctx.Done():
-		return "", ErrStoppedStateMachine
+		return "", nil, ErrStoppedStateMachine
 	default:
-	}
-
-	if _, err := w.Write(r.Bytes()); err != nil {
-		return "", err
 	}
 
 	exist := func(m map[string]interface{}, k string) bool {
@@ -69,22 +64,22 @@ func (s *ChoiceState) Transition(ctx context.Context, r, w *bytes.Buffer) (next 
 		case exist(choice, "BooleanEquals"):
 			equals, ok := choice["BooleanEquals"]
 			if !ok {
-				return "", fmt.Errorf("choice rule error: BooleanEquals is blank")
+				return "", nil, fmt.Errorf("choice rule error: BooleanEquals is blank")
 			}
 
 			variable, ok := choice.variable()
 			if !ok {
-				return "", fmt.Errorf("choice rule error: Variable is blank")
+				return "", nil, fmt.Errorf("choice rule error: Variable is blank")
 			}
 
 			next, ok := choice.next()
 			if !ok {
-				return "", fmt.Errorf("choice rule error: Next is blank")
+				return "", nil, fmt.Errorf("choice rule error: Next is blank")
 			}
 
-			nodes, err := ajson.JSONPath(r.Bytes(), variable)
+			nodes, err := r.JSONPath(variable)
 			if err != nil {
-				return "", fmt.Errorf("choice rule error: JSONPath error")
+				return "", nil, fmt.Errorf("choice rule error: JSONPath error")
 			}
 
 			for _, node := range nodes {
@@ -98,7 +93,7 @@ func (s *ChoiceState) Transition(ctx context.Context, r, w *bytes.Buffer) (next 
 				}
 
 				if v == equals {
-					return next, nil
+					return next, r, nil
 				}
 			}
 
@@ -143,9 +138,7 @@ func (s *ChoiceState) Transition(ctx context.Context, r, w *bytes.Buffer) (next 
 		case exist(choice, "TimestampLessThanEquals"):
 		case exist(choice, "TimestampLessThanEqualsPath"):
 		}
-
-		println()
 	}
 
-	return "", ErrEndStateMachine
+	return "", r, ErrEndStateMachine
 }
