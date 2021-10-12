@@ -11,6 +11,21 @@ import (
 	"github.com/k0kubun/pp"
 )
 
+func init() {
+	pp.ColoringEnabled = false
+}
+
+type RootLogger struct {
+}
+
+func NewRootLogger() *RootLogger {
+	return &RootLogger{}
+}
+
+func (l *RootLogger) Println(id string, v ...interface{}) {
+	log.Println(id+":", fmt.Sprint(v...))
+}
+
 type Logger struct {
 	CH                 chan Message
 	LogDirPrefix       string
@@ -24,10 +39,6 @@ type Message struct {
 	StateType      string
 	Body           string
 	close          bool
-}
-
-func init() {
-	pp.ColoringEnabled = false
 }
 
 func NewLogger(rootStateMachineID string) *Logger {
@@ -112,8 +123,4 @@ func (l *Logger) Println(id, name, typ string, v ...interface{}) {
 		StateType:      typ,
 		Body:           fmt.Sprint(v...),
 	}
-}
-
-func Println(id string, v ...interface{}) {
-	log.Println(id+":", fmt.Sprint(v...))
 }

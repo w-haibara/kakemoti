@@ -38,6 +38,7 @@ type StateMachine struct {
 	Version        int64                      `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
+	RootLogger     *log.RootLogger            `json:"-"`
 	Logger         *log.Logger                `json:"-"`
 }
 
@@ -249,7 +250,7 @@ End:
 }
 
 func (sm *StateMachine) Log(v ...interface{}) {
-	log.Println(sm.ID, "", "", fmt.Sprint(v...))
+	sm.RootLogger.Println(sm.ID, "", "", fmt.Sprint(v...))
 }
 
 func (sm *StateMachine) StateMachineStartLog() {
