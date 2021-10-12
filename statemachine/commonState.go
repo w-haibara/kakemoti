@@ -3,24 +3,22 @@ package statemachine
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"strings"
 
-	"karage/log"
-
 	"github.com/k0kubun/pp"
+	"github.com/sirupsen/logrus"
 )
 
 type CommonState struct {
-	Name           string      `json:"-"`
-	StateMachineID string      `json:"-"`
-	Type           string      `json:"Type"`
-	Next           string      `json:"Next"`
-	End            bool        `json:"End"`
-	Comment        string      `json:"Comment"`
-	InputPath      string      `json:"InputPath"`
-	OutputPath     string      `json:"OutputPath"`
-	Logger         *log.Logger `json:"-"`
+	Name           string        `json:"-"`
+	StateMachineID string        `json:"-"`
+	Type           string        `json:"Type"`
+	Next           string        `json:"Next"`
+	End            bool          `json:"End"`
+	Comment        string        `json:"Comment"`
+	InputPath      string        `json:"InputPath"`
+	OutputPath     string        `json:"OutputPath"`
+	logger         *logrus.Entry `json:"-"`
 }
 
 func (s *CommonState) SetName(name string) {
@@ -69,22 +67,13 @@ func (s *CommonState) Transition(ctx context.Context, r, w *bytes.Buffer) (next 
 	return s.Next, nil
 }
 
-func (s *CommonState) SetLogger(l *log.Logger) {
-	s.Logger = l
+func (s *CommonState) SetLogger(l *logrus.Entry) {
+	s.logger = l.WithFields(logrus.Fields{
+		"name": s.Name,
+		"type": s.Type,
+	})
 }
 
-func (s *CommonState) GetLogger() *log.Logger {
-	return s.Logger
-}
-
-func (s *CommonState) Log(v ...interface{}) {
-	s.Logger.Println(s.StateMachineID, s.Name, s.Type, fmt.Sprint(v...))
-}
-
-func (s *CommonState) StateStartLog() {
-	s.Log("START")
-}
-
-func (s *CommonState) StateEndLog() {
-	s.Log("END")
+func (s *CommonState) Logger() *logrus.Entry {
+	return s.logger
 }

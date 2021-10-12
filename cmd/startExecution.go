@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"karage/statemachine"
@@ -66,27 +65,10 @@ func NewStartExecutionCmd() *cobra.Command {
 				log.Fatalln(err.Error())
 			}
 
-			wg := &sync.WaitGroup{}
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				sm.Logger.Listen()
-			}()
-
-			//sm.PrintInfo()
-			//sm.PrintStates()
-
-			log.Println("===  First input  ===", "\n"+r.String())
-
 			w := new(bytes.Buffer)
 			if err := sm.Start(ctx, r, w); err != nil {
 				log.Fatalln(err.Error())
 			}
-
-			close(sm.Logger.CH)
-			wg.Wait()
-
-			log.Println("=== Finaly output ===", "\n"+w.String())
 		},
 	}
 

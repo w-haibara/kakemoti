@@ -6,10 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"karage/log"
-
 	"github.com/google/uuid"
-	"github.com/k0kubun/pp"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -38,8 +36,7 @@ type StateMachine struct {
 	Version        int64                      `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
-	RootLogger     *log.RootLogger            `json:"-"`
-	Logger         *log.Logger                `json:"-"`
+	Logger         *logrus.Entry              `json:"-"`
 }
 
 type States map[string]State
@@ -50,7 +47,7 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	if err := sm.setID(); err != nil {
 		return nil, err
 	}
-	sm.Logger = log.NewLogger(sm.ID)
+	sm.Logger = sm.logger()
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -191,13 +188,13 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 		}
 	}
 
-	defer sm.Logger.Close(sm.ID)
-
 	for i := range sm.States {
 		sm.States[i].SetID(sm.ID)
 	}
 
-	sm.StateMachineStartLog()
+	l := sm.logger()
+
+	l.Info("statemachine start")
 
 	cur := sm.StartAt
 	for {
@@ -210,9 +207,9 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 			return ErrInvalidJSONInput
 		}
 
-		s.StateStartLog()
+		s.Logger().Info("state start")
 		next, err := s.Transition(ctx, r, w)
-		s.StateEndLog()
+		s.Logger().Info("state end")
 
 		if ok := ValidateJSON(w); !ok {
 			return ErrInvalidJSONOutput
@@ -245,44 +242,15 @@ func (sm *StateMachine) start(ctx context.Context, r, w *bytes.Buffer) error {
 	}
 
 End:
-	sm.StateMachineEndLog()
+	l.Info("statemachine end")
 	return nil
 }
 
-func (sm *StateMachine) Log(v ...interface{}) {
-	sm.RootLogger.Println(sm.ID, "", "", fmt.Sprint(v...))
-}
-
-func (sm *StateMachine) StateMachineStartLog() {
-	sm.Log("START")
-}
-
-func (sm *StateMachine) StateMachineEndLog() {
-	sm.Log("END")
-}
-
-func (sm *StateMachine) PrintInfo() {
-	if sm == nil {
-		return
-	}
-
-	fmt.Println("====== StateMachine Info ======")
-	_, _ = pp.Println("Comment", sm.Comment)
-	_, _ = pp.Println("StartAt", sm.StartAt)
-	_, _ = pp.Println("TimeoutSeconds", sm.TimeoutSeconds)
-	_, _ = pp.Println("Version", sm.Version)
-	fmt.Println("===============================")
-}
-
-func (sm *StateMachine) PrintStates() {
-	if sm == nil {
-		return
-	}
-
-	s := sm.States
-	fmt.Println("=========== States  ===========")
-	for k, v := range s {
-		_, _ = pp.Println(k, "\n", v, "\n")
-	}
-	fmt.Println("===============================")
+func (sm *StateMachine) logger() *logrus.Entry {
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		PrettyPrint: true,
+	})
+	return logrus.WithFields(logrus.Fields{
+		"id": sm.ID,
+	})
 }

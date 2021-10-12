@@ -40,7 +40,7 @@ func (s *ParallelState) Transition(ctx context.Context, r, w *bytes.Buffer) (nex
 	var outputs outputs
 	for _, sm := range s.Branches {
 		sm := sm
-		sm.Logger = s.GetLogger()
+		sm.Logger = s.logger
 
 		eg.Go(func() error {
 			r2 := new(bytes.Buffer)

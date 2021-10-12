@@ -3,7 +3,8 @@ package statemachine
 import (
 	"bytes"
 	"context"
-	"karage/log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type State interface {
@@ -12,9 +13,6 @@ type State interface {
 	StateType() string
 	String() string
 	Transition(ctx context.Context, r, w *bytes.Buffer) (next string, err error)
-	SetLogger(l *log.Logger)
-	GetLogger() *log.Logger
-	Log(v ...interface{})
-	StateStartLog()
-	StateEndLog()
+	SetLogger(l *logrus.Entry)
+	Logger() *logrus.Entry
 }
