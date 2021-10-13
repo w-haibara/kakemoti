@@ -26,6 +26,9 @@ func NewStartExecutionCmd() *cobra.Command {
 		Use:   "start-execution",
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
+			close := statemachine.SetLogWriter()
+			defer close()
+
 			ctx, cancel := context.WithCancel(context.Background())
 			if o.Timeout > 0 {
 				ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
