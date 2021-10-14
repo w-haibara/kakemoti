@@ -9,9 +9,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func SetLogWriter() (close func()) {
-	if err := os.Mkdir("logs", os.ModePerm); err != nil {
-		logrus.Fatal(err)
+func setLogWriter() (close func()) {
+	if _, err := os.Stat("logs"); err != nil {
+		if err := os.Mkdir("logs", os.ModePerm); err != nil {
+			logrus.Fatal(err)
+		}
 	}
 
 	f, err := os.Create(filepath.Join("logs", time.Now().Format("2006010215040507")+".log"))
