@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -91,36 +90,36 @@ func Start(ctx context.Context, o *Options) ([]byte, error) {
 	defer cancel()
 
 	if strings.TrimSpace(o.Input) == "" {
-		log.Fatalln("input option value is empty")
+		logrus.Fatalln("input option value is empty")
 	}
 
 	if strings.TrimSpace(o.ASL) == "" {
-		log.Fatalln("ASL option value is empty")
+		logrus.Fatalln("ASL option value is empty")
 	}
 
 	f1, input, err := readFile(o.Input)
 	if err != nil {
-		log.Fatalln(err.Error())
+		logrus.Fatalln(err.Error())
 	}
 	defer func() {
 		if err := f1.Close(); err != nil {
-			log.Fatalln(err.Error())
+			logrus.Fatalln(err.Error())
 		}
 	}()
 
 	f2, asl, err := readFile(o.ASL)
 	if err != nil {
-		log.Fatalln(err.Error())
+		logrus.Fatalln(err.Error())
 	}
 	defer func() {
 		if err := f2.Close(); err != nil {
-			log.Fatalln(err.Error())
+			logrus.Fatalln(err.Error())
 		}
 	}()
 
 	sm, err := NewStateMachine(asl)
 	if err != nil {
-		log.Fatalln(err.Error())
+		logrus.Fatalln(err.Error())
 	}
 
 	return sm.Start(ctx, input)
