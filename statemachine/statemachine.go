@@ -5,6 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -28,6 +32,12 @@ var (
 var (
 	EmptyJSON = []byte("{}")
 )
+
+type Options struct {
+	Input   string
+	ASL     string
+	Timeout int64
+}
 
 type StateMachine struct {
 	ID             string                     `json:"-"`
@@ -70,111 +80,50 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func NewStates() map[string]State {
-	return map[string]State{}
-}
+func Start(ctx context.Context, o *Options) ([]byte, error) {
+	close := setLogWriter()
+	defer close()
 
-func (sm *StateMachine) decodeStates() (States, error) {
-	if sm == nil {
-		return nil, ErrRecieverIsNil
+	ctx, cancel := context.WithCancel(ctx)
+	if o.Timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
+	}
+	defer cancel()
+
+	if strings.TrimSpace(o.Input) == "" {
+		log.Fatalln("input option value is empty")
 	}
 
-	states := NewStates()
-
-	for name, raw := range sm.RawStates {
-		state, err := sm.decodeState(raw)
-		if err != nil {
-			return nil, err
-		}
-
-		state.SetName(name)
-		state.SetLogger(sm.Logger)
-
-		states[name] = state
+	if strings.TrimSpace(o.ASL) == "" {
+		log.Fatalln("ASL option value is empty")
 	}
 
-	return states, nil
-}
-
-func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
-	var t struct {
-		Type string `json:"Type"`
-	}
-
-	if err := json.Unmarshal(raw, &t); err != nil {
-		return nil, err
-	}
-
-	switch t.Type {
-	case "Parallel":
-		v := new(ParallelState)
-		if err := json.Unmarshal(raw, v); err != nil {
-			return nil, err
-		}
-
-		for k := range v.Branches {
-			v.Branches[k].Logger = sm.Logger
-
-			var err error
-			v.Branches[k].States, err = v.Branches[k].decodeStates()
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return v, nil
-	}
-
-	var state State
-	switch t.Type {
-	case "Pass":
-		state = new(PassState)
-	case "Task":
-		state = new(TaskState)
-	case "Choice":
-		state = new(ChoiceState)
-	case "Wait":
-		state = new(WaitState)
-	case "Succeed":
-		state = new(SucceedState)
-	case "Fail":
-		state = new(FailState)
-	case "Map":
-		state = new(MapState)
-	}
-
-	if err := json.Unmarshal(raw, state); err != nil {
-		return nil, err
-	}
-
-	return state, nil
-}
-
-func ValidateJSON(j *bytes.Buffer) bool {
-	b := j.Bytes()
-
-	if len(bytes.TrimSpace(b)) == 0 {
-		j.Reset()
-		j.Write(EmptyJSON)
-		return true
-	}
-
-	if !json.Valid(b) {
-		return false
-	}
-
-	return true
-}
-
-func (sm *StateMachine) setID() error {
-	id, err := uuid.NewRandom()
+	f1, input, err := readFile(o.Input)
 	if err != nil {
-		return err
+		log.Fatalln(err.Error())
+	}
+	defer func() {
+		if err := f1.Close(); err != nil {
+			log.Fatalln(err.Error())
+		}
+	}()
+
+	f2, asl, err := readFile(o.ASL)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer func() {
+		if err := f2.Close(); err != nil {
+			log.Fatalln(err.Error())
+		}
+	}()
+
+	sm, err := NewStateMachine(asl)
+	if err != nil {
+		log.Fatalln(err.Error())
 	}
 
-	sm.ID = id.String()
-
-	return nil
+	return sm.Start(ctx, input)
 }
 
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
@@ -306,4 +255,109 @@ func (sm *StateMachine) logger() *logrus.Entry {
 		"startat": sm.StartAt,
 		"timeout": sm.TimeoutSeconds,
 	})
+}
+
+func (sm *StateMachine) decodeStates() (States, error) {
+	if sm == nil {
+		return nil, ErrRecieverIsNil
+	}
+
+	states := NewStates()
+
+	for name, raw := range sm.RawStates {
+		state, err := sm.decodeState(raw)
+		if err != nil {
+			return nil, err
+		}
+
+		state.SetName(name)
+		state.SetLogger(sm.Logger)
+
+		states[name] = state
+	}
+
+	return states, nil
+}
+
+func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
+	var t struct {
+		Type string `json:"Type"`
+	}
+
+	if err := json.Unmarshal(raw, &t); err != nil {
+		return nil, err
+	}
+
+	switch t.Type {
+	case "Parallel":
+		v := new(ParallelState)
+		if err := json.Unmarshal(raw, v); err != nil {
+			return nil, err
+		}
+
+		for k := range v.Branches {
+			v.Branches[k].Logger = sm.Logger
+
+			var err error
+			v.Branches[k].States, err = v.Branches[k].decodeStates()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return v, nil
+	}
+
+	var state State
+	switch t.Type {
+	case "Pass":
+		state = new(PassState)
+	case "Task":
+		state = new(TaskState)
+	case "Choice":
+		state = new(ChoiceState)
+	case "Wait":
+		state = new(WaitState)
+	case "Succeed":
+		state = new(SucceedState)
+	case "Fail":
+		state = new(FailState)
+	case "Map":
+		state = new(MapState)
+	}
+
+	if err := json.Unmarshal(raw, state); err != nil {
+		return nil, err
+	}
+
+	return state, nil
+}
+
+func (sm *StateMachine) setID() error {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+
+	sm.ID = id.String()
+
+	return nil
+}
+
+func NewStates() map[string]State {
+	return map[string]State{}
+}
+
+func readFile(path string) (*os.File, *bytes.Buffer, error) {
+	f, err := os.Open(path) // #nosec G304
+	if err != nil {
+		return nil, nil, err
+	}
+
+	b := new(bytes.Buffer)
+	if _, err := b.ReadFrom(f); err != nil {
+		return nil, nil, err
+	}
+
+	return f, b, nil
 }
