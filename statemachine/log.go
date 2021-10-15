@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func setLogWriter() (close func()) {
+func SetLogWriter() (close func()) {
 	if _, err := os.Stat("logs"); err != nil {
 		if err := os.Mkdir("logs", os.ModePerm); err != nil {
 			logrus.Fatal(err)
