@@ -182,7 +182,7 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 func (sm *StateMachine) transition(ctx context.Context, next string, input *ajson.Node) (string, *ajson.Node, error) {
 	select {
 	case <-ctx.Done():
-		break
+		return "", nil, ErrStoppedStateMachine
 	default:
 	}
 
