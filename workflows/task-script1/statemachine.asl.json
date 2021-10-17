@@ -5,8 +5,8 @@
     "Task1": {
       "Type": "Task",
       "Resource": "script:workflows/task-script1/task.sh",
-      "InputPath": "$.lambda",
-      "ResultPath": "$.data.lambdaresult",
+      "InputPath": "$.script",
+      "ResultPath": "$.data.scriptresult",
       "OutputPath": "$.data",
       "End": true
     }
