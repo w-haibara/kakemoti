@@ -67,15 +67,21 @@ func (s *CommonState) Transition(ctx context.Context, r *ajson.Node) (next strin
 	return s.Next, r, nil
 }
 
-func (s *CommonState) SetLogger(l *logrus.Entry) {
-	s.logger = l.WithFields(logrus.Fields{
+func (s *CommonState) SetLogger(v *logrus.Entry) {
+	s.logger = v
+}
+
+func (s *CommonState) Logger(v logrus.Fields) *logrus.Entry {
+	l := s.logger.WithFields(logrus.Fields{
 		"name": s.Name,
 		"type": s.Type,
 		"next": s.Next,
 		"end":  s.End,
 	})
-}
 
-func (s *CommonState) Logger() *logrus.Entry {
-	return s.logger
+	if v == nil {
+		return l
+	}
+
+	return l.WithFields(v)
 }

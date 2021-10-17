@@ -15,11 +15,12 @@ func NewStartExecutionCmd() *cobra.Command {
 		Use:   "start-execution",
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
-			close := statemachine.SetLogWriter()
+			l := statemachine.NewLogger()
+			close := statemachine.SetLogWriter(l)
 			defer close()
 
 			ctx := context.Background()
-			if _, err := statemachine.Start(ctx, o); err != nil {
+			if _, err := statemachine.Start(ctx, l, o); err != nil {
 				logrus.Fatal(err)
 			}
 		},

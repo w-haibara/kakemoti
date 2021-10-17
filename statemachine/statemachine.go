@@ -51,20 +51,13 @@ type StateMachine struct {
 
 type States map[string]State
 
-func init() {
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: true,
-	})
-}
-
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 	sm := new(StateMachine)
 	if err := sm.setID(); err != nil {
 		return nil, err
 	}
-	sm.Logger = sm.logger()
+	sm.Logger = NewLogger()
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -79,7 +72,7 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func Start(ctx context.Context, o *Options) ([]byte, error) {
+func Start(ctx context.Context, l *logrus.Entry, o *Options) ([]byte, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	if o.Timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
@@ -87,41 +80,43 @@ func Start(ctx context.Context, o *Options) ([]byte, error) {
 	defer cancel()
 
 	if strings.TrimSpace(o.Input) == "" {
-		logrus.Fatalln("input option value is empty")
+		l.Fatalln("input option value is empty")
 	}
 
 	if strings.TrimSpace(o.ASL) == "" {
-		logrus.Fatalln("ASL option value is empty")
+		l.Fatalln("ASL option value is empty")
 	}
 
 	f1, input, err := readFile(o.Input)
 	if err != nil {
-		logrus.Fatalln(err)
+		l.Fatalln(err)
 	}
 	defer func() {
 		if err := f1.Close(); err != nil {
-			logrus.Fatalln(err)
+			l.Fatalln(err)
 		}
 	}()
 
 	f2, asl, err := readFile(o.ASL)
 	if err != nil {
-		logrus.Fatalln(err)
+		l.Fatalln(err)
 	}
 	defer func() {
 		if err := f2.Close(); err != nil {
-			logrus.Fatalln(err)
+			l.Fatalln(err)
 		}
 	}()
 
 	sm, err := NewStateMachine(asl)
 	if err != nil {
-		logrus.Fatalln(err)
+		l.Fatalln(err)
 	}
+
+	sm.Logger = l
 
 	b, err := sm.Start(ctx, input)
 	if err != nil {
-		logrus.Fatalln(err)
+		l.Fatalln(err)
 	}
 
 	return b, nil
@@ -130,17 +125,17 @@ func Start(ctx context.Context, o *Options) ([]byte, error) {
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
-		sm.Logger.Fatalln(err)
+		sm.logger(nil).Fatalln(err)
 	}
 
 	out, err := sm.start(ctx, in)
 	if err != nil {
-		return nil, err
+		sm.logger(nil).Fatalln(err)
 	}
 
 	b, err := ajson.Marshal(out)
 	if err != nil {
-		sm.Logger.Fatalln(err)
+		sm.logger(nil).Fatalln(err)
 	}
 
 	return b, nil
@@ -194,7 +189,7 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 	if v, err := input.Unpack(); err != nil {
 		return "", nil, fmt.Errorf("invalid ajson.Node error: %v", err)
 	} else {
-		s.Logger().WithFields(logrus.Fields{
+		s.Logger(logrus.Fields{
 			"input": v,
 		}).Info("state start")
 	}
@@ -207,7 +202,7 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 	if v, err := output.Unpack(); err != nil {
 		return "", nil, fmt.Errorf("invalid ajson.Node error: %v", err)
 	} else {
-		s.Logger().WithFields(logrus.Fields{
+		s.Logger(logrus.Fields{
 			"output": v,
 		}).Info("state end")
 	}
@@ -219,12 +214,12 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 	return next, output, nil
 }
 
-func (sm *StateMachine) logger() *logrus.Entry {
-	return logrus.WithFields(logrus.Fields{
+func (sm *StateMachine) logger(v logrus.Fields) *logrus.Entry {
+	return sm.Logger.WithFields(logrus.Fields{
 		"id":      sm.ID,
 		"startat": sm.StartAt,
 		"timeout": sm.TimeoutSeconds,
-	})
+	}).WithFields(v)
 }
 
 func (sm *StateMachine) decodeStates() (States, error) {

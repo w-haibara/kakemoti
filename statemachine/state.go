@@ -13,6 +13,6 @@ type State interface {
 	StateType() string
 	String() string
 	Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error)
-	SetLogger(l *logrus.Entry)
-	Logger() *logrus.Entry
+	SetLogger(v *logrus.Entry)
+	Logger(v logrus.Fields) *logrus.Entry
 }
