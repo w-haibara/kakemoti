@@ -26,6 +26,7 @@ var (
 	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
 	ErrEndStateMachine       = fmt.Errorf("end state machine")
 	ErrStoppedStateMachine   = fmt.Errorf("stopped state machine")
+	ErrInvalidJsonPath       = fmt.Errorf("invalid JsonPath")
 )
 
 var (
