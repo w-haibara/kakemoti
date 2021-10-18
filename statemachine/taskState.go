@@ -40,25 +40,14 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 	default:
 	}
 
-	res, err := s.parseResource()
+	node, err := filterByInputPath(r, s.InputPath)
 	if err != nil {
 		return "", nil, err
 	}
 
-	var node *ajson.Node
-	if s.InputPath == "" || s.InputPath == "null" {
-		node = r
-	} else {
-		nodes, err := r.JSONPath(s.InputPath)
-		if err != nil {
-			return "", nil, err
-		}
-
-		if len(nodes) == 0 {
-			return "", nil, ErrInvalidInputPath
-		}
-
-		node = nodes[0]
+	res, err := s.parseResource()
+	if err != nil {
+		return "", nil, err
 	}
 
 	out, err := res.exec(ctx, node)
@@ -67,15 +56,9 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 		return "", nil, err
 	}
 
-	switch s.ResultPath {
-	case "null":
-	case "", "$":
-		r = out
-	default:
-		r, err = insertNode(r, out, s.ResultPath)
-		if err != nil {
-			return "", nil, err
-		}
+	r, err = filterByResultPath(r, out, s.ResultPath)
+	if err != nil {
+		return "", nil, err
 	}
 
 	if s.End {
