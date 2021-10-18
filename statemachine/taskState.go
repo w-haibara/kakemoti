@@ -61,6 +61,11 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 		return "", nil, err
 	}
 
+	r, err = filterByOutputPath(r, s.OutputPath)
+	if err != nil {
+		return "", nil, err
+	}
+
 	if s.End {
 		return "", r, ErrEndStateMachine
 	}

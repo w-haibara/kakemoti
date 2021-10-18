@@ -14,6 +14,15 @@ func filterByInputPath(input *ajson.Node, path string) (*ajson.Node, error) {
 	return filterNode(input, path)
 }
 
+func filterByOutputPath(output *ajson.Node, path string) (*ajson.Node, error) {
+	switch path {
+	case "", "$":
+		return output, nil
+	}
+
+	return filterNode(output, path)
+}
+
 func filterNode(input *ajson.Node, path string) (*ajson.Node, error) {
 	nodes, err := input.JSONPath(path)
 	if err != nil {
