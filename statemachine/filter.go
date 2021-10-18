@@ -1,6 +1,8 @@
 package statemachine
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/spyzhov/ajson"
 )
@@ -26,6 +28,8 @@ func insertNode(n1, n2 *ajson.Node, path string) (*ajson.Node, error) {
 		if i+3 == len(cmds) {
 			n[cmds[len(cmds)-1]] = n2
 		}
+
+		fmt.Println(node)
 
 		cur := ajson.ObjectNode(uuid.New().String(), n)
 		if err := node.AppendObject(cmd, cur); err != nil {

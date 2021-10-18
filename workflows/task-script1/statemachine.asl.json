@@ -5,7 +5,7 @@
     "Task1": {
       "Type": "Task",
       "Resource": "script:workflows/task-script1/task.sh",
-      "InputPath": "$.script",
+      "InputPath": "$.script.args",
       "ResultPath": "$.data.scriptresult",
       "OutputPath": "$.data",
       "End": true

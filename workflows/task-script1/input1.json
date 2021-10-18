@@ -1,3 +1,5 @@
 {
-	"IsHelloWorldExample": false
+	"script": {
+		"args": ["arg0", "arg1", "arg2"]
+	}
 }

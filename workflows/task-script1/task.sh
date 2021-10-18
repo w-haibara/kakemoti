@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo "Hello" 
+echo "args: "$1", "$2", "$3

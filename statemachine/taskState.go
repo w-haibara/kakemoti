@@ -45,7 +45,23 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 		return "", nil, err
 	}
 
-	out, err := res.exec(ctx, r)
+	var node *ajson.Node
+	if s.InputPath == "" || s.InputPath == "null" {
+		node = r
+	} else {
+		nodes, err := r.JSONPath(s.InputPath)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if len(nodes) == 0 {
+			return "", nil, ErrInvalidInputPath
+		}
+
+		node = nodes[0]
+	}
+
+	out, err := res.exec(ctx, node)
 	if err != nil {
 		// Task failed
 		return "", nil, err
@@ -93,8 +109,19 @@ func (s *TaskState) parseResource() (*resource, error) {
 func (res *resource) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
 	switch res.typ {
 	case "script":
-		// TODO: set argss
-		out, err := res.execScript(ctx)
+		args := make([]string, 0)
+		if !input.IsArray() {
+			return nil, ErrInvalidInputPath
+		}
+		v := input.MustArray()
+		for _, v := range v {
+			if !v.IsString() {
+				return nil, ErrInvalidInputPath
+			}
+			args = append(args, v.MustString())
+		}
+
+		out, err := res.execScript(ctx, args...)
 		if err != nil {
 			return nil, err
 		}
