@@ -1,6 +1,9 @@
 package statemachine
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/spyzhov/ajson"
 )
@@ -23,6 +26,54 @@ func filterByOutputPath(output *ajson.Node, path string) (*ajson.Node, error) {
 	return filterNode(output, path)
 }
 
+func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
+	if selector == nil {
+		return output, nil
+	}
+
+	b, err := selector.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	root, err := ajson.Unmarshal(b)
+	if err != nil {
+		return nil, err
+	}
+
+	if !root.IsObject() {
+		return nil, ErrInvalidResultSelector
+	}
+
+	m, err := root.GetObject()
+	if err != nil {
+		return nil, err
+	}
+
+	for k, node := range m {
+		if strings.HasSuffix(k, ".$") {
+			if !node.IsString() {
+				continue
+			}
+
+			nodes, err := output.JSONPath(node.MustString())
+			if err != nil {
+				continue
+			}
+
+			if len(nodes) == 0 {
+				continue
+			}
+
+			delete(m, k)
+			k = strings.TrimSuffix(k, ".$")
+			m[k] = nodes[0]
+		}
+	}
+
+	return ajson.ObjectNode("", m), nil
+}
+
 func filterNode(input *ajson.Node, path string) (*ajson.Node, error) {
 	nodes, err := input.JSONPath(path)
 	if err != nil {
@@ -40,7 +91,7 @@ func filterByResultPath(input, result *ajson.Node, path string) (*ajson.Node, er
 	switch path {
 	case "", "$":
 		return result, nil
-	case "nill":
+	case "null":
 		return input, nil
 	}
 

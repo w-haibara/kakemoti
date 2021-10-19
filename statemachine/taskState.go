@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -12,16 +13,16 @@ import (
 
 type TaskState struct {
 	CommonState
-	Resource             string `json:"Resource"`
-	Parameters           string `json:"Parameters"`
-	ResultPath           string `json:"ResultPath"`
-	ResultSelector       string `json:"ResultSelector"`
-	Retry                string `json:"Retry"`
-	Catch                string `json:"Catch"`
-	TimeoutSeconds       string `json:"TimeoutSeconds"`
-	TimeoutSecondsPath   string `json:"TimeoutSecondsPath"`
-	HeartbeatSeconds     string `json:"HeartbeatSeconds"`
-	HeartbeatSecondsPath string `json:"HeartbeatSecondsPath"`
+	Resource             string           `json:"Resource"`
+	Parameters           string           `json:"Parameters"` // TODO
+	ResultPath           string           `json:"ResultPath"`
+	ResultSelector       *json.RawMessage `json:"ResultSelector"`
+	Retry                string           `json:"Retry"`                // TODO
+	Catch                string           `json:"Catch"`                // TODO
+	TimeoutSeconds       string           `json:"TimeoutSeconds"`       // TODO
+	TimeoutSecondsPath   string           `json:"TimeoutSecondsPath"`   // TODO
+	HeartbeatSeconds     string           `json:"HeartbeatSeconds"`     // TODO
+	HeartbeatSecondsPath string           `json:"HeartbeatSecondsPath"` // TODO
 }
 
 type resource struct {
@@ -53,6 +54,11 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 	out, err := res.exec(ctx, node)
 	if err != nil {
 		// Task failed
+		return "", nil, err
+	}
+
+	out, err = filterByResultSelector(out, s.ResultSelector)
+	if err != nil {
 		return "", nil, err
 	}
 

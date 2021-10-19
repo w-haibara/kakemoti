@@ -6,7 +6,7 @@ karage: *.go */*.go go.mod
 	go build -o karage
 
 .PHONY: run
-run: run3
+run: run4
 
 .PHONY: run1
 run1: karage
@@ -25,3 +25,9 @@ run3: karage
 	./karage start-execution \
 	--asl  "./workflows/task-script1/statemachine.asl.json" \
 	--input "./workflows/task-script1/input1.json"
+
+.PHONY: run4
+run4: karage
+	./karage start-execution \
+	--asl  "./workflows/task-script2/statemachine.asl.json" \
+	--input "./workflows/task-script2/input1.json"
