@@ -9,21 +9,29 @@ import (
 )
 
 func filterByInputPath(input *ajson.Node, path string) (*ajson.Node, error) {
+	return filterByJSONPath(input, path)
+}
+
+func filterByOutputPath(output *ajson.Node, path string) (*ajson.Node, error) {
+	return filterByJSONPath(output, path)
+}
+
+func filterByJSONPath(input *ajson.Node, path string) (*ajson.Node, error) {
 	switch path {
 	case "", "$":
 		return input, nil
 	}
 
-	return filterNode(input, path)
-}
-
-func filterByOutputPath(output *ajson.Node, path string) (*ajson.Node, error) {
-	switch path {
-	case "", "$":
-		return output, nil
+	nodes, err := input.JSONPath(path)
+	if err != nil {
+		return nil, err
 	}
 
-	return filterNode(output, path)
+	if len(nodes) == 0 {
+		return nil, ErrInvalidJsonPath
+	}
+
+	return nodes[0], nil
 }
 
 func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
@@ -72,19 +80,6 @@ func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajs
 	}
 
 	return ajson.ObjectNode("", m), nil
-}
-
-func filterNode(input *ajson.Node, path string) (*ajson.Node, error) {
-	nodes, err := input.JSONPath(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(nodes) == 0 {
-		return nil, ErrInvalidJsonPath
-	}
-
-	return nodes[0], nil
 }
 
 func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
