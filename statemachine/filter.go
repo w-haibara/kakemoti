@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/spyzhov/ajson"
 )
 
@@ -143,7 +142,7 @@ func insertNode(n1, n2 *ajson.Node, path string) (*ajson.Node, error) {
 			n[cmds[len(cmds)-1]] = n2
 		}
 
-		cur := ajson.ObjectNode(uuid.New().String(), n)
+		cur := ajson.ObjectNode("", n)
 		if err := node.AppendObject(cmd, cur); err != nil {
 			return nil, err
 		}

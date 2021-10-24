@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/spyzhov/ajson"
 )
 
@@ -138,8 +137,8 @@ func (res *resource) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, 
 			return nil, err
 		}
 
-		node := ajson.ObjectNode(uuid.New().String(), map[string]*ajson.Node{
-			"result": ajson.StringNode(uuid.New().String(), string(out)),
+		node := ajson.ObjectNode("", map[string]*ajson.Node{
+			"result": ajson.StringNode("", string(out)),
 		})
 
 		return node, nil
