@@ -15,7 +15,6 @@ var (
 	ErrInvalidTaskResource     = fmt.Errorf("invalid resource")
 	ErrInvalidTaskResourceType = fmt.Errorf("invalid resource type")
 	ErrInvalidTaskInput        = fmt.Errorf("invalid task input")
-	ErrInvalidTaskParameters   = fmt.Errorf("invalid Parameters")
 )
 
 type TaskState struct {

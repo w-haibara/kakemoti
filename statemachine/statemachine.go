@@ -28,7 +28,7 @@ var (
 	ErrStoppedStateMachine   = fmt.Errorf("stopped state machine")
 	ErrInvalidJsonPath       = fmt.Errorf("invalid JsonPath")
 	ErrInvalidInputPath      = fmt.Errorf("invalid InputPath")
-	ErrInvalidResultSelector = fmt.Errorf("invalid ResultSeparator")
+	ErrInvalidRawJSON        = fmt.Errorf("invalid raw json")
 )
 
 var (

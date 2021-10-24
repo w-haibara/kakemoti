@@ -2,6 +2,8 @@ package statemachine
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -34,60 +36,38 @@ func filterByJSONPath(input *ajson.Node, path string) (*ajson.Node, error) {
 	return nodes[0], nil
 }
 
-func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
-	if selector == nil {
-		return output, nil
-	}
-
-	b, err := selector.MarshalJSON()
+func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
+	n, err := repraceByRawJSON(input, parameters)
 	if err != nil {
-		return nil, err
+		panic(err.Error())
 	}
 
-	root, err := ajson.Unmarshal(b)
-	if err != nil {
-		return nil, err
+	if errors.Is(err, ErrInvalidRawJSON) {
+		err = fmt.Errorf("invalid Task Parameters: %v", err)
 	}
 
-	if !root.IsObject() {
-		return nil, ErrInvalidResultSelector
-	}
-
-	m, err := root.GetObject()
-	if err != nil {
-		return nil, err
-	}
-
-	for k, node := range m {
-		if strings.HasSuffix(k, ".$") {
-			if !node.IsString() {
-				continue
-			}
-
-			nodes, err := output.JSONPath(node.MustString())
-			if err != nil {
-				continue
-			}
-
-			if len(nodes) == 0 {
-				continue
-			}
-
-			delete(m, k)
-			k = strings.TrimSuffix(k, ".$")
-			m[k] = nodes[0]
-		}
-	}
-
-	return ajson.ObjectNode("", m), nil
+	return n, err
 }
 
-func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
-	if parameters == nil {
-		return input, nil
+func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
+	n, err := repraceByRawJSON(output, selector)
+	if errors.Is(err, ErrInvalidRawJSON) {
+		err = fmt.Errorf("invalid ResulutSelector: %v", err)
 	}
 
-	b, err := parameters.MarshalJSON()
+	return n, err
+}
+
+func repraceByRawJSON(node *ajson.Node, raw *json.RawMessage) (*ajson.Node, error) {
+	if node == nil {
+		return node, nil
+	}
+
+	if raw == nil {
+		return node, nil
+	}
+
+	b, err := raw.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +78,7 @@ func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.
 	}
 
 	if !root.IsObject() {
-		return nil, ErrInvalidTaskParameters
+		return nil, ErrInvalidRawJSON
 	}
 
 	m, err := root.GetObject()
@@ -106,13 +86,13 @@ func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.
 		return nil, err
 	}
 
-	for k, node := range m {
+	for k, n := range m {
 		if strings.HasSuffix(k, ".$") {
-			if !node.IsString() {
+			if !n.IsString() {
 				continue
 			}
 
-			nodes, err := input.JSONPath(node.MustString())
+			nodes, err := node.JSONPath(n.MustString())
 			if err != nil {
 				continue
 			}
