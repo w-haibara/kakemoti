@@ -6,6 +6,9 @@
       "Type": "Task",
       "Resource": "script:workflows/task-script1/task.sh",
       "InputPath": "$.script",
+      "Parameters": {
+        "args": ["aaa", "bbb", "ccc"]
+      },
       "ResultSelector": {
         "aaa": "111",
         "bbb": "222",

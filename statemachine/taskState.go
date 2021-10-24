@@ -11,10 +11,17 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
+var (
+	ErrInvalidTaskResource     = fmt.Errorf("invalid resource")
+	ErrInvalidTaskResourceType = fmt.Errorf("invalid resource type")
+	ErrInvalidTaskInput        = fmt.Errorf("invalid task input")
+	ErrInvalidTaskParameters   = fmt.Errorf("invalid Parameters")
+)
+
 type TaskState struct {
 	CommonState
 	Resource             string           `json:"Resource"`
-	Parameters           string           `json:"Parameters"` // TODO
+	Parameters           *json.RawMessage `json:"Parameters"`
 	ResultPath           string           `json:"ResultPath"`
 	ResultSelector       *json.RawMessage `json:"ResultSelector"`
 	Retry                string           `json:"Retry"`                // TODO
@@ -42,6 +49,11 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 	}
 
 	node, err := filterByInputPath(r, s.InputPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	node, err = filterByParameters(node, s.Parameters)
 	if err != nil {
 		return "", nil, err
 	}
@@ -86,12 +98,15 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 func (s *TaskState) parseResource() (*resource, error) {
 	v := strings.Split(s.Resource, ":")
 
-	if len(v) < 2 {
-		return nil, fmt.Errorf("invalid resource")
+	switch {
+	case len(v) < 2:
+		return nil, ErrInvalidTaskResource
+	case len(v) > 2:
+		v[1] = strings.Join(v[1:], "")
 	}
 
 	if strings.Trim(v[0], "") == "" || strings.Trim(v[1], "") == "" {
-		return nil, fmt.Errorf("invalid resource")
+		return nil, ErrInvalidTaskResource
 	}
 
 	return &resource{
@@ -103,14 +118,18 @@ func (s *TaskState) parseResource() (*resource, error) {
 func (res *resource) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
 	switch res.typ {
 	case "script":
+		if !input.IsObject() {
+			return nil, ErrInvalidTaskInput
+		}
+		input = input.MustObject()["args"]
+
 		args := make([]string, 0)
 		if !input.IsArray() {
-			return nil, ErrInvalidInputPath
+			return nil, ErrInvalidTaskInput
 		}
-		v := input.MustArray()
-		for _, v := range v {
+		for _, v := range input.MustArray() {
 			if !v.IsString() {
-				return nil, ErrInvalidInputPath
+				return nil, ErrInvalidTaskInput
 			}
 			args = append(args, v.MustString())
 		}
@@ -127,11 +146,13 @@ func (res *resource) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, 
 		return node, nil
 	case "command":
 		// TODO
+		panic("not implemented: Task state, resource type = command")
 	case "curl":
 		// TODO
+		panic("not implemented: Task state, resource type = curl")
 	}
 
-	return nil, fmt.Errorf("invalid resource type")
+	return nil, ErrInvalidTaskResourceType
 }
 
 func (res *resource) execScript(ctx context.Context, args ...string) ([]byte, error) {

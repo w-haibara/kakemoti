@@ -81,10 +81,58 @@ func filterNode(input *ajson.Node, path string) (*ajson.Node, error) {
 	}
 
 	if len(nodes) == 0 {
-		return nil, ErrInvalidInputPath
+		return nil, ErrInvalidJsonPath
 	}
 
 	return nodes[0], nil
+}
+
+func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
+	if parameters == nil {
+		return input, nil
+	}
+
+	b, err := parameters.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	root, err := ajson.Unmarshal(b)
+	if err != nil {
+		return nil, err
+	}
+
+	if !root.IsObject() {
+		return nil, ErrInvalidTaskParameters
+	}
+
+	m, err := root.GetObject()
+	if err != nil {
+		return nil, err
+	}
+
+	for k, node := range m {
+		if strings.HasSuffix(k, ".$") {
+			if !node.IsString() {
+				continue
+			}
+
+			nodes, err := input.JSONPath(node.MustString())
+			if err != nil {
+				continue
+			}
+
+			if len(nodes) == 0 {
+				continue
+			}
+
+			delete(m, k)
+			k = strings.TrimSuffix(k, ".$")
+			m[k] = nodes[0]
+		}
+	}
+
+	return ajson.ObjectNode("", m), nil
 }
 
 func filterByResultPath(input, result *ajson.Node, path string) (*ajson.Node, error) {
