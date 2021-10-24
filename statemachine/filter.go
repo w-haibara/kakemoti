@@ -36,8 +36,8 @@ func filterByJSONPath(input *ajson.Node, path string) (*ajson.Node, error) {
 	return nodes[0], nil
 }
 
-func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
-	n, err := repraceByRawJSON(input, parameters)
+func replaceByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.Node, error) {
+	n, err := replaceByRawJSON(input, parameters)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -49,8 +49,8 @@ func filterByParameters(input *ajson.Node, parameters *json.RawMessage) (*ajson.
 	return n, err
 }
 
-func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
-	n, err := repraceByRawJSON(output, selector)
+func replaceByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajson.Node, error) {
+	n, err := replaceByRawJSON(output, selector)
 	if errors.Is(err, ErrInvalidRawJSON) {
 		err = fmt.Errorf("invalid ResulutSelector: %v", err)
 	}
@@ -58,7 +58,7 @@ func filterByResultSelector(output *ajson.Node, selector *json.RawMessage) (*ajs
 	return n, err
 }
 
-func repraceByRawJSON(node *ajson.Node, raw *json.RawMessage) (*ajson.Node, error) {
+func replaceByRawJSON(node *ajson.Node, raw *json.RawMessage) (*ajson.Node, error) {
 	if node == nil {
 		return node, nil
 	}

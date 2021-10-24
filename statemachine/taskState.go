@@ -52,7 +52,7 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 		return "", nil, err
 	}
 
-	node, err = filterByParameters(node, s.Parameters)
+	node, err = replaceByParameters(node, s.Parameters)
 	if err != nil {
 		return "", nil, err
 	}
@@ -68,7 +68,7 @@ func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string,
 		return "", nil, err
 	}
 
-	out, err = filterByResultSelector(out, s.ResultSelector)
+	out, err = replaceByResultSelector(out, s.ResultSelector)
 	if err != nil {
 		return "", nil, err
 	}
