@@ -45,6 +45,24 @@ func (s *CommonState) String() string {
 	return pp.Sprintln(s)
 }
 
+func (s *CommonState) FilterInput(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
+	node, err := filterByInputPath(input, s.InputPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
+func (s *CommonState) FilterOutput(ctx context.Context, output *ajson.Node) (*ajson.Node, error) {
+	node, err := filterByOutputPath(output, s.OutputPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
 func (s *CommonState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
 	if s == nil {
 		return "", nil, nil
