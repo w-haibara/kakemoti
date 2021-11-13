@@ -75,7 +75,9 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func Start(ctx context.Context, l *logrus.Entry, o *Options) ([]byte, error) {
+func Start(ctx context.Context, o *Options) ([]byte, error) {
+	l := NewLogger()
+
 	ctx, cancel := context.WithCancel(ctx)
 	if o.Timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
