@@ -1,1 +1,75 @@
 # karage
+
+# TODO
+- [ ] Top-level fields
+  - [ ] States
+  - [ ] StartAt
+  - [ ] Comment
+  - [ ] Version
+  - [ ] TimeoutSeconds
+- [ ] States
+  - [ ] Pass State
+  - [ ] Task State
+  - [ ] Choice State
+    - [ ] Boolean expression
+    - [ ] Data-test expression
+      - [ ] StringEquals, StringEqualsPath
+      - [ ] StringLessThan, StringLessThanPath
+      - [ ] StringGreaterThan, StringGreaterThanPath
+      - [ ] StringLessThanEquals, StringLessThanEqualsPath
+      - [ ] StringGreaterThanEquals, StringGreaterThanEqualsPath
+      - [ ] StringMatches
+      - [ ] NumericEquals, NumericEqualsPath
+      - [ ] NumericLessThan, NumericLessThanPath
+      - [ ] NumericGreaterThan, NumericGreaterThanPath
+      - [ ] NumericLessThanEquals, NumericLessThanEqualsPath
+      - [ ] NumericGreaterThanEquals, NumericGreaterThanEqualsPath
+      - [ ] BooleanEquals, BooleanEqualsPath
+      - [ ] TimestampEquals, TimestampEqualsPath
+      - [ ] TimestampLessThan, TimestampLessThanPath
+      - [ ] TimestampGreaterThan, TimestampGreaterThanPath
+      - [ ] TimestampLessThanEquals, TimestampLessThanEqualsPath
+      - [ ] TimestampGreaterThanEquals, TimestampGreaterThanEqualsPath
+      - [ ] IsNull
+      - [ ] IsPresent
+      - [ ] IsNumeric
+      - [ ] IsString
+      - [ ] IsBoolean
+      - [ ] IsTimestamp
+  - [ ] Wait State
+  - [ ] Succeed State
+  - [ ] Fail State
+  - [ ] Parallel State
+  - [ ] Map State
+    - [ ] Map State input/output processing
+    - [ ] Map State concurrency
+    - [ ] Map State Iterator definition
+- [ ] Transitions
+- [ ] Timestamps
+- [ ] Data
+- [ ] The Context Object
+- [ ] Paths
+- [ ] Reference Paths
+- [ ] Payload Template
+- [ ] Intrinsic Functions
+  - [ ] States.Format
+  - [ ] States.StringToJson
+  - [ ] States.JsonToString
+  - [ ] States.Array
+- [ ] Input and Output Processing
+  - [ ] InputPath
+  - [ ] Parameters
+  - [ ] ResultSelector
+  - [ ] ResultPath
+  - [ ] OutputPath
+- [ ] Errors
+  - [ ] States.ALL
+  - [ ] States.HeartbeatTimeout
+  - [ ] States.Timeout
+  - [ ] States.TaskFailed
+  - [ ] States.Permissions
+  - [ ] States.ResultPathMatchFailure
+  - [ ] States.ParameterPathFailure
+  - [ ] States.BranchFailed
+  - [ ] States.NoChoiceMatched
+  - [ ] States.IntrinsicFailure
