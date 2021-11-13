@@ -98,6 +98,7 @@ func (s *CommonState) Logger(v logrus.Fields) *log.Logger {
 			"type": s.Type,
 			"next": s.Next,
 			"end":  s.End,
+			"line": log.Line(),
 		}),
 	}
 

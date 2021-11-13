@@ -1,9 +1,11 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -44,4 +46,15 @@ func (l *Logger) SetWriter() (close func()) {
 			logrus.Fatal(err)
 		}
 	}
+}
+
+func Line() string {
+	_, path, line, ok := runtime.Caller(2)
+	if !ok {
+		return "---"
+	}
+
+	_, file := filepath.Split(path)
+
+	return fmt.Sprintf("%s:%d", file, line)
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"karage/log"
@@ -78,18 +79,24 @@ func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64, logger 
 
 	sm, err := NewStateMachine(asl, logger)
 	if err != nil {
-		sm.loggerWithSMInfo().Fatalln(err)
+		logger.Fatalln(err)
 	}
+
+	sm.Logger = logger
 
 	b, err := sm.Start(ctx, input)
 	if err != nil {
-		sm.loggerWithSMInfo().Fatalln(err)
+		logger.Fatalln(err)
 	}
 
 	return b, nil
 }
 
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
+	if input == nil || strings.TrimSpace(input.String()) == "" {
+		input = bytes.NewBuffer(EmptyJSON)
+	}
+
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
 		sm.loggerWithSMInfo().Fatalln(err)
@@ -198,6 +205,7 @@ func (sm *StateMachine) loggerWithSMInfo() *logrus.Entry {
 		"id":      sm.ID,
 		"startat": sm.StartAt,
 		"timeout": sm.TimeoutSeconds,
+		"line":    log.Line(),
 	})
 }
 
