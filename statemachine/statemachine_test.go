@@ -23,23 +23,34 @@ func TestStart(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "minimal",
+			name: "minimal-1",
 			asl: `{
-				"Comment": "A simple minimal example of the States language",
-				"StartAt": "Hello World",
+				"StartAt": "a1",
 				"States": {
-				"Hello World": {
-				  "Type": "Task",
-				  "Resource": "script:../workflows/task-script1/task.sh",
-				  "End": true
+					"a1": {
+						"Type": "Succeed"
+					}
 				}
-			  }
+			}`,
+			input:   "{}",
+			want:    "{}",
+			wantErr: false,
+		},
+		{
+			name: "minimal-2",
+			asl: `{
+				"StartAt": "a1",
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
 			}`,
 			input: `{
-				"args": ["1", "2", "3"]
+				"abc":"123"
 			}`,
 			want: `{
-				"result": "args: 1, 2, 3"
+				"abc":"123"
 			}`,
 			wantErr: false,
 		},
@@ -64,6 +75,10 @@ func TestStart(t *testing.T) {
 				return
 			}
 
+			if string(got) == tt.want {
+				return
+			}
+
 			g := new(interface{})
 			if err := json.Unmarshal(got, g); err != nil {
 				t.Errorf("invalid json format: %v \n%q", err, got)
@@ -71,7 +86,7 @@ func TestStart(t *testing.T) {
 			}
 
 			if reflect.DeepEqual(g, want) {
-				t.Errorf("Start() = %v, want %v", g, tt.want)
+				t.Errorf("Start() = %q, want %q", got, tt.want)
 			}
 		})
 	}
