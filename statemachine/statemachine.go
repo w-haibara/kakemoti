@@ -53,6 +53,7 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 		return nil, err
 	}
 	sm.Logger = NewLogger()
+	SetLogWriter(sm.Logger)
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -76,12 +77,12 @@ func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64) ([]byte
 
 	sm, err := NewStateMachine(asl)
 	if err != nil {
-		sm.Logger.Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	b, err := sm.Start(ctx, input)
 	if err != nil {
-		sm.Logger.Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	return b, nil
@@ -90,17 +91,17 @@ func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64) ([]byte
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	out, err := sm.start(ctx, in)
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	b, err := ajson.Marshal(out)
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	return b, nil
@@ -191,12 +192,12 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 	return next, output, nil
 }
 
-func (sm *StateMachine) logger(v logrus.Fields) *logrus.Entry {
+func (sm *StateMachine) loggerWithSMInfo() *logrus.Entry {
 	return sm.Logger.WithFields(logrus.Fields{
 		"id":      sm.ID,
 		"startat": sm.StartAt,
 		"timeout": sm.TimeoutSeconds,
-	}).WithFields(v)
+	})
 }
 
 func (sm *StateMachine) decodeStates() (States, error) {
