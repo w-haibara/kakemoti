@@ -42,11 +42,11 @@ type Options struct {
 }
 
 type StateMachine struct {
-	ID             string                     `json:"-"`
-	Comment        string                     `json:"Comment"`
-	StartAt        string                     `json:"StartAt"`
-	TimeoutSeconds int64                      `json:"TimeoutSeconds"`
-	Version        int64                      `json:"Version"`
+	ID             *string                    `json:"-"`
+	Comment        *string                    `json:"Comment"`
+	StartAt        *string                    `json:"StartAt"`
+	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
+	Version        *string                    `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
 	Logger         *logrus.Entry              `json:"-"`
@@ -56,6 +56,7 @@ type States map[string]State
 
 func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
+
 	sm := new(StateMachine)
 	if err := sm.setID(); err != nil {
 		return nil, err
@@ -63,6 +64,10 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	sm.Logger = NewLogger()
 
 	if err := dec.Decode(sm); err != nil {
+		return nil, err
+	}
+
+	if err := sm.check(); err != nil {
 		return nil, err
 	}
 
@@ -125,6 +130,20 @@ func Start(ctx context.Context, l *logrus.Entry, o *Options) ([]byte, error) {
 	return b, nil
 }
 
+func (sm *StateMachine) check() error {
+	switch {
+	case sm.States == nil:
+		return fmt.Errorf("Top-level fields: 'States' is needed")
+	case sm.StartAt == nil:
+		return fmt.Errorf("Top-level fields: 'StartAt' is needed")
+	case sm.Version == nil:
+		str := "1.0"
+		sm.Version = &str
+	}
+
+	return nil
+}
+
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
@@ -149,21 +168,21 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 		return nil, ErrRecieverIsNil
 	}
 
-	if _, ok := sm.States[sm.StartAt]; !ok {
+	if _, ok := sm.States[*sm.StartAt]; !ok {
 		return nil, ErrInvalidStartAtValue
 	}
 
-	if sm.ID == "" {
+	if sm.ID == nil {
 		if err := sm.setID(); err != nil {
 			return nil, err
 		}
 	}
 
 	for i := range sm.States {
-		sm.States[i].SetID(sm.ID)
+		sm.States[i].SetID(*sm.ID)
 	}
 
-	cur := sm.StartAt
+	cur := *sm.StartAt
 	for {
 		var err error
 		cur, input, err = sm.transition(ctx, cur, input)
@@ -319,7 +338,8 @@ func (sm *StateMachine) setID() error {
 		return err
 	}
 
-	sm.ID = id.String()
+	str := id.String()
+	sm.ID = &str
 
 	return nil
 }
