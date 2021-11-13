@@ -3,10 +3,11 @@ package cli
 import (
 	"bytes"
 	"context"
-	"karage/statemachine"
-	"log"
 	"os"
 	"strings"
+
+	"karage/log"
+	"karage/statemachine"
 )
 
 type Options struct {
@@ -16,35 +17,38 @@ type Options struct {
 }
 
 func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
+	logger := log.NewLogger()
+	logger.SetWriter()
+
 	if strings.TrimSpace(opt.Input) == "" {
-		log.Fatalln("input option value is empty")
+		logger.Fatalln("input option value is empty")
 	}
 
 	if strings.TrimSpace(opt.ASL) == "" {
-		log.Fatalln("ASL option value is empty")
+		logger.Fatalln("ASL option value is empty")
 	}
 
 	f1, input, err := readFile(opt.Input)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatalln(err)
 	}
 	defer func() {
 		if err := f1.Close(); err != nil {
-			log.Fatalln(err)
+			logger.Fatalln(err)
 		}
 	}()
 
 	f2, asl, err := readFile(opt.ASL)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatalln(err)
 	}
 	defer func() {
 		if err := f2.Close(); err != nil {
-			log.Fatalln(err)
+			logger.Fatalln(err)
 		}
 	}()
 
-	return statemachine.Start(ctx, asl, input, opt.Timeout)
+	return statemachine.Start(ctx, asl, input, opt.Timeout, logger)
 }
 
 func readFile(path string) (*os.File, *bytes.Buffer, error) {

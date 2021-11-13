@@ -48,14 +48,13 @@ type StateMachine struct {
 
 type States map[string]State
 
-func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
+func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 	sm := new(StateMachine)
 	if err := sm.setID(); err != nil {
 		return nil, err
 	}
-	sm.Logger = log.NewLogger()
-	sm.Logger.SetWriter()
+	sm.Logger = logger
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -70,14 +69,14 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64) ([]byte, error) {
+func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64, logger *log.Logger) ([]byte, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	if timeout > 0 {
 		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(timeout))
 	}
 	defer cancel()
 
-	sm, err := NewStateMachine(asl)
+	sm, err := NewStateMachine(asl, logger)
 	if err != nil {
 		sm.loggerWithSMInfo().Fatalln(err)
 	}
