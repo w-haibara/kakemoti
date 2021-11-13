@@ -1,4 +1,5 @@
 # karage
+Karage is a simple tool that executes workflows defined in the [Amazon States Language](https://states-language.net/). It breaks up large scripts into pieces to improve readability, observability and serviceability.
 
 # TODO
 - [ ] Top-level fields
