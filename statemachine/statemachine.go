@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"karage/log"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
@@ -41,7 +43,7 @@ type StateMachine struct {
 	Version        int64                      `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
-	Logger         *logrus.Entry              `json:"-"`
+	Logger         *log.Logger                `json:"-"`
 }
 
 type States map[string]State
@@ -52,8 +54,8 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	if err := sm.setID(); err != nil {
 		return nil, err
 	}
-	sm.Logger = NewLogger()
-	SetLogWriter(sm.Logger)
+	sm.Logger = log.NewLogger()
+	sm.Logger.SetWriter()
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err

@@ -4,21 +4,23 @@ import (
 	"context"
 	"strings"
 
+	"karage/log"
+
 	"github.com/k0kubun/pp"
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
 )
 
 type CommonState struct {
-	Name           string        `json:"-"`
-	StateMachineID string        `json:"-"`
-	Type           string        `json:"Type"`
-	Next           string        `json:"Next"`
-	End            bool          `json:"End"`
-	Comment        string        `json:"Comment"`
-	InputPath      string        `json:"InputPath"`
-	OutputPath     string        `json:"OutputPath"`
-	logger         *logrus.Entry `json:"-"`
+	Name           string      `json:"-"`
+	StateMachineID string      `json:"-"`
+	Type           string      `json:"Type"`
+	Next           string      `json:"Next"`
+	End            bool        `json:"End"`
+	Comment        string      `json:"Comment"`
+	InputPath      string      `json:"InputPath"`
+	OutputPath     string      `json:"OutputPath"`
+	logger         *log.Logger `json:"-"`
 }
 
 func (s *CommonState) SetName(name string) {
@@ -85,21 +87,25 @@ func (s *CommonState) Transition(ctx context.Context, r *ajson.Node) (next strin
 	return s.Next, r, nil
 }
 
-func (s *CommonState) SetLogger(v *logrus.Entry) {
+func (s *CommonState) SetLogger(v *log.Logger) {
 	s.logger = v
 }
 
-func (s *CommonState) Logger(v logrus.Fields) *logrus.Entry {
-	l := s.logger.WithFields(logrus.Fields{
-		"name": s.Name,
-		"type": s.Type,
-		"next": s.Next,
-		"end":  s.End,
-	})
-
-	if v == nil {
-		return l
+func (s *CommonState) Logger(v logrus.Fields) *log.Logger {
+	l := log.Logger{
+		Entry: s.logger.WithFields(logrus.Fields{
+			"name": s.Name,
+			"type": s.Type,
+			"next": s.Next,
+			"end":  s.End,
+		}),
 	}
 
-	return l.WithFields(v)
+	if v == nil {
+		return &l
+	}
+
+	return &log.Logger{
+		Entry: l.WithFields(v),
+	}
 }

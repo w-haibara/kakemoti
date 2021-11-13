@@ -3,8 +3,8 @@ package cmd
 import (
 	"context"
 	"karage/cli"
+	"log"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +17,7 @@ func NewStartExecutionCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			if _, err := cli.StartExecution(ctx, o); err != nil {
-				logrus.Fatal(err)
+				log.Fatal(err)
 			}
 		},
 	}
