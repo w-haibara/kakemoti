@@ -2,21 +2,21 @@ package cmd
 
 import (
 	"context"
-	"karage/statemachine"
+	"karage/cli"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 func NewStartExecutionCmd() *cobra.Command {
-	o := new(statemachine.Options)
+	o := cli.Options{}
 
 	cmd := &cobra.Command{
 		Use:   "start-execution",
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if _, err := statemachine.Start(ctx, o); err != nil {
+			if _, err := cli.StartExecution(ctx, o); err != nil {
 				logrus.Fatal(err)
 			}
 		},

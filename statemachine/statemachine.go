@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,12 +32,6 @@ var (
 var (
 	EmptyJSON = []byte("{}")
 )
-
-type Options struct {
-	Input   string
-	ASL     string
-	Timeout int64
-}
 
 type StateMachine struct {
 	ID             string                     `json:"-"`
@@ -75,53 +67,21 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func Start(ctx context.Context, o *Options) ([]byte, error) {
-	l := NewLogger()
-
+func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64) ([]byte, error) {
 	ctx, cancel := context.WithCancel(ctx)
-	if o.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(timeout))
 	}
 	defer cancel()
 
-	if strings.TrimSpace(o.Input) == "" {
-		l.Fatalln("input option value is empty")
-	}
-
-	if strings.TrimSpace(o.ASL) == "" {
-		l.Fatalln("ASL option value is empty")
-	}
-
-	f1, input, err := readFile(o.Input)
-	if err != nil {
-		l.Fatalln(err)
-	}
-	defer func() {
-		if err := f1.Close(); err != nil {
-			l.Fatalln(err)
-		}
-	}()
-
-	f2, asl, err := readFile(o.ASL)
-	if err != nil {
-		l.Fatalln(err)
-	}
-	defer func() {
-		if err := f2.Close(); err != nil {
-			l.Fatalln(err)
-		}
-	}()
-
 	sm, err := NewStateMachine(asl)
 	if err != nil {
-		l.Fatalln(err)
+		sm.Logger.Fatalln(err)
 	}
-
-	sm.Logger = l
 
 	b, err := sm.Start(ctx, input)
 	if err != nil {
-		l.Fatalln(err)
+		sm.Logger.Fatalln(err)
 	}
 
 	return b, nil
@@ -328,18 +288,4 @@ func (sm *StateMachine) setID() error {
 
 func NewStates() map[string]State {
 	return map[string]State{}
-}
-
-func readFile(path string) (*os.File, *bytes.Buffer, error) {
-	f, err := os.Open(path) // #nosec G304
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(bytes.Buffer)
-	if _, err := b.ReadFrom(f); err != nil {
-		return nil, nil, err
-	}
-
-	return f, b, nil
 }
