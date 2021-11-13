@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"time"
+
+	"karage/log"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -35,12 +36,6 @@ var (
 	EmptyJSON = []byte("{}")
 )
 
-type Options struct {
-	Input   string
-	ASL     string
-	Timeout int64
-}
-
 type StateMachine struct {
 	ID             *string                    `json:"-"`
 	Comment        *string                    `json:"Comment"`
@@ -49,19 +44,19 @@ type StateMachine struct {
 	Version        *string                    `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
-	Logger         *logrus.Entry              `json:"-"`
+	Logger         *log.Logger                `json:"-"`
 }
 
 type States map[string]State
 
-func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
+func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
 
 	sm := new(StateMachine)
 	if err := sm.setID(); err != nil {
 		return nil, err
 	}
-	sm.Logger = NewLogger()
+	sm.Logger = logger
 
 	if err := dec.Decode(sm); err != nil {
 		return nil, err
@@ -80,51 +75,23 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 	return sm, nil
 }
 
-func Start(ctx context.Context, l *logrus.Entry, o *Options) ([]byte, error) {
+func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64, logger *log.Logger) ([]byte, error) {
 	ctx, cancel := context.WithCancel(ctx)
-	if o.Timeout > 0 {
-		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(o.Timeout))
+	if timeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(timeout))
 	}
 	defer cancel()
 
-	if strings.TrimSpace(o.Input) == "" {
-		l.Fatalln("input option value is empty")
-	}
-
-	if strings.TrimSpace(o.ASL) == "" {
-		l.Fatalln("ASL option value is empty")
-	}
-
-	f1, input, err := readFile(o.Input)
+	sm, err := NewStateMachine(asl, logger)
 	if err != nil {
-		l.Fatalln(err)
-	}
-	defer func() {
-		if err := f1.Close(); err != nil {
-			l.Fatalln(err)
-		}
-	}()
-
-	f2, asl, err := readFile(o.ASL)
-	if err != nil {
-		l.Fatalln(err)
-	}
-	defer func() {
-		if err := f2.Close(); err != nil {
-			l.Fatalln(err)
-		}
-	}()
-
-	sm, err := NewStateMachine(asl)
-	if err != nil {
-		l.Fatalln(err)
+		logger.Fatalln(err)
 	}
 
-	sm.Logger = l
+	sm.Logger = logger
 
 	b, err := sm.Start(ctx, input)
 	if err != nil {
-		l.Fatalln(err)
+		logger.Fatalln(err)
 	}
 
 	return b, nil
@@ -145,19 +112,23 @@ func (sm *StateMachine) check() error {
 }
 
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
+	if input == nil || strings.TrimSpace(input.String()) == "" {
+		input = bytes.NewBuffer(EmptyJSON)
+	}
+
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	out, err := sm.start(ctx, in)
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	b, err := ajson.Marshal(out)
 	if err != nil {
-		sm.logger(nil).Fatalln(err)
+		sm.loggerWithSMInfo().Fatalln(err)
 	}
 
 	return b, nil
@@ -248,12 +219,13 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 	return next, output, nil
 }
 
-func (sm *StateMachine) logger(v logrus.Fields) *logrus.Entry {
+func (sm *StateMachine) loggerWithSMInfo() *logrus.Entry {
 	return sm.Logger.WithFields(logrus.Fields{
 		"id":      sm.ID,
 		"startat": sm.StartAt,
 		"timeout": sm.TimeoutSeconds,
-	}).WithFields(v)
+		"line":    log.Line(),
+	})
 }
 
 func (sm *StateMachine) decodeStates() (States, error) {
@@ -346,18 +318,4 @@ func (sm *StateMachine) setID() error {
 
 func NewStates() map[string]State {
 	return map[string]State{}
-}
-
-func readFile(path string) (*os.File, *bytes.Buffer, error) {
-	f, err := os.Open(path) // #nosec G304
-	if err != nil {
-		return nil, nil, err
-	}
-
-	b := new(bytes.Buffer)
-	if _, err := b.ReadFrom(f); err != nil {
-		return nil, nil, err
-	}
-
-	return f, b, nil
 }
