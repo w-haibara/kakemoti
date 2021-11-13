@@ -109,17 +109,20 @@ func (res *resource) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, 
 		if !input.IsObject() {
 			return nil, ErrInvalidTaskInput
 		}
-		input = input.MustObject()["args"]
 
 		args := make([]string, 0)
-		if !input.IsArray() {
-			return nil, ErrInvalidTaskInput
-		}
-		for _, v := range input.MustArray() {
-			if !v.IsString() {
+
+		input, ok := input.MustObject()["args"]
+		if ok {
+			if !input.IsArray() {
 				return nil, ErrInvalidTaskInput
 			}
-			args = append(args, v.MustString())
+			for _, v := range input.MustArray() {
+				if !v.IsString() {
+					return nil, ErrInvalidTaskInput
+				}
+				args = append(args, v.MustString())
+			}
 		}
 
 		out, err := res.execScript(ctx, args...)
