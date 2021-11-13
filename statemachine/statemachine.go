@@ -62,15 +62,15 @@ func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, erro
 		return nil, err
 	}
 
-	if err := sm.check(); err != nil {
-		return nil, err
-	}
-
 	states, err := sm.decodeStates()
 	if err != nil {
 		return nil, err
 	}
 	sm.States = states
+
+	if err := sm.check(); err != nil {
+		return nil, err
+	}
 
 	return sm, nil
 }
@@ -295,6 +295,8 @@ func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
 		state = new(FailState)
 	case "Map":
 		state = new(MapState)
+	default:
+		return nil, ErrUnknownStateName
 	}
 
 	if err := json.Unmarshal(raw, state); err != nil {
