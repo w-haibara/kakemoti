@@ -71,11 +71,11 @@ func NewStateMachine(asl *bytes.Buffer) (*StateMachine, error) {
 		return nil, err
 	}
 
-	var err error
-	sm.States, err = sm.decodeStates()
+	states, err := sm.decodeStates()
 	if err != nil {
 		return nil, err
 	}
+	sm.States = states
 
 	return sm, nil
 }
