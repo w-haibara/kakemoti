@@ -175,12 +175,24 @@ func TestStart(t *testing.T) {
 					}
 				}
 			}`,
-			input: `{
-				"abc":"123"
+			input:   `{"abc":"123"}`,
+			want:    `{"abc":"123"}`,
+			wantErr: false,
+		},
+		{
+			name: "wait-seconds",
+			asl: `{
+				"StartAt": "wait1",
+				"States": {
+					"wait1": {
+						"Type": "Wait",
+						"Seconds": 1,
+						"End": true
+					}
+				}
 			}`,
-			want: `{
-				"abc":"123"
-			}`,
+			input:   `{"abc":"123"}`,
+			want:    `{"abc":"123"}`,
 			wantErr: false,
 		},
 	}
