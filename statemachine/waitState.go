@@ -26,7 +26,7 @@ func parseTimestamp(timestamp string) (time.Duration, error) {
 	return time.Until(t), nil
 }
 
-func (s *WaitState) Dulation(r *ajson.Node) (time.Duration, error) {
+func (s *WaitState) dulation(r *ajson.Node) (time.Duration, error) {
 	if s == nil {
 		return time.Duration(0), nil
 	}
@@ -90,7 +90,7 @@ func (s *WaitState) Transition(ctx context.Context, r *ajson.Node) (next string,
 	default:
 	}
 
-	d, err := s.Dulation(r)
+	d, err := s.dulation(r)
 	if err != nil {
 		return "", nil, err
 	}
