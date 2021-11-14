@@ -27,9 +27,51 @@ func TestNewStateMachine(t *testing.T) {
 		{
 			name: "top-lebel-1",
 			asl: `{
+				"Version": "1.0",
 				"Comment": "sample comment",
 				"StartAt": "a1",
 				"TimeoutSeconds": 0,
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			want: Want{
+				States:         []string{"a1"},
+				Comment:        "sample comment",
+				StartAt:        "a1",
+				Version:        "1.0",
+				TimeoutSeconds: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "top-lebel-without-version",
+			asl: `{
+				"Comment": "sample comment",
+				"StartAt": "a1",
+				"TimeoutSeconds": 0,
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			want: Want{
+				States:         []string{"a1"},
+				Comment:        "sample comment",
+				StartAt:        "a1",
+				Version:        "1.0",
+				TimeoutSeconds: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "top-lebel-without-timeoutseconds",
+			asl: `{
+				"Comment": "sample comment",
+				"StartAt": "a1",
 				"States": {
 					"a1": {
 						"Type": "Succeed"
