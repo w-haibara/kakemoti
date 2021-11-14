@@ -37,11 +37,11 @@ var (
 )
 
 type StateMachine struct {
-	ID             string                     `json:"-"`
-	Comment        string                     `json:"Comment"`
-	StartAt        string                     `json:"StartAt"`
-	TimeoutSeconds int64                      `json:"TimeoutSeconds"`
-	Version        int64                      `json:"Version"`
+	ID             *string                    `json:"-"`
+	Comment        *string                    `json:"Comment"`
+	StartAt        *string                    `json:"StartAt"`
+	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
+	Version        *string                    `json:"Version"`
 	RawStates      map[string]json.RawMessage `json:"States"`
 	States         States                     `json:"-"`
 	Logger         *log.Logger                `json:"-"`
@@ -51,6 +51,7 @@ type States map[string]State
 
 func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, error) {
 	dec := json.NewDecoder(asl)
+
 	sm := new(StateMachine)
 	if err := sm.setID(); err != nil {
 		return nil, err
@@ -61,9 +62,13 @@ func NewStateMachine(asl *bytes.Buffer, logger *log.Logger) (*StateMachine, erro
 		return nil, err
 	}
 
-	var err error
-	sm.States, err = sm.decodeStates()
+	states, err := sm.decodeStates()
 	if err != nil {
+		return nil, err
+	}
+	sm.States = states
+
+	if err := sm.check(); err != nil {
 		return nil, err
 	}
 
@@ -90,6 +95,28 @@ func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64, logger 
 	}
 
 	return b, nil
+}
+
+func (sm *StateMachine) check() error {
+	if sm.States == nil {
+		return fmt.Errorf("Top-level fields: 'States' is needed")
+	}
+
+	if sm.StartAt == nil {
+		return fmt.Errorf("Top-level fields: 'StartAt' is needed")
+	}
+
+	if sm.Version == nil {
+		sm.Version = new(string)
+		*sm.Version = "1.0"
+	}
+
+	if sm.TimeoutSeconds == nil {
+		sm.TimeoutSeconds = new(int64)
+		*sm.TimeoutSeconds = 0
+	}
+
+	return nil
 }
 
 func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte, error) {
@@ -120,21 +147,21 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 		return nil, ErrRecieverIsNil
 	}
 
-	if _, ok := sm.States[sm.StartAt]; !ok {
+	if _, ok := sm.States[*sm.StartAt]; !ok {
 		return nil, ErrInvalidStartAtValue
 	}
 
-	if sm.ID == "" {
+	if sm.ID == nil {
 		if err := sm.setID(); err != nil {
 			return nil, err
 		}
 	}
 
 	for i := range sm.States {
-		sm.States[i].SetID(sm.ID)
+		sm.States[i].SetID(*sm.ID)
 	}
 
-	cur := sm.StartAt
+	cur := *sm.StartAt
 	for {
 		var err error
 		cur, input, err = sm.transition(ctx, cur, input)
@@ -276,6 +303,8 @@ func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
 		state = new(FailState)
 	case "Map":
 		state = new(MapState)
+	default:
+		return nil, ErrUnknownStateName
 	}
 
 	if err := json.Unmarshal(raw, state); err != nil {
@@ -291,7 +320,8 @@ func (sm *StateMachine) setID() error {
 		return err
 	}
 
-	sm.ID = id.String()
+	str := id.String()
+	sm.ID = &str
 
 	return nil
 }

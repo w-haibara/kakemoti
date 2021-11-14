@@ -10,6 +10,129 @@ import (
 	"karage/log"
 )
 
+func TestNewStateMachine(t *testing.T) {
+	type Want struct {
+		States         []string
+		Comment        string
+		StartAt        string
+		Version        string
+		TimeoutSeconds int64
+	}
+	tests := []struct {
+		name    string
+		asl     string
+		want    Want
+		wantErr bool
+	}{
+		{
+			name: "top-lebel-1",
+			asl: `{
+				"Version": "1.0",
+				"Comment": "sample comment",
+				"StartAt": "a1",
+				"TimeoutSeconds": 0,
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			want: Want{
+				States:         []string{"a1"},
+				Comment:        "sample comment",
+				StartAt:        "a1",
+				Version:        "1.0",
+				TimeoutSeconds: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "top-lebel-without-version",
+			asl: `{
+				"Comment": "sample comment",
+				"StartAt": "a1",
+				"TimeoutSeconds": 0,
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			want: Want{
+				States:         []string{"a1"},
+				Comment:        "sample comment",
+				StartAt:        "a1",
+				Version:        "1.0",
+				TimeoutSeconds: 0,
+			},
+			wantErr: false,
+		},
+		{
+			name: "top-lebel-without-timeoutseconds",
+			asl: `{
+				"Comment": "sample comment",
+				"StartAt": "a1",
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			want: Want{
+				States:         []string{"a1"},
+				Comment:        "sample comment",
+				StartAt:        "a1",
+				Version:        "1.0",
+				TimeoutSeconds: 0,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		logger := log.NewLogger()
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewStateMachine(bytes.NewBufferString(tt.asl), logger)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewStateMachine() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			for _, v := range tt.want.States {
+				_, ok := got.States[v]
+				if !ok {
+					t.Errorf("States: invalid key: %s", v)
+					return
+				}
+			}
+
+			if *got.Comment != tt.want.Comment {
+				t.Errorf("Comment: %s (got) != %s (want)", *got.Comment, tt.want.Comment)
+				return
+			}
+
+			if *got.StartAt != tt.want.StartAt {
+				t.Errorf("StartAt: %s (got) != %s (want)", *got.StartAt, tt.want.StartAt)
+				return
+			}
+
+			if *got.Version != tt.want.Version {
+				t.Errorf("Version: %s (got) != %s (want)", *got.Version, tt.want.Version)
+				return
+			}
+
+			if got.TimeoutSeconds == nil {
+				t.Errorf("TimeoutSeconds is nil")
+				return
+			}
+
+			if *got.TimeoutSeconds != tt.want.TimeoutSeconds {
+				t.Errorf("TimeoutSeconds: %d (got) != %d (want)", *got.TimeoutSeconds, tt.want.TimeoutSeconds)
+				return
+			}
+		})
+	}
+}
+
 func TestStart(t *testing.T) {
 	const (
 		timeout = 10
@@ -23,23 +146,34 @@ func TestStart(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "minimal",
+			name: "minimal-1",
 			asl: `{
-				"Comment": "A simple minimal example of the States language",
-				"StartAt": "Hello World",
+				"StartAt": "a1",
 				"States": {
-				"Hello World": {
-				  "Type": "Task",
-				  "Resource": "script:../workflows/task-script1/task.sh",
-				  "End": true
+					"a1": {
+						"Type": "Succeed"
+					}
 				}
-			  }
+			}`,
+			input:   "{}",
+			want:    "{}",
+			wantErr: false,
+		},
+		{
+			name: "minimal-2",
+			asl: `{
+				"StartAt": "a1",
+				"States": {
+					"a1": {
+						"Type": "Succeed"
+					}
+				}
 			}`,
 			input: `{
-				"args": ["1", "2", "3"]
+				"abc":"123"
 			}`,
 			want: `{
-				"result": "args: 1, 2, 3"
+				"abc":"123"
 			}`,
 			wantErr: false,
 		},
@@ -64,6 +198,10 @@ func TestStart(t *testing.T) {
 				return
 			}
 
+			if string(got) == tt.want {
+				return
+			}
+
 			g := new(interface{})
 			if err := json.Unmarshal(got, g); err != nil {
 				t.Errorf("invalid json format: %v \n%q", err, got)
@@ -71,7 +209,7 @@ func TestStart(t *testing.T) {
 			}
 
 			if reflect.DeepEqual(g, want) {
-				t.Errorf("Start() = %v, want %v", g, tt.want)
+				t.Errorf("Start() = %q, want %q", got, tt.want)
 			}
 		})
 	}
