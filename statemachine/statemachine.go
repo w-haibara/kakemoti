@@ -98,14 +98,22 @@ func Start(ctx context.Context, asl, input *bytes.Buffer, timeout int64, logger 
 }
 
 func (sm *StateMachine) check() error {
-	switch {
-	case sm.States == nil:
+	if sm.States == nil {
 		return fmt.Errorf("Top-level fields: 'States' is needed")
-	case sm.StartAt == nil:
+	}
+
+	if sm.StartAt == nil {
 		return fmt.Errorf("Top-level fields: 'StartAt' is needed")
-	case sm.Version == nil:
-		str := "1.0"
-		sm.Version = &str
+	}
+
+	if sm.Version == nil {
+		sm.Version = new(string)
+		*sm.Version = "1.0"
+	}
+
+	if sm.TimeoutSeconds == nil {
+		sm.TimeoutSeconds = new(int64)
+		*sm.TimeoutSeconds = 0
 	}
 
 	return nil
