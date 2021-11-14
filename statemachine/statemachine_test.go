@@ -146,12 +146,13 @@ func TestStart(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "minimal-1",
+			name: "pass-end",
 			asl: `{
-				"StartAt": "a1",
+				"StartAt": "pass1",
 				"States": {
-					"a1": {
-						"Type": "Succeed"
+					"pass1": {
+						"Type": "Pass",
+						"end": true
 					}
 				}
 			}`,
@@ -160,12 +161,17 @@ func TestStart(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "minimal-2",
+			name: "pass-next",
 			asl: `{
-				"StartAt": "a1",
+				"StartAt": "pass1",
 				"States": {
-					"a1": {
-						"Type": "Succeed"
+					"pass1": {
+						"Type": "Pass",
+						"Next": "pass2"
+					},
+					"pass2": {
+						"Type": "Pass",
+						"End": true
 					}
 				}
 			}`,
@@ -193,8 +199,10 @@ func TestStart(t *testing.T) {
 				bytes.NewBufferString(tt.asl),
 				bytes.NewBufferString(tt.input),
 				timeout, logger)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
+			if err != nil {
+				if !tt.wantErr {
+					t.Errorf("Start() returns an error: %v", err)
+				}
 				return
 			}
 
