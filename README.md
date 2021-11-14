@@ -9,7 +9,7 @@ Karage is a simple tool that executes workflows defined in the [Amazon States La
   - [x] Version
   - [x] TimeoutSeconds
 - [ ] States
-  - [ ] Pass State
+  - [x] Pass State
   - [ ] Task State
   - [ ] Choice State
     - [ ] Boolean expression
