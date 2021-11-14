@@ -37,7 +37,7 @@ Karage is a simple tool that executes workflows defined in the [Amazon States La
       - [ ] IsString
       - [ ] IsBoolean
       - [ ] IsTimestamp
-  - [ ] Wait State
+  - [x] Wait State
   - [ ] Succeed State
   - [ ] Fail State
   - [ ] Parallel State
