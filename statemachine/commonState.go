@@ -64,7 +64,7 @@ func (s *CommonState) FilterOutput(ctx context.Context, output *ajson.Node) (*aj
 	return node, nil
 }
 
-type TransitionFunc func(ctx context.Context, r *ajson.Node) (*ajson.Node, error)
+type TransitionFunc func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error)
 
 func (s *CommonState) Transition(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
 	if s == nil {
@@ -77,10 +77,14 @@ func (s *CommonState) Transition(ctx context.Context, r *ajson.Node, fn Transiti
 	default:
 	}
 
+	next := s.Next
 	if fn != nil {
-		w, err := fn(ctx, r)
+		n, w, err := fn(ctx, r)
 		if err != nil {
 			return "", r, err
+		}
+		if strings.TrimSpace(n) != "" {
+			next = n
 		}
 		if w != nil {
 			r = w
@@ -91,7 +95,7 @@ func (s *CommonState) Transition(ctx context.Context, r *ajson.Node, fn Transiti
 		return "", r, ErrEndStateMachine
 	}
 
-	if strings.TrimSpace(s.Next) == "" {
+	if strings.TrimSpace(next) == "" {
 		return "", nil, ErrNextStateIsBrank
 	}
 

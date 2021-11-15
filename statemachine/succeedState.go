@@ -11,15 +11,7 @@ type SucceedState struct {
 }
 
 func (s *SucceedState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	if s == nil {
-		return "", nil, nil
-	}
-
-	select {
-	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
-	default:
-	}
-
-	return "", r, ErrSucceededStateMachine
+	return s.CommonState.Transition(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+		return "", r, ErrSucceededStateMachine
+	})
 }

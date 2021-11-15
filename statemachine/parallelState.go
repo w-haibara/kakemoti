@@ -2,7 +2,6 @@ package statemachine
 
 import (
 	"context"
-	"strings"
 	"sync"
 
 	"github.com/spyzhov/ajson"
@@ -24,51 +23,33 @@ type outputs struct {
 }
 
 func (s *ParallelState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	if s == nil {
-		return "", nil, nil
-	}
+	return s.CommonState.Transition(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+		var eg errgroup.Group
+		var outputs outputs
+		outputs.v = make([]*ajson.Node, len(s.Branches))
 
-	select {
-	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
-	default:
-	}
+		for i, sm := range s.Branches {
+			i, sm := i, sm
+			sm.Logger = s.logger
 
-	var eg errgroup.Group
-	var outputs outputs
-	outputs.v = make([]*ajson.Node, len(s.Branches))
+			eg.Go(func() error {
+				w, err := sm.start(ctx, r)
+				if err != nil {
+					return err
+				}
 
-	for i, sm := range s.Branches {
-		i, sm := i, sm
-		sm.Logger = s.logger
+				outputs.mu.Lock()
+				outputs.v[i] = w.Clone()
+				outputs.mu.Unlock()
 
-		eg.Go(func() error {
-			w, err := sm.start(ctx, r)
-			if err != nil {
-				return err
-			}
+				return nil
+			})
+		}
 
-			outputs.mu.Lock()
-			outputs.v[i] = w.Clone()
-			outputs.mu.Unlock()
+		if err := eg.Wait(); err != nil {
+			return "", nil, err
+		}
 
-			return nil
-		})
-	}
-
-	if err := eg.Wait(); err != nil {
-		return "", nil, err
-	}
-
-	w = ajson.ArrayNode(s.StateMachineID, outputs.v)
-
-	if s.End {
-		return "", w, ErrEndStateMachine
-	}
-
-	if strings.TrimSpace(s.Next) == "" {
-		return "", nil, ErrNextStateIsBrank
-	}
-
-	return s.Next, w, nil
+		return "", ajson.ArrayNode(s.StateMachineID, outputs.v), nil
+	})
 }
