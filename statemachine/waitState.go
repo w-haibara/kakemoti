@@ -3,7 +3,6 @@ package statemachine
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/spyzhov/ajson"
@@ -80,29 +79,14 @@ func (s *WaitState) dulation(r *ajson.Node) (time.Duration, error) {
 }
 
 func (s *WaitState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	if s == nil {
+	return s.CommonState.TransitionWithEndNext(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+		d, err := s.dulation(r)
+		if err != nil {
+			return "", nil, err
+		}
+
+		time.Sleep(d)
+
 		return "", nil, nil
-	}
-
-	select {
-	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
-	default:
-	}
-
-	d, err := s.dulation(r)
-	if err != nil {
-		return "", nil, err
-	}
-	time.Sleep(d)
-
-	if s.End {
-		return "", r, ErrEndStateMachine
-	}
-
-	if strings.TrimSpace(s.Next) == "" {
-		return "", nil, ErrNextStateIsBrank
-	}
-
-	return s.Next, r, nil
+	})
 }

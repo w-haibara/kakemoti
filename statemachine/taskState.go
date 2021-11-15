@@ -36,51 +36,23 @@ type resource struct {
 }
 
 func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	if s == nil {
-		return "", nil, nil
-	}
+	return s.CommonState.TransitionWithResultselectorRetry(ctx, r,
+		s.Parameters, s.ResultPath,
+		s.ResultSelector, s.Retry, s.Catch,
+		func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+			res, err := s.parseResource()
+			if err != nil {
+				return "", nil, err
+			}
 
-	select {
-	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
-	default:
-	}
+			out, err := res.exec(ctx, r)
+			if err != nil {
+				// Task failed
+				return "", nil, err
+			}
 
-	node, err := replaceByParameters(r, s.Parameters)
-	if err != nil {
-		return "", nil, err
-	}
-
-	res, err := s.parseResource()
-	if err != nil {
-		return "", nil, err
-	}
-
-	out, err := res.exec(ctx, node)
-	if err != nil {
-		// Task failed
-		return "", nil, err
-	}
-
-	out, err = replaceByResultSelector(out, s.ResultSelector)
-	if err != nil {
-		return "", nil, err
-	}
-
-	r, err = filterByResultPath(r, out, s.ResultPath)
-	if err != nil {
-		return "", nil, err
-	}
-
-	if s.End {
-		return "", r, ErrEndStateMachine
-	}
-
-	if strings.TrimSpace(s.Next) == "" {
-		return "", nil, ErrNextStateIsBrank
-	}
-
-	return s.Next, r, nil
+			return "", out, nil
+		})
 }
 
 func (s *TaskState) parseResource() (*resource, error) {
