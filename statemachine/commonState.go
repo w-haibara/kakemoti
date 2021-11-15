@@ -172,6 +172,34 @@ func (s *CommonState) TransitionWithResultpathParameters(ctx context.Context, r 
 		})
 }
 
+func (s *CommonState) TransitionWithResultselectorRetry(ctx context.Context, r *ajson.Node, parameters *json.RawMessage, resultPath string, resultSelector *json.RawMessage, retry, catch string, fn TransitionFunc) (string, *ajson.Node, error) {
+	// TODO: Implement Retry & Catch
+	return s.TransitionWithResultpathParameters(ctx, r,
+		parameters, resultPath,
+		func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+			if fn == nil {
+				return s.Next, r, nil
+			}
+
+			next, w, err := fn.do(ctx, r)
+			if next != "" {
+				s.Next = next
+			}
+
+			if w != nil {
+				node, err := replaceByResultSelector(w, resultSelector)
+				if err != nil {
+					return "", nil, err
+				}
+				if node != nil {
+					w = node
+				}
+			}
+
+			return s.Next, w, err
+		})
+}
+
 func (s *CommonState) SetLogger(v *log.Logger) {
 	s.logger = v
 }
