@@ -36,7 +36,7 @@ type resource struct {
 }
 
 func (s *TaskState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	return s.CommonState.Transition(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+	return s.CommonState.TransitionWithEndNext(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
 		node, err := replaceByParameters(r, s.Parameters)
 		if err != nil {
 			return "", nil, err

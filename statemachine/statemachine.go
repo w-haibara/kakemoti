@@ -194,19 +194,7 @@ func (sm *StateMachine) transition(ctx context.Context, next string, input *ajso
 		}).Info("state start")
 	}
 
-	if node, err := s.FilterInput(ctx, input); err != nil {
-		return "", nil, fmt.Errorf("failed to FilterInput(): %v", err)
-	} else {
-		input = node
-	}
-
 	next, output, err := s.Transition(ctx, input)
-
-	if node, err := s.FilterOutput(ctx, output); err != nil {
-		return "", nil, fmt.Errorf("failed to FilterOutput(): %v", err)
-	} else {
-		output = node
-	}
 
 	if output == nil {
 		output = &ajson.Node{}

@@ -14,5 +14,5 @@ type PassState struct {
 }
 
 func (s *PassState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	return s.CommonState.Transition(ctx, r, nil)
+	return s.CommonState.TransitionWithEndNext(ctx, r, nil)
 }

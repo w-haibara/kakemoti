@@ -23,7 +23,7 @@ type outputs struct {
 }
 
 func (s *ParallelState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	return s.CommonState.Transition(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+	return s.CommonState.TransitionWithEndNext(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
 		var eg errgroup.Group
 		var outputs outputs
 		outputs.v = make([]*ajson.Node, len(s.Branches))

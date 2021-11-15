@@ -18,5 +18,5 @@ type MapState struct {
 }
 
 func (s *MapState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	return s.CommonState.Transition(ctx, r, nil)
+	return s.CommonState.TransitionWithEndNext(ctx, r, nil)
 }

@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/k0kubun/pp"
@@ -66,49 +67,77 @@ func (s *CommonState) FilterOutput(ctx context.Context, output *ajson.Node) (*aj
 
 type TransitionFunc func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error)
 
-func (s *CommonState) TransitionWithoutPostCheck(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
-	if s == nil {
+func (fn TransitionFunc) do(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+	if fn == nil {
 		return "", nil, nil
 	}
 
-	select {
-	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
-	default:
+	next, w, err := fn(ctx, r)
+	if err != nil {
+		return "", r, err
 	}
 
-	next := s.Next
-	if fn != nil {
-		n, w, err := fn(ctx, r)
-		if err != nil {
-			return "", r, err
-		}
-		if strings.TrimSpace(n) != "" {
-			next = n
-		}
-		if w != nil {
-			r = w
-		}
+	if w != nil {
+		r = w
 	}
 
 	return next, r, nil
 }
 
 func (s *CommonState) Transition(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
-	next, r, err := s.TransitionWithoutPostCheck(ctx, r, fn)
+	select {
+	case <-ctx.Done():
+		return "", nil, ErrStoppedStateMachine
+	default:
+	}
+
+	if fn != nil {
+		next, w, err := fn.do(ctx, r)
+		if err != nil {
+			return next, r, err
+		}
+
+		if w != nil {
+			r = w
+		}
+
+		if strings.TrimSpace(next) != "" {
+			return next, r, nil
+		}
+	}
+
+	return s.Next, r, nil
+}
+
+func (s *CommonState) TransitionWithIO(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
+	if node, err := s.FilterInput(ctx, r); err != nil {
+		return "", nil, fmt.Errorf("failed to FilterInput(): %v", err)
+	} else {
+		r = node
+	}
+
+	next, w, err := s.Transition(ctx, r, fn)
+
+	if node, err := s.FilterOutput(ctx, w); err != nil {
+		return "", nil, fmt.Errorf("failed to FilterOutput(): %v", err)
+	} else {
+		w = node
+	}
+
+	return next, w, err
+}
+
+func (s *CommonState) TransitionWithEndNext(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
+	next, w, err := s.TransitionWithIO(ctx, r, fn)
 	if err != nil {
-		return "", r, err
+		return next, w, err
 	}
 
 	if s.End {
 		return "", r, ErrEndStateMachine
 	}
 
-	if strings.TrimSpace(next) == "" {
-		return "", nil, ErrNextStateIsBrank
-	}
-
-	return s.Next, r, nil
+	return next, w, nil
 }
 
 func (s *CommonState) SetLogger(v *log.Logger) {
