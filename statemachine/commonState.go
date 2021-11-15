@@ -2,6 +2,7 @@ package statemachine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -138,6 +139,31 @@ func (s *CommonState) TransitionWithEndNext(ctx context.Context, r *ajson.Node, 
 	}
 
 	return next, w, nil
+}
+
+func (s *CommonState) TransitionWithResultpathParameters(ctx context.Context, r *ajson.Node, parameters *json.RawMessage, resultPath string, fn TransitionFunc) (string, *ajson.Node, error) {
+	return s.TransitionWithEndNext(ctx, r,
+		func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+			r, err := replaceByParameters(r, parameters)
+			if err != nil {
+				return "", nil, err
+			}
+
+			var (
+				next string
+				w    *ajson.Node
+			)
+			if fn != nil {
+				next, w, err = fn(ctx, r)
+			}
+
+			w, err2 := filterByResultPath(r, w, resultPath)
+			if err2 != nil {
+				return "", nil, err
+			}
+
+			return next, w, err
+		})
 }
 
 func (s *CommonState) SetLogger(v *log.Logger) {

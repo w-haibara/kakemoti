@@ -5,6 +5,10 @@ kuirejo: *.go */*.go go.mod
 	gosec ./...
 	go build -o kuirejo
 
+.PHONY: test
+test: kuirejo
+	go test ./...
+
 .PHONY: run
 run: run5
 
