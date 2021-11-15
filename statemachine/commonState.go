@@ -149,20 +149,26 @@ func (s *CommonState) TransitionWithResultpathParameters(ctx context.Context, r 
 				return "", nil, err
 			}
 
-			var (
-				next string
-				w    *ajson.Node
-			)
-			if fn != nil {
-				next, w, err = fn(ctx, r)
+			if fn == nil {
+				return s.Next, r, nil
 			}
 
-			w, err2 := filterByResultPath(r, w, resultPath)
-			if err2 != nil {
-				return "", nil, err
+			next, w, err := fn(ctx, r)
+			if next != "" {
+				s.Next = next
 			}
 
-			return next, w, err
+			if w != nil {
+				node, err := filterByResultPath(r, w, resultPath)
+				if err != nil {
+					return "", nil, err
+				}
+				if node != nil {
+					w = node
+				}
+			}
+
+			return s.Next, w, err
 		})
 }
 
