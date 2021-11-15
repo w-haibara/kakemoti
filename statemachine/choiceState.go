@@ -43,7 +43,7 @@ type ChoiceState struct {
 }
 
 func (s *ChoiceState) Transition(ctx context.Context, r *ajson.Node) (next string, w *ajson.Node, err error) {
-	return s.CommonState.Transition(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
+	return s.CommonState.TransitionWithoutPostCheck(ctx, r, func(ctx context.Context, r *ajson.Node) (string, *ajson.Node, error) {
 		exist := func(m map[string]interface{}, k string) bool {
 			_, ok := m[k]
 			return ok
