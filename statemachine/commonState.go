@@ -4,11 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"karage/log"
-
 	"github.com/k0kubun/pp"
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
+	"github.com/w-haibara/kuirejo/log"
 )
 
 type CommonState struct {

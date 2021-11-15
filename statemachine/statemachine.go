@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"karage/log"
-
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
+	"github.com/w-haibara/kuirejo/log"
 )
 
 var (

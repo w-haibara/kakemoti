@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"karage/log"
+	"github.com/w-haibara/kuirejo/log"
 )
 
 func TestNewStateMachine(t *testing.T) {

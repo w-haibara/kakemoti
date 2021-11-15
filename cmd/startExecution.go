@@ -4,9 +4,8 @@ import (
 	"context"
 	"log"
 
-	"karage/cli"
-
 	"github.com/spf13/cobra"
+	"github.com/w-haibara/kuirejo/cli"
 )
 
 func NewStartExecutionCmd() *cobra.Command {
