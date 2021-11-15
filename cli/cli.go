@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"karage/log"
-	"karage/statemachine"
+	"github.com/w-haibara/kuirejo/log"
+	"github.com/w-haibara/kuirejo/statemachine"
 )
 
 type Options struct {

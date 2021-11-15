@@ -3,10 +3,9 @@ package statemachine
 import (
 	"context"
 
-	"karage/log"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
+	"github.com/w-haibara/kuirejo/log"
 )
 
 type State interface {
