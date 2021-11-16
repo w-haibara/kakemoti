@@ -145,6 +145,9 @@ func TestStart(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
+		/*
+		 *	Pass State
+		 */
 		{
 			name: "pass-end",
 			asl: `{
@@ -179,6 +182,10 @@ func TestStart(t *testing.T) {
 			want:    `{"abc":"123"}`,
 			wantErr: false,
 		},
+
+		/*
+		 *	Wait State
+		 */
 		{
 			name: "wait-seconds",
 			asl: `{
@@ -188,6 +195,24 @@ func TestStart(t *testing.T) {
 						"Type": "Wait",
 						"Seconds": 1,
 						"End": true
+					}
+				}
+			}`,
+			input:   `{"abc":"123"}`,
+			want:    `{"abc":"123"}`,
+			wantErr: false,
+		},
+
+		/*
+		 *	Succeed State
+		 */
+		{
+			name: "succeed",
+			asl: `{
+				"StartAt": "succeed1",
+				"States": {
+					"succeed1": {
+						"Type": "Succeed"
 					}
 				}
 			}`,
