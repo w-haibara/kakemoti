@@ -202,6 +202,24 @@ func TestStart(t *testing.T) {
 			want:    `{"abc":"123"}`,
 			wantErr: false,
 		},
+
+		/*
+		 *	Succeed State
+		 */
+		{
+			name: "succeed",
+			asl: `{
+				"StartAt": "succeed1",
+				"States": {
+					"succeed1": {
+						"Type": "Succeed"
+					}
+				}
+			}`,
+			input:   `{"abc":"123"}`,
+			want:    `{"abc":"123"}`,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		ctx := context.TODO()
