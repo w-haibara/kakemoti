@@ -2,10 +2,12 @@ package statemachine
 
 import (
 	"errors"
+	"fmt"
 )
 
-type statemachineError struct {
-	name string
+type aslError struct {
+	name  string
+	cause error
 }
 
 const (
@@ -22,31 +24,46 @@ const (
 )
 
 var (
-	ErrStatesALL                    = newStateMachineError(statesAll)
-	ErrStatesHeartbeatTimeout       = newStateMachineError(statesHeartbeatTimeout)
-	ErrStatesTimeout                = newStateMachineError(statesTimeout)
-	ErrStatesTaskFailed             = newStateMachineError(statesTaskFailed)
-	ErrStatesPermissions            = newStateMachineError(statesPermissions)
-	ErrStatesResultPathMatchFailure = newStateMachineError(statesResultPathMatchFailure)
-	ErrStatesParameterPathFailure   = newStateMachineError(statesParameterPathFailure)
-	ErrStatesBranchFailed           = newStateMachineError(statesBranchFailed)
-	ErrStatesNoChoiceMatched        = newStateMachineError(statesNoChoiceMatched)
-	ErrStatesIntrinsicFailure       = newStateMachineError(statesIntrinsicFailure)
+	ErrStatesALL                    = newASLError(statesAll)
+	ErrStatesHeartbeatTimeout       = newASLError(statesHeartbeatTimeout)
+	ErrStatesTimeout                = newASLError(statesTimeout)
+	ErrStatesTaskFailed             = newASLError(statesTaskFailed)
+	ErrStatesPermissions            = newASLError(statesPermissions)
+	ErrStatesResultPathMatchFailure = newASLError(statesResultPathMatchFailure)
+	ErrStatesParameterPathFailure   = newASLError(statesParameterPathFailure)
+	ErrStatesBranchFailed           = newASLError(statesBranchFailed)
+	ErrStatesNoChoiceMatched        = newASLError(statesNoChoiceMatched)
+	ErrStatesIntrinsicFailure       = newASLError(statesIntrinsicFailure)
 )
 
-func newStateMachineError(name string) statemachineError {
-	return statemachineError{
+func newASLError(name string) aslError {
+	return aslError{
 		name: name,
 	}
 }
 
-func (e statemachineError) Error() string {
-	return e.name
+func newASLErrorWithCause(name string, cause error) aslError {
+	return aslError{
+		name:  name,
+		cause: cause,
+	}
 }
 
-func (e statemachineError) Is(target error) bool {
+func (e aslError) Error() string {
+	if e.cause == nil {
+		return fmt.Sprintf("ASL Error [%s]", e.name)
+	}
+
+	return fmt.Sprintf("ASL Error [%s], %v", e.name, e.cause)
+}
+
+func (e aslError) Unwrap() error {
+	return e.cause
+}
+
+func (e aslError) Is(target error) bool {
 	switch v := target.(type) {
-	case statemachineError:
+	case aslError:
 		if v.name == statesAll {
 			return true
 		}
