@@ -21,6 +21,7 @@ const (
 	statesBranchFailed           = "States.BranchFailed"
 	statesNoChoiceMatched        = "States.NoChoiceMatched"
 	statesIntrinsicFailure       = "States.IntrinsicFailure"
+	statesInternalError          = "States.InternalError"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 	ErrStatesBranchFailed           = newASLError(statesBranchFailed)
 	ErrStatesNoChoiceMatched        = newASLError(statesNoChoiceMatched)
 	ErrStatesIntrinsicFailure       = newASLError(statesIntrinsicFailure)
+	ErrStatesInternalError          = newASLError(statesInternalError)
 )
 
 func newASLError(name string) aslError {
