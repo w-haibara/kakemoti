@@ -9,7 +9,8 @@ import (
 
 func Test_statemachineError_Is(t *testing.T) {
 	type fields struct {
-		name string
+		name  string
+		cause error
 	}
 	type args struct {
 		target error
@@ -64,6 +65,34 @@ func Test_statemachineError_Is(t *testing.T) {
 				t.Errorf(`errors.Is(fmt.Errorf("wrap:%%w", tt.args.target) = %v, want %v`, got, tt.want)
 			}
 		})
+	}
+
+	tests2 := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "with cause",
+			fields: fields{
+				name:  "internal error",
+				cause: os.ErrInvalid,
+			},
+			args: args{
+				target: os.ErrInvalid,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests2 {
+		e := newASLErrorWithCause(
+			tt.fields.name,
+			tt.fields.cause,
+		)
+		if got := errors.Is(e, tt.args.target); got != tt.want {
+			t.Errorf("errors.Is(e, tt.args.target) = %v, want %v", got, tt.want)
+		}
 	}
 }
 
