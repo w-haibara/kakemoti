@@ -127,3 +127,53 @@ func Test_aslError_Unwrap(t *testing.T) {
 		})
 	}
 }
+
+func Test_aslError_addError(t *testing.T) {
+	type fields struct {
+		name  string
+		cause error
+	}
+	type args struct {
+		cause error
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   aslError
+	}{
+		{
+			name: "add cause",
+			fields: fields{
+				name:  "error",
+				cause: nil,
+			},
+			args: args{
+				cause: os.ErrInvalid,
+			},
+			want: newASLErrorWithCause("error", os.ErrInvalid),
+		},
+		{
+			name: "change cause",
+			fields: fields{
+				name:  "error",
+				cause: os.ErrClosed,
+			},
+			args: args{
+				cause: os.ErrInvalid,
+			},
+			want: newASLErrorWithCause("error", os.ErrInvalid),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := aslError{
+				name:  tt.fields.name,
+				cause: tt.fields.cause,
+			}
+			if got := e.addError(tt.args.cause); !errors.Is(got, tt.want) {
+				t.Errorf("aslError.addError() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

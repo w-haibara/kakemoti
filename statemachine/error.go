@@ -51,6 +51,13 @@ func newASLErrorWithCause(name string, cause error) aslError {
 	}
 }
 
+func (e aslError) addError(cause error) aslError {
+	return newASLErrorWithCause(
+		e.name,
+		cause,
+	)
+}
+
 func (e aslError) Error() string {
 	if e.cause == nil {
 		return fmt.Sprintf("ASL Error [%s]", e.name)
