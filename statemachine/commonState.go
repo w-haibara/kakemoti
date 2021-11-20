@@ -135,7 +135,7 @@ func (s *CommonState) TransitionWithEndNext(ctx context.Context, r *ajson.Node, 
 	}
 
 	if s.End {
-		return "", r, ErrEndStateMachine
+		return "", r, ErrStateMachineTerminated
 	}
 
 	return next, w, nil

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,21 +15,23 @@ import (
 	"github.com/w-haibara/kuirejo/log"
 )
 
+var ErrStateMachineTerminated = errors.New("state machine terminated")
+
 var (
-	ErrRecieverIsNil         = fmt.Errorf("receiver is nil")
-	ErrInvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
-	ErrInvalidJSONInput      = fmt.Errorf("invalid json input")
-	ErrInvalidJSONOutput     = fmt.Errorf("invalid json output")
-	ErrUnknownStateName      = fmt.Errorf("unknown state name")
-	ErrUnknownStateType      = fmt.Errorf("unknown state type")
-	ErrNextStateIsBrank      = fmt.Errorf("next state is brank")
-	ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
-	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
-	ErrEndStateMachine       = fmt.Errorf("end state machine")
-	ErrStoppedStateMachine   = fmt.Errorf("stopped state machine")
-	ErrInvalidJsonPath       = fmt.Errorf("invalid JsonPath")
-	ErrInvalidInputPath      = fmt.Errorf("invalid InputPath")
-	ErrInvalidRawJSON        = fmt.Errorf("invalid raw json")
+	ErrRecieverIsNil       = fmt.Errorf("receiver is nil")
+	ErrInvalidStartAtValue = fmt.Errorf("invalid StateAt value")
+	ErrInvalidJSONInput    = fmt.Errorf("invalid json input")
+	ErrInvalidJSONOutput   = fmt.Errorf("invalid json output")
+	ErrUnknownStateName    = fmt.Errorf("unknown state name")
+	ErrUnknownStateType    = fmt.Errorf("unknown state type")
+	ErrNextStateIsBrank    = fmt.Errorf("next state is brank")
+	//ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
+	//ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
+	//ErrEndStateMachine       = fmt.Errorf("end state machine")
+	ErrStoppedStateMachine = fmt.Errorf("stopped state machine")
+	ErrInvalidJsonPath     = fmt.Errorf("invalid JsonPath")
+	ErrInvalidInputPath    = fmt.Errorf("invalid InputPath")
+	ErrInvalidRawJSON      = fmt.Errorf("invalid raw json")
 )
 
 var (
@@ -164,11 +167,10 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 	for {
 		var err error
 		cur, input, err = sm.transition(ctx, cur, input)
-		switch err {
-		case nil:
-		case ErrSucceededStateMachine, ErrFailedStateMachine, ErrEndStateMachine:
+		if errors.Is(err, ErrStateMachineTerminated) {
 			return input, nil
-		default:
+		}
+		if err != nil {
 			return nil, err
 		}
 	}
