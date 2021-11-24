@@ -9,6 +9,11 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
+var (
+	ErrInvalidJsonPath = fmt.Errorf("invalid JsonPath")
+	ErrInvalidRawJSON  = fmt.Errorf("invalid raw json")
+)
+
 func filterByInputPath(input *ajson.Node, path string) (*ajson.Node, error) {
 	return filterByJSONPath(input, path)
 }
@@ -126,12 +131,8 @@ func insertNode(n1, n2 *ajson.Node, path string) (*ajson.Node, error) {
 		return nil, err
 	}
 
-	if len(cmds) < 1 {
-		return nil, ErrInvalidJsonPath
-	}
-
-	if cmds[0] != "$" {
-		return nil, ErrInvalidJsonPath
+	if len(cmds) < 1 || cmds[0] != "$" {
+		return nil, ErrInvalidRawJSON
 	}
 
 	root := n1.Clone()

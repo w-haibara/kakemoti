@@ -18,11 +18,6 @@ import (
 var ErrStateMachineTerminated = errors.New("state machine terminated")
 
 var (
-	ErrInvalidJsonPath = fmt.Errorf("invalid JsonPath")
-	ErrInvalidRawJSON  = fmt.Errorf("invalid raw json")
-)
-
-var (
 	EmptyJSON = []byte("{}")
 )
 
