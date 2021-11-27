@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,22 +15,7 @@ import (
 	"github.com/w-haibara/kuirejo/log"
 )
 
-var (
-	ErrRecieverIsNil         = fmt.Errorf("receiver is nil")
-	ErrInvalidStartAtValue   = fmt.Errorf("invalid StateAt value")
-	ErrInvalidJSONInput      = fmt.Errorf("invalid json input")
-	ErrInvalidJSONOutput     = fmt.Errorf("invalid json output")
-	ErrUnknownStateName      = fmt.Errorf("unknown state name")
-	ErrUnknownStateType      = fmt.Errorf("unknown state type")
-	ErrNextStateIsBrank      = fmt.Errorf("next state is brank")
-	ErrSucceededStateMachine = fmt.Errorf("state machine stopped successfully")
-	ErrFailedStateMachine    = fmt.Errorf("state machine stopped unsuccessfully")
-	ErrEndStateMachine       = fmt.Errorf("end state machine")
-	ErrStoppedStateMachine   = fmt.Errorf("stopped state machine")
-	ErrInvalidJsonPath       = fmt.Errorf("invalid JsonPath")
-	ErrInvalidInputPath      = fmt.Errorf("invalid InputPath")
-	ErrInvalidRawJSON        = fmt.Errorf("invalid raw json")
-)
+var ErrStateMachineTerminated = errors.New("state machine terminated")
 
 var (
 	EmptyJSON = []byte("{}")
@@ -143,11 +129,11 @@ func (sm *StateMachine) Start(ctx context.Context, input *bytes.Buffer) ([]byte,
 
 func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
 	if sm == nil {
-		return nil, ErrRecieverIsNil
+		return nil, errors.New("receiver is nil")
 	}
 
 	if _, ok := sm.States[*sm.StartAt]; !ok {
-		return nil, ErrInvalidStartAtValue
+		return nil, errors.New("invalid StateAt value")
 	}
 
 	if sm.ID == nil {
@@ -164,11 +150,10 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 	for {
 		var err error
 		cur, input, err = sm.transition(ctx, cur, input)
-		switch err {
-		case nil:
-		case ErrSucceededStateMachine, ErrFailedStateMachine, ErrEndStateMachine:
+		if errors.Is(err, ErrStateMachineTerminated) {
 			return input, nil
-		default:
+		}
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -177,13 +162,13 @@ func (sm *StateMachine) start(ctx context.Context, input *ajson.Node) (*ajson.No
 func (sm *StateMachine) transition(ctx context.Context, next string, input *ajson.Node) (string, *ajson.Node, error) {
 	select {
 	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
+		return "", nil, errors.New("stopped state machine")
 	default:
 	}
 
 	s, ok := sm.States[next]
 	if !ok {
-		return "", nil, ErrUnknownStateName
+		return "", nil, errors.New("unknown state name")
 	}
 
 	if v, err := input.Unpack(); err != nil {
@@ -225,7 +210,7 @@ func (sm *StateMachine) loggerWithSMInfo() *logrus.Entry {
 
 func (sm *StateMachine) decodeStates() (States, error) {
 	if sm == nil {
-		return nil, ErrRecieverIsNil
+		return nil, errors.New("receiver is nil")
 	}
 
 	states := NewStates()
@@ -291,7 +276,7 @@ func (sm *StateMachine) decodeState(raw json.RawMessage) (State, error) {
 	case "Map":
 		state = new(MapState)
 	default:
-		return nil, ErrUnknownStateName
+		return nil, errors.New("unknown state name")
 	}
 
 	if err := json.Unmarshal(raw, state); err != nil {

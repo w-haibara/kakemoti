@@ -131,6 +131,6 @@ func (s *ChoiceState) Transition(ctx context.Context, r *ajson.Node) (next strin
 			}
 		}
 
-		return "", r, ErrEndStateMachine
+		return "", r, ErrStateMachineTerminated
 	})
 }

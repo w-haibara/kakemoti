@@ -88,7 +88,7 @@ func (fn TransitionFunc) do(ctx context.Context, r *ajson.Node) (string, *ajson.
 func (s *CommonState) Transition(ctx context.Context, r *ajson.Node, fn TransitionFunc) (string, *ajson.Node, error) {
 	select {
 	case <-ctx.Done():
-		return "", nil, ErrStoppedStateMachine
+		return "", nil, ErrStateMachineTerminated
 	default:
 	}
 
@@ -135,7 +135,7 @@ func (s *CommonState) TransitionWithEndNext(ctx context.Context, r *ajson.Node, 
 	}
 
 	if s.End {
-		return "", r, ErrEndStateMachine
+		return "", r, ErrStateMachineTerminated
 	}
 
 	return next, w, nil
