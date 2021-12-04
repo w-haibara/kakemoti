@@ -1,0 +1,203 @@
+package compiler
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log"
+
+	"github.com/k0kubun/pp"
+)
+
+var ErrStateMachineTerminated = errors.New("state machine terminated")
+
+type ASL struct {
+	Comment        *string                    `json:"Comment"`
+	StartAt        *string                    `json:"StartAt"`
+	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
+	Version        *string                    `json:"Version"`
+	States         map[string]json.RawMessage `json:"States"`
+}
+
+type Workflow struct {
+	Comment        string
+	StartAt        string
+	TimeoutSeconds int64
+	Version        string
+	States         States
+}
+
+type States []State
+
+type State struct {
+	Type    string
+	Name    string
+	Next    string
+	Body    StateBody
+	Choices []States
+}
+
+func (s *States) makeStateMachine(state State, states map[string]State) (*State, error) {
+	if state.Type == "Choice" {
+		if state.Type == "Choice" {
+			body, ok := state.Body.(*ChoiceState)
+			if !ok {
+				return nil, fmt.Errorf("can't covert to type ChoiceState")
+			}
+
+			choices := make([]States, len(body.Choices))
+			for i, choice := range body.Choices {
+				if choice.Next == "" {
+					continue
+				}
+
+				state, ok := states[choice.Next]
+				if !ok {
+					return nil, fmt.Errorf("Next state is not found: %s", choice.Next)
+				}
+				choices[i] = []State{state}
+
+				if _, err := choices[i].makeStateMachine(state, states); err != nil {
+					return nil, err
+				}
+			}
+			state.Choices = choices
+			*s = append(*s, state)
+		}
+	}
+
+	if state.Next == "" {
+		return nil, nil
+	}
+
+	cur, ok := states[state.Next]
+	if !ok {
+		return nil, fmt.Errorf("Next state is not found: %s", cur.Next)
+	}
+	*s = append(*s, cur)
+	return s.makeStateMachine(cur, states)
+}
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
+
+func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
+	asl, err := NewStateMachine(aslBytes)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	workflow := &Workflow{
+		Comment:        *asl.Comment,
+		StartAt:        *asl.StartAt,
+		TimeoutSeconds: *asl.TimeoutSeconds,
+		Version:        *asl.Version,
+	}
+
+	states := make(map[string]State)
+	for name, state := range asl.States {
+		v := &struct {
+			Type string `json:"type"`
+		}{}
+		if err := json.Unmarshal(state, v); err != nil {
+			log.Fatal(err)
+		}
+
+		if v.Type == "Choice" {
+			var raw RawChoiceState
+			if err := json.Unmarshal(state, &raw); err != nil {
+				log.Fatal(err)
+			}
+
+			body, err := raw.decode()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			states[name] = State{
+				Type: v.Type,
+				Name: name,
+				Body: body,
+			}
+			continue
+		}
+
+		var body StateBody
+		switch v.Type {
+		case "Pass":
+			body = new(PassState)
+		case "Task":
+			body = new(TaskState)
+		case "Wait":
+			body = new(WaitState)
+		case "Succeed":
+			body = new(SucceedState)
+		case "Fail":
+			body = new(FailState)
+		case "Parallel":
+			body = new(ParallelState)
+		case "Map":
+			body = new(MapState)
+		default:
+			return nil, fmt.Errorf("Unknown state name: %s", v.Type)
+		}
+		if err := json.Unmarshal(state, body); err != nil {
+			log.Fatal(err)
+		}
+
+		states[name] = State{
+			Type: v.Type,
+			Name: name,
+			Next: body.GetNext(),
+			Body: body,
+		}
+	}
+
+	workflow.States = make([]State, 0, len(states))
+	cur := states[workflow.StartAt]
+	workflow.States = append(workflow.States, cur)
+
+	if _, err := workflow.States.makeStateMachine(cur, states); err != nil {
+		log.Fatal(err)
+	}
+
+	_, _ = pp.Println(workflow)
+
+	return nil, nil
+}
+
+func NewStateMachine(aslBytes *bytes.Buffer) (*ASL, error) {
+	dec := json.NewDecoder(aslBytes)
+
+	asl := new(ASL)
+	if err := dec.Decode(asl); err != nil {
+		return nil, err
+	}
+
+	if err := asl.validate(); err != nil {
+		return nil, err
+	}
+
+	return asl, nil
+}
+
+func (asl *ASL) validate() error {
+	if asl.StartAt == nil {
+		return fmt.Errorf("Top-level fields: 'StartAt' is needed")
+	}
+
+	if asl.Version == nil {
+		asl.Version = new(string)
+		*asl.Version = "1.0"
+	}
+
+	if asl.TimeoutSeconds == nil {
+		asl.TimeoutSeconds = new(int64)
+		*asl.TimeoutSeconds = 0
+	}
+
+	return nil
+}

@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"io"
+	l "log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/w-haibara/kuirejo/compiler"
 	"github.com/w-haibara/kuirejo/log"
 	"github.com/w-haibara/kuirejo/statemachine"
 )
@@ -19,6 +21,28 @@ type Options struct {
 	Input   string
 	ASL     string
 	Timeout int64
+}
+
+func Compile(ctx context.Context, opt Options) ([]byte, error) {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	if strings.TrimSpace(opt.ASL) == "" {
+		l.Fatalln("ASL option value is empty")
+	}
+
+	f, asl, err := readFile(opt.ASL)
+	if err != nil {
+		l.Fatalln(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			l.Fatalln(err)
+		}
+	}()
+
+	return compiler.Compile(ctx, asl)
 }
 
 func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
