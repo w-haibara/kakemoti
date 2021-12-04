@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/w-haibara/kuirejo/log"
 	"github.com/w-haibara/kuirejo/statemachine"
 )
@@ -65,13 +66,25 @@ func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
 }
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		l.Fatal(err)
+	}
+
 	if _, err := os.Stat(path); err != nil {
 		if err := os.Mkdir(path, os.ModePerm); err != nil {
 			l.Fatal(err)
 		}
 	}
 
-	f, err := os.Create(filepath.Join(path, time.Now().Format("2006010215040507")+".log"))
+	path = filepath.Join(path, time.Now().Format("dt=20060102"))
+	if _, err := os.Stat(path); err != nil {
+		if err := os.Mkdir(path, os.ModePerm); err != nil {
+			l.Fatal(err)
+		}
+	}
+
+	f, err := os.Create(filepath.Join(path, id.String()+".log"))
 	if err != nil {
 		l.Fatal(err)
 	}
