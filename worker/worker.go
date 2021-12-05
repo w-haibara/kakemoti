@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -21,8 +22,6 @@ var (
 )
 
 func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger *log.Logger) ([]byte, error) {
-	_, _ = pp.Println(w)
-
 	id, err := uuid.NewRandom()
 	if err != nil {
 		logger.Println(err)
@@ -71,7 +70,7 @@ func (w Workflow) loggerWithInfo() *logrus.Entry {
 }
 
 func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
-	o, err := w.execStates(ctx, w.States, input)
+	o, err := w.execStates(ctx, &w.States, input)
 	if err != nil {
 		w.loggerWithInfo().Println(err)
 		return nil, err
@@ -80,18 +79,24 @@ func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, err
 	return o, nil
 }
 
-func (w Workflow) execStates(ctx context.Context, states compiler.States, input *ajson.Node) (output *ajson.Node, err error) {
-	for _, state := range states {
-		if state.Type == "Choice" {
+func (w Workflow) execStates(ctx context.Context, states *compiler.States, input *ajson.Node) (output *ajson.Node, err error) {
+	for i := range *states {
+		if (*states)[i].Type == "Choice" {
 			next := ""
-			next, output, err = evalChoice(ctx, state, input)
+			next, output, err = evalChoice(ctx, &(*states)[i], input)
 			if err != nil {
 				w.loggerWithInfo().Println(err)
 				return nil, err
 			}
-			_, _ = pp.Println("next:", next)
+			s, ok := (*states)[i].Choices[next]
+			if !ok {
+				err = fmt.Errorf("'next' key is invalid: %s", next)
+				w.loggerWithInfo().Println(err)
+				return nil, err
+			}
+			return w.execStates(ctx, s, output)
 		} else {
-			output, err = eval(ctx, state, input)
+			output, err = eval(ctx, &(*states)[i], input)
 			if err != nil {
 				w.loggerWithInfo().Println(err)
 				return nil, err
@@ -104,12 +109,13 @@ func (w Workflow) execStates(ctx context.Context, states compiler.States, input 
 	return output, nil
 }
 
-func eval(ctx context.Context, state compiler.State, input *ajson.Node) (*ajson.Node, error) {
-	_, _ = pp.Println(state.Name, state.Type)
+func eval(ctx context.Context, state *compiler.State, input *ajson.Node) (*ajson.Node, error) {
+	_, _ = pp.Println(state.Name, "-->", state.Next)
 	return input, nil
 }
 
-func evalChoice(ctx context.Context, state compiler.State, input *ajson.Node) (string, *ajson.Node, error) {
-	_, _ = pp.Println(state.Name, state.Type)
-	return "", input, nil
+func evalChoice(ctx context.Context, state *compiler.State, input *ajson.Node) (string, *ajson.Node, error) {
+	next := "Yes"
+	_, _ = pp.Println(state.Name, "-->", next)
+	return next, input, nil
 }
