@@ -41,10 +41,8 @@ type State struct {
 
 func makeStateMachine(s *States, state State, states map[string]State) error {
 	if state.Type == "Choice" {
-		if state.Type == "Choice" {
-			if err := setChoices(s, state, states); err != nil {
-				return err
-			}
+		if err := setChoices(s, state, states); err != nil {
+			return err
 		}
 	}
 
