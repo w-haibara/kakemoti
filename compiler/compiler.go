@@ -40,10 +40,12 @@ type State struct {
 }
 
 func makeStateMachine(s *States, state State, states map[string]State) error {
-	if state.Type == "Choice" {
+	switch state.Type {
+	case "Choice":
 		if err := setChoices(s, state, states); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	if state.Next == "" {
