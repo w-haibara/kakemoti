@@ -5,6 +5,7 @@ import (
 )
 
 type RawChoiceState struct {
+	CommonState
 	Choices []map[string]interface{} `json:"Choices"`
 	Default string                   `json:"Default"`
 }
@@ -55,8 +56,9 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 	}
 
 	return &ChoiceState{
-		Choices: choices,
-		Default: raw.Default,
+		CommonState: raw.CommonState,
+		Choices:     choices,
+		Default:     raw.Default,
 	}, nil
 }
 
