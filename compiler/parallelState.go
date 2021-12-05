@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-
-	"github.com/k0kubun/pp"
 )
 
 type RawParallelState struct {
@@ -33,8 +31,6 @@ func (raw RawParallelState) decode() (*ParallelState, error) {
 			log.Println(err)
 			return nil, err
 		}
-
-		_, _ = pp.Println(asl)
 
 		workflow, err := asl.compile()
 		if err != nil {
