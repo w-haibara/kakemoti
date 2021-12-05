@@ -1,8 +1,7 @@
 package compiler
 
 type FailState struct {
-}
-
-func (state FailState) GetNext() string {
-	return ""
+	CommonState
+	Cause string `json:"Cause"`
+	Error string `json:"Error"`
 }

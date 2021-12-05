@@ -1,8 +1,10 @@
 package compiler
 
 type ParallelState struct {
-}
-
-func (state ParallelState) GetNext() string {
-	return ""
+	CommonState
+	Branches       []ASL  `json:"Branches"`
+	ResultPath     string `json:"ResultPath"`
+	ResultSelector string `json:"ResultSelector"`
+	Retry          string `json:"Retry"`
+	Catch          string `json:"Catch"`
 }

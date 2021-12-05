@@ -1,8 +1,12 @@
 package compiler
 
 type MapState struct {
-}
-
-func (state MapState) GetNext() string {
-	return ""
+	CommonState
+	Iterator       ASL    `json:"Iterator"`
+	ItemsPath      string `json:"ItemsPath"`
+	MaxConcurrency int64  `json:"MaxConcurrency"`
+	ResultPath     string `json:"ResultPath"`
+	ResultSelector string `json:"ResultSelector"`
+	Retry          string `json:"Retry"`
+	Catch          string `json:"Catch"`
 }

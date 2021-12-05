@@ -61,6 +61,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 }
 
 type ChoiceState struct {
+	CommonState
 	Choices []Choice `json:"Choices"`
 	Default string   `json:"Default"`
 }

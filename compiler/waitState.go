@@ -1,8 +1,9 @@
 package compiler
 
 type WaitState struct {
-}
-
-func (state WaitState) GetNext() string {
-	return ""
+	CommonState
+	Seconds       int64  `json:"Seconds"`
+	Timestamp     string `json:"Timestamp"`
+	SecondsPath   string `json:"SecondsPath"`
+	TimestampPath string `json:"TimestampPath"`
 }
