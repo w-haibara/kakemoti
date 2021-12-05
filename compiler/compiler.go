@@ -87,7 +87,6 @@ func setChoices(s *States, state State, states map[string]State) error {
 
 	var s1 []State = *s
 	s1[len(s1)-1] = state
-	s = (*States)(&s1)
 
 	return nil
 }
