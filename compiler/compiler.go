@@ -34,7 +34,7 @@ type State struct {
 	Name    string
 	Next    string
 	Body    StateBody
-	Choices []States
+	Choices map[string]*States
 }
 
 func makeStateMachine(s *States, state State, states map[string]State) error {
@@ -63,8 +63,8 @@ func setChoices(s *States, state State, states map[string]State) error {
 		return fmt.Errorf("can't covert to type ChoiceState")
 	}
 
-	choices := make([]States, len(body.Choices))
-	for i, choice := range body.Choices {
+	choices := make(map[string]*States)
+	for _, choice := range body.Choices {
 		if choice.Next == "" {
 			continue
 		}
@@ -73,9 +73,9 @@ func setChoices(s *States, state State, states map[string]State) error {
 		if !ok {
 			return fmt.Errorf("Next state is not found: %s", choice.Next)
 		}
-		choices[i] = []State{state}
+		choices[state.Name] = &States{state}
 
-		if err := makeStateMachine(&choices[i], state, states); err != nil {
+		if err := makeStateMachine(choices[state.Name], state, states); err != nil {
 			return err
 		}
 	}
