@@ -39,48 +39,57 @@ type State struct {
 	Choices []States
 }
 
-func (s *States) makeStateMachine(state State, states map[string]State) (*State, error) {
+func (s *States) makeStateMachine(state State, states map[string]State) error {
 	if state.Type == "Choice" {
 		if state.Type == "Choice" {
-			body, ok := state.Body.(*ChoiceState)
-			if !ok {
-				return nil, fmt.Errorf("can't covert to type ChoiceState")
+			if err := s.setChoices(state, states); err != nil {
+				return err
 			}
-
-			choices := make([]States, len(body.Choices))
-			for i, choice := range body.Choices {
-				if choice.Next == "" {
-					continue
-				}
-
-				state, ok := states[choice.Next]
-				if !ok {
-					return nil, fmt.Errorf("Next state is not found: %s", choice.Next)
-				}
-				choices[i] = []State{state}
-
-				if _, err := choices[i].makeStateMachine(state, states); err != nil {
-					return nil, err
-				}
-			}
-			state.Choices = choices
-			var s1 []State = *s
-			s1[len(s1)-1] = state
-			var s2 States = s1
-			s = &s2
 		}
 	}
 
 	if state.Next == "" {
-		return nil, nil
+		return nil
 	}
 
 	cur, ok := states[state.Next]
 	if !ok {
-		return nil, fmt.Errorf("Next state is not found: %s", cur.Next)
+		return fmt.Errorf("Next state is not found: %s", cur.Next)
 	}
 	*s = append(*s, cur)
 	return s.makeStateMachine(cur, states)
+}
+
+func (s *States) setChoices(state State, states map[string]State) error {
+	body, ok := state.Body.(*ChoiceState)
+	if !ok {
+		return fmt.Errorf("can't covert to type ChoiceState")
+	}
+
+	choices := make([]States, len(body.Choices))
+	for i, choice := range body.Choices {
+		if choice.Next == "" {
+			continue
+		}
+
+		state, ok := states[choice.Next]
+		if !ok {
+			return fmt.Errorf("Next state is not found: %s", choice.Next)
+		}
+		choices[i] = []State{state}
+
+		if err := choices[i].makeStateMachine(state, states); err != nil {
+			return err
+		}
+	}
+
+	state.Choices = choices
+	var s1 []State = *s
+	s1[len(s1)-1] = state
+	var s2 States = s1
+	s = &s2
+
+	return nil
 }
 
 func init() {
@@ -163,7 +172,7 @@ func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
 	cur := states[workflow.StartAt]
 	workflow.States = append(workflow.States, cur)
 
-	if _, err := workflow.States.makeStateMachine(cur, states); err != nil {
+	if err := workflow.States.makeStateMachine(cur, states); err != nil {
 		log.Fatal(err)
 	}
 
