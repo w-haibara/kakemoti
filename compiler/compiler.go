@@ -195,6 +195,7 @@ func (asl *ASL) compile() (*Workflow, error) {
 			states[name] = State{
 				Type: v.Type,
 				Name: name,
+				Next: body.Next,
 				Body: body,
 			}
 			continue
