@@ -14,7 +14,7 @@ import (
 var ErrStateMachineTerminated = errors.New("state machine terminated")
 
 type ASL struct {
-	Comment        *string                    `json:"Comment"`
+	Comment        string                     `json:"Comment"`
 	StartAt        *string                    `json:"StartAt"`
 	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
 	Version        *string                    `json:"Version"`
@@ -40,8 +40,7 @@ type State struct {
 }
 
 func makeStateMachine(s *States, state State, states map[string]State) error {
-	switch state.Type {
-	case "Choice":
+	if state.Type == "Choice" {
 		if err := setChoices(s, state, states); err != nil {
 			return err
 		}
@@ -96,83 +95,14 @@ func init() {
 }
 
 func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
-	asl, err := NewStateMachine(aslBytes)
+	asl, err := NewASL(aslBytes)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	workflow := &Workflow{
-		Comment:        *asl.Comment,
-		StartAt:        *asl.StartAt,
-		TimeoutSeconds: *asl.TimeoutSeconds,
-		Version:        *asl.Version,
-	}
-
-	states := make(map[string]State)
-	for name, state := range asl.States {
-		v := &struct {
-			Type string `json:"type"`
-		}{}
-		if err := json.Unmarshal(state, v); err != nil {
-			log.Fatal(err)
-		}
-
-		if v.Type == "Choice" {
-			var raw RawChoiceState
-			if err := json.Unmarshal(state, &raw); err != nil {
-				log.Fatal(err)
-			}
-
-			body, err := raw.decode()
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			states[name] = State{
-				Type: v.Type,
-				Name: name,
-				Body: body,
-			}
-			continue
-		}
-
-		var body StateBody
-		switch v.Type {
-		case "Pass":
-			body = new(PassState)
-		case "Task":
-			body = new(TaskState)
-		case "Wait":
-			body = new(WaitState)
-		case "Succeed":
-			body = new(SucceedState)
-		case "Fail":
-			body = new(FailState)
-		case "Parallel":
-			body = new(ParallelState)
-		case "Map":
-			body = new(MapState)
-		default:
-			return nil, fmt.Errorf("Unknown state name: %s", v.Type)
-		}
-		if err := json.Unmarshal(state, body); err != nil {
-			log.Fatal(err)
-		}
-
-		states[name] = State{
-			Type: v.Type,
-			Name: name,
-			Next: body.GetNext(),
-			Body: body,
-		}
-	}
-
-	workflow.States = make([]State, 0, len(states))
-	cur := states[workflow.StartAt]
-	workflow.States = append(workflow.States, cur)
-
-	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
-		log.Fatal(err)
+	workflow, err := asl.compile()
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	_, _ = pp.Println(workflow)
@@ -180,7 +110,7 @@ func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
 	return nil, nil
 }
 
-func NewStateMachine(aslBytes *bytes.Buffer) (*ASL, error) {
+func NewASL(aslBytes *bytes.Buffer) (*ASL, error) {
 	dec := json.NewDecoder(aslBytes)
 
 	asl := new(ASL)
@@ -211,4 +141,107 @@ func (asl *ASL) validate() error {
 	}
 
 	return nil
+}
+
+func (asl *ASL) compile() (*Workflow, error) {
+	workflow := &Workflow{
+		Comment:        asl.Comment,
+		StartAt:        *asl.StartAt,
+		TimeoutSeconds: *asl.TimeoutSeconds,
+		Version:        *asl.Version,
+	}
+
+	states := make(map[string]State)
+	for name, state := range asl.States {
+		v := &struct {
+			Type string `json:"type"`
+		}{}
+		if err := json.Unmarshal(state, v); err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		switch v.Type {
+		case "Choice":
+			var raw RawChoiceState
+			if err := json.Unmarshal(state, &raw); err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			body, err := raw.decode()
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			states[name] = State{
+				Type: v.Type,
+				Name: name,
+				Body: body,
+			}
+			continue
+		case "Parallel":
+			var raw RawParallelState
+			if err := json.Unmarshal(state, &raw); err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			body, err := raw.decode()
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			states[name] = State{
+				Type: v.Type,
+				Name: name,
+				Body: body,
+			}
+			continue
+		}
+
+		var body StateBody
+		switch v.Type {
+		case "Pass":
+			body = new(PassState)
+		case "Task":
+			body = new(TaskState)
+		case "Wait":
+			body = new(WaitState)
+		case "Succeed":
+			body = new(SucceedState)
+		case "Fail":
+			body = new(FailState)
+		case "Map":
+			body = new(MapState)
+		default:
+			err := fmt.Errorf("Unknown state name: %s", v.Type)
+			log.Println(err)
+			return nil, err
+		}
+		if err := json.Unmarshal(state, body); err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		states[name] = State{
+			Type: v.Type,
+			Name: name,
+			Next: body.GetNext(),
+			Body: body,
+		}
+	}
+
+	workflow.States = make([]State, 0, len(states))
+	cur := states[workflow.StartAt]
+	workflow.States = append(workflow.States, cur)
+
+	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return workflow, nil
 }
