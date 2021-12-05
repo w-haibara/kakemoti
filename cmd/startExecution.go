@@ -19,7 +19,7 @@ func NewStartExecutionCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			//result, err := cli.StartExecution(ctx, o)
-			result, err := cli.Compile(ctx, o)
+			result, err := cli.StartExecution2(ctx, o)
 			if err != nil {
 				log.Fatal(err)
 			}

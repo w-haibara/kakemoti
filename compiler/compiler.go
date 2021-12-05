@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-
-	"github.com/k0kubun/pp"
 )
 
 var ErrStateMachineTerminated = errors.New("state machine terminated")
@@ -94,20 +92,20 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
-func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
+func Compile(ctx context.Context, aslBytes *bytes.Buffer) (*Workflow, error) {
 	asl, err := NewASL(aslBytes)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return nil, err
 	}
 
 	workflow, err := asl.compile()
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return nil, err
 	}
 
-	_, _ = pp.Println(workflow)
-
-	return nil, nil
+	return workflow, nil
 }
 
 func NewASL(aslBytes *bytes.Buffer) (*ASL, error) {
