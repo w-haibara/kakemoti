@@ -69,7 +69,7 @@ func StartExecution2(ctx context.Context, opt Options) ([]byte, error) {
 		}
 	}()
 
-	return worker.Exec(ctx, *workflow, input)
+	return worker.Exec(ctx, *workflow, input, logger)
 }
 
 func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
