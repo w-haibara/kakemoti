@@ -64,7 +64,10 @@ func (s *States) makeStateMachine(state State, states map[string]State) (*State,
 				}
 			}
 			state.Choices = choices
-			*s = append(*s, state)
+			var s1 []State = *s
+			s1[len(s1)-1] = state
+			var s2 States = s1
+			s = &s2
 		}
 	}
 
