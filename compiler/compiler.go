@@ -39,10 +39,10 @@ type State struct {
 	Choices []States
 }
 
-func (s *States) makeStateMachine(state State, states map[string]State) error {
+func makeStateMachine(s *States, state State, states map[string]State) error {
 	if state.Type == "Choice" {
 		if state.Type == "Choice" {
-			if err := s.setChoices(state, states); err != nil {
+			if err := setChoices(s, state, states); err != nil {
 				return err
 			}
 		}
@@ -57,10 +57,10 @@ func (s *States) makeStateMachine(state State, states map[string]State) error {
 		return fmt.Errorf("Next state is not found: %s", cur.Next)
 	}
 	*s = append(*s, cur)
-	return s.makeStateMachine(cur, states)
+	return makeStateMachine(s, cur, states)
 }
 
-func (s *States) setChoices(state State, states map[string]State) error {
+func setChoices(s *States, state State, states map[string]State) error {
 	body, ok := state.Body.(*ChoiceState)
 	if !ok {
 		return fmt.Errorf("can't covert to type ChoiceState")
@@ -78,16 +78,16 @@ func (s *States) setChoices(state State, states map[string]State) error {
 		}
 		choices[i] = []State{state}
 
-		if err := choices[i].makeStateMachine(state, states); err != nil {
+		if err := makeStateMachine(&choices[i], state, states); err != nil {
 			return err
 		}
 	}
 
 	state.Choices = choices
+
 	var s1 []State = *s
 	s1[len(s1)-1] = state
-	var s2 States = s1
-	s = &s2
+	s = (*States)(&s1)
 
 	return nil
 }
@@ -172,7 +172,7 @@ func Compile(ctx context.Context, aslBytes *bytes.Buffer) ([]byte, error) {
 	cur := states[workflow.StartAt]
 	workflow.States = append(workflow.States, cur)
 
-	if err := workflow.States.makeStateMachine(cur, states); err != nil {
+	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
 		log.Fatal(err)
 	}
 
