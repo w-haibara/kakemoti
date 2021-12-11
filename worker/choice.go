@@ -22,35 +22,14 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 		if choice.Rule != nil {
 			switch choice.Rule.Operator {
 			case "BooleanEquals":
-				path, ok := choice.Rule.Variable1.(string)
-				if !ok {
-					return "", nil, errors.New("type of choice.Rule.Variable1 is not string")
-				}
-
-				nodes, err := input.JSONPath(path)
+				next, output, err := BooleanEquals(choice, input)
 				if err != nil {
-					return "", nil, fmt.Errorf("input.JSONPath(path) failed: %w", err)
+					return "", nil, err
 				}
-
-				if len(nodes) != 1 {
-					return "", nil, fmt.Errorf("invalid length of input.JSONPath(path) result")
+				if next == "" {
+					continue
 				}
-
-				v1, err := nodes[0].GetBool()
-				if err != nil {
-					return "", nil, fmt.Errorf("invalid type of input.JSONPath(path) result")
-				}
-
-				v2, ok := choice.Rule.Variable2.(bool)
-				if !ok {
-					return "", nil, errors.New("type of choice.Rule.Variable2 is not bool")
-				}
-
-				if v1 == v2 {
-					return choice.Next, input, nil
-				}
-
-				continue
+				return next, output, nil
 			case "BooleanEqualsPath":
 				panic("Not Implemented")
 			case "IsBoolean":
@@ -128,4 +107,36 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 	}
 
 	return state.Default, input, nil
+}
+
+func BooleanEquals(choice compiler.Choice, input *ajson.Node) (string, *ajson.Node, error) {
+	path, ok := choice.Rule.Variable1.(string)
+	if !ok {
+		return "", nil, errors.New("type of choice.Rule.Variable1 is not string")
+	}
+
+	nodes, err := input.JSONPath(path)
+	if err != nil {
+		return "", nil, fmt.Errorf("input.JSONPath(path) failed: %w", err)
+	}
+
+	if len(nodes) != 1 {
+		return "", nil, fmt.Errorf("invalid length of input.JSONPath(path) result")
+	}
+
+	v1, err := nodes[0].GetBool()
+	if err != nil {
+		return "", nil, fmt.Errorf("invalid type of input.JSONPath(path) result")
+	}
+
+	v2, ok := choice.Rule.Variable2.(bool)
+	if !ok {
+		return "", nil, errors.New("type of choice.Rule.Variable2 is not bool")
+	}
+
+	if v1 == v2 {
+		return choice.Next, input, nil
+	}
+
+	return "", nil, nil
 }
