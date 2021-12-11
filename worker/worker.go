@@ -8,14 +8,16 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/k0kubun/pp"
 	"github.com/sirupsen/logrus"
 	"github.com/spyzhov/ajson"
 	"github.com/w-haibara/kuirejo/compiler"
 	"github.com/w-haibara/kuirejo/log"
 )
 
-var ErrStateMachineTerminated = errors.New("state machine terminated")
+var (
+	ErrStateMachineTerminated = errors.New("state machine terminated")
+	ErrUnknownStateType       = errors.New("unknown state type")
+)
 
 var (
 	EmptyJSON = []byte("{}")
@@ -24,7 +26,7 @@ var (
 func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger *log.Logger) ([]byte, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		logger.Println(err)
+		logger.Println("Error:", err)
 		return nil, err
 	}
 	workflow := Workflow{&w, id.String(), logger}
@@ -35,19 +37,19 @@ func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger 
 
 	in, err := ajson.Unmarshal(input.Bytes())
 	if err != nil {
-		workflow.loggerWithInfo().Println(err)
+		workflow.errorLog(err)
 		return nil, err
 	}
 
 	out, err := workflow.exec(ctx, in)
 	if err != nil {
-		workflow.loggerWithInfo().Println(err)
+		workflow.errorLog(err)
 		return nil, err
 	}
 
 	b, err := ajson.Marshal(out)
 	if err != nil {
-		workflow.loggerWithInfo().Println(err)
+		workflow.errorLog(err)
 		return nil, err
 	}
 
@@ -69,10 +71,22 @@ func (w Workflow) loggerWithInfo() *logrus.Entry {
 	})
 }
 
+func (w Workflow) errorLog(err error) {
+	w.loggerWithInfo().Println("Error:", err)
+}
+
+func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
+	return w.loggerWithInfo().WithFields(logrus.Fields{
+		"Type": s.Type,
+		"Name": s.Name,
+		"Next": s.Next,
+	})
+}
+
 func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
 	o, err := w.execStates(ctx, &w.States, input)
 	if err != nil {
-		w.loggerWithInfo().Println(err)
+		w.errorLog(err)
 		return nil, err
 	}
 
@@ -81,24 +95,25 @@ func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, err
 
 func (w Workflow) execStates(ctx context.Context, states *compiler.States, input *ajson.Node) (output *ajson.Node, err error) {
 	for i := range *states {
+		w.loggerWithStateInfo((*states)[i]).Println("eval state:", (*states)[i].Name)
 		if (*states)[i].Type == "Choice" {
 			next := ""
-			next, output, err = evalChoice(ctx, &(*states)[i], input)
+			next, output, err = w.evalChoice(ctx, &(*states)[i], input)
 			if err != nil {
-				w.loggerWithInfo().Println(err)
+				w.errorLog(err)
 				return nil, err
 			}
 			s, ok := (*states)[i].Choices[next]
 			if !ok {
 				err = fmt.Errorf("'next' key is invalid: %s", next)
-				w.loggerWithInfo().Println(err)
+				w.errorLog(err)
 				return nil, err
 			}
 			return w.execStates(ctx, s, output)
 		} else {
-			output, err = eval(ctx, &(*states)[i], input)
+			output, err = w.eval(ctx, &(*states)[i], input)
 			if err != nil {
-				w.loggerWithInfo().Println(err)
+				w.errorLog(err)
 				return nil, err
 			}
 		}
@@ -109,13 +124,22 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	return output, nil
 }
 
-func eval(ctx context.Context, state *compiler.State, input *ajson.Node) (*ajson.Node, error) {
-	_, _ = pp.Println(state.Name, "-->", state.Next)
-	return input, nil
+func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.Node) (*ajson.Node, error) {
+	switch body := state.Body.(type) {
+	case *compiler.PassState:
+		output, err := w.evalPass(ctx, body, input)
+		if err != nil {
+			w.errorLog(err)
+			return nil, err
+		}
+		return output, nil
+	}
+
+	w.errorLog(ErrUnknownStateType)
+	return nil, ErrUnknownStateType
 }
 
-func evalChoice(ctx context.Context, state *compiler.State, input *ajson.Node) (string, *ajson.Node, error) {
+func (w Workflow) evalChoice(ctx context.Context, state *compiler.State, input *ajson.Node) (string, *ajson.Node, error) {
 	next := "Yes"
-	_, _ = pp.Println(state.Name, "-->", next)
 	return next, input, nil
 }
