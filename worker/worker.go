@@ -126,6 +126,13 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 
 func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.Node) (*ajson.Node, error) {
 	switch body := state.Body.(type) {
+	case *compiler.FailState:
+		output, err := w.evalFail(ctx, body, input)
+		if err != nil {
+			w.errorLog(err)
+			return nil, err
+		}
+		return output, nil
 	case *compiler.PassState:
 		output, err := w.evalPass(ctx, body, input)
 		if err != nil {
@@ -133,8 +140,8 @@ func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.
 			return nil, err
 		}
 		return output, nil
-	case *compiler.FailState:
-		output, err := w.evalFail(ctx, body, input)
+	case *compiler.SucceedState:
+		output, err := w.evalSucceed(ctx, body, input)
 		if err != nil {
 			w.errorLog(err)
 			return nil, err
