@@ -24,12 +24,10 @@ var (
 )
 
 func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger *log.Logger) ([]byte, error) {
-	id, err := uuid.NewRandom()
+	workflow, err := NewWorkflow(&w, logger)
 	if err != nil {
 		logger.Println("Error:", err)
-		return nil, err
 	}
-	workflow := Workflow{&w, id.String(), logger}
 
 	if input == nil || strings.TrimSpace(input.String()) == "" {
 		input = bytes.NewBuffer(EmptyJSON)
@@ -60,6 +58,14 @@ type Workflow struct {
 	*compiler.Workflow
 	ID     string
 	Logger *log.Logger
+}
+
+func NewWorkflow(w *compiler.Workflow, logger *log.Logger) (*Workflow, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	return &Workflow{w, id.String(), logger}, nil
 }
 
 func (w Workflow) loggerWithInfo() *logrus.Entry {
