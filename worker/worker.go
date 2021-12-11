@@ -133,6 +133,8 @@ func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.
 			return nil, err
 		}
 		return output, nil
+	case *compiler.MapState:
+	case *compiler.ParallelState:
 	case *compiler.PassState:
 		output, err := w.evalPass(ctx, body, input)
 		if err != nil {
@@ -147,6 +149,8 @@ func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.
 			return nil, err
 		}
 		return output, nil
+	case *compiler.TaskState:
+	case *compiler.WaitState:
 	}
 
 	w.errorLog(ErrUnknownStateType)
