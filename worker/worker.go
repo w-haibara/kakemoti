@@ -96,9 +96,9 @@ func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, err
 func (w Workflow) execStates(ctx context.Context, states *compiler.States, input *ajson.Node) (output *ajson.Node, err error) {
 	for i := range *states {
 		w.loggerWithStateInfo((*states)[i]).Println("eval state:", (*states)[i].Name)
-		if (*states)[i].Type == "Choice" {
+		if choice, ok := (*states)[i].Body.(*compiler.ChoiceState); ok {
 			next := ""
-			next, output, err = w.evalChoice(ctx, &(*states)[i], input)
+			next, output, err = w.evalChoice(ctx, choice, input)
 			if err != nil {
 				w.errorLog(err)
 				return nil, err
@@ -137,9 +137,4 @@ func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.
 
 	w.errorLog(ErrUnknownStateType)
 	return nil, ErrUnknownStateType
-}
-
-func (w Workflow) evalChoice(ctx context.Context, state *compiler.State, input *ajson.Node) (string, *ajson.Node, error) {
-	next := "Yes"
-	return next, input, nil
 }
