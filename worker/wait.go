@@ -71,13 +71,5 @@ func getDulation(state *compiler.WaitState, input *ajson.Node) (time.Duration, e
 		return 0, err
 	}
 
-	fmt.Printf("%s\n", time.Now().Format(timeformat))
-	fmt.Printf("%s\n", timestamp)
-	fmt.Println()
-	fmt.Printf("%s\n", time.Now())
-	fmt.Printf("%s\n", t)
-	fmt.Println()
-	fmt.Printf("%s\n", time.Until(t))
-
 	return time.Until(t), nil
 }
