@@ -199,6 +199,26 @@ func (asl *ASL) compile() (*Workflow, error) {
 				Body: body,
 			}
 			continue
+		case "Task":
+			var raw RawTaskState
+			if err := json.Unmarshal(state, &raw); err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			body, err := raw.decode()
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			states[name] = State{
+				Type: v.Type,
+				Name: name,
+				Next: body.Next,
+				Body: body,
+			}
+			continue
 		}
 
 		var body StateBody
