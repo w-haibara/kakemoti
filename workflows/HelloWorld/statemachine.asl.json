@@ -35,7 +35,7 @@
     "Wait 3 sec": {
       "Comment": "A Wait state delays the state machine from continuing for a specified time.",
       "Type": "Wait",
-      "Seconds": 3,
+      "Seconds": 0,
       "Next": "Parallel State"
     },
     "Parallel State": {
