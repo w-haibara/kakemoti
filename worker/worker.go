@@ -78,7 +78,7 @@ func (w Workflow) loggerWithInfo() *logrus.Entry {
 }
 
 func (w Workflow) errorLog(err error) {
-	w.loggerWithInfo().WithField("line", log.Line()).Println("Error:", err)
+	w.loggerWithInfo().WithField("line", log.Line()).Fatalln("Error:", err)
 }
 
 func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
