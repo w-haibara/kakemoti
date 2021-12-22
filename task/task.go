@@ -58,12 +58,12 @@ func unmarshal(node interface{}) (fn.Obj, error) {
 		return nil, err
 	}
 
-	in := new(fn.Obj)
-	if err := json.Unmarshal(b, in); err != nil {
+	var in fn.Obj
+	if err := json.Unmarshal(b, &in); err != nil {
 		return nil, err
 	}
 
-	return *in, nil
+	return in, nil
 }
 
 func marshal(obj fn.Obj) (interface{}, error) {
