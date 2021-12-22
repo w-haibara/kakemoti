@@ -101,32 +101,41 @@ func (w Workflow) exec(ctx context.Context, input interface{}) (interface{}, err
 
 func (w Workflow) execStates(ctx context.Context, states *compiler.States, input interface{}) (output interface{}, err error) {
 	for i := range *states {
-		w.loggerWithStateInfo((*states)[i]).Println("eval state:", (*states)[i].Name)
-		if choice, ok := (*states)[i].Body.(*compiler.ChoiceState); ok {
-			next := ""
-			next, output, err = w.evalChoice(ctx, choice, input)
-			if err != nil {
-				w.errorLog(err)
-				return nil, err
-			}
-			s, ok := (*states)[i].Choices[next]
-			if !ok {
-				err = fmt.Errorf("'next' key is invalid: %s", next)
-				w.errorLog(err)
-				return nil, err
-			}
-			return w.execStates(ctx, s, output)
-		} else {
-			output, err = w.eval(ctx, &(*states)[i], input)
-			if err != nil {
-				w.errorLog(err)
-				return nil, err
-			}
+		output, err = w.execState(ctx, (*states)[i], input)
+		if err != nil {
+			return nil, err
 		}
-
 		input = output
 	}
+	return output, nil
+}
 
+func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
+
+	var output interface{}
+	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
+		next := ""
+		next, out, err := w.evalChoice(ctx, choice, input)
+		if err != nil {
+			w.errorLog(err)
+			return nil, err
+		}
+		s, ok := state.Choices[next]
+		if !ok {
+			err = fmt.Errorf("'next' key is invalid: %s", next)
+			w.errorLog(err)
+			return nil, err
+		}
+		return w.execStates(ctx, s, out)
+	} else {
+		out, err := w.eval(ctx, &state, input)
+		if err != nil {
+			w.errorLog(err)
+			return nil, err
+		}
+		output = out
+	}
 	return output, nil
 }
 
