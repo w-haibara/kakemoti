@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/google/uuid v1.3.0
 	github.com/k0kubun/pp v3.0.1+incompatible
+	github.com/ohler55/ojg v1.12.11
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spyzhov/ajson v0.6.0

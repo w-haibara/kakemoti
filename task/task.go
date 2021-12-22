@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/spyzhov/ajson"
 	"github.com/w-haibara/kuirejo/task/fn"
 )
 
@@ -29,7 +28,7 @@ func Register(name string, fn Fn) {
 	fnMap[name] = fn
 }
 
-func Do(ctx context.Context, resouceType, resoucePath string, input *ajson.Node) (*ajson.Node, error) {
+func Do(ctx context.Context, resouceType, resoucePath string, input interface{}) (interface{}, error) {
 	fn, ok := fnMap[resouceType]
 	if !ok {
 		return nil, fmt.Errorf("invalid resouce type: %s", resouceType)
@@ -37,24 +36,24 @@ func Do(ctx context.Context, resouceType, resoucePath string, input *ajson.Node)
 
 	in, err := unmarshal(input)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal() failed: %w", err)
+		return nil, fmt.Errorf("unmarshal() failed: %v", err)
 	}
 
 	out, err := fn(ctx, resoucePath, in)
 	if err != nil {
-		return nil, fmt.Errorf("fn() failed: %w", err)
+		return nil, fmt.Errorf("fn() failed: %v", err)
 	}
 
 	output, err := marshal(out)
 	if err != nil {
-		return nil, fmt.Errorf("marshal() failed: %w", err)
+		return nil, fmt.Errorf("marshal() failed: %v", err)
 	}
 
 	return output, nil
 }
 
-func unmarshal(node *ajson.Node) (fn.Obj, error) {
-	b, err := ajson.Marshal(node)
+func unmarshal(node interface{}) (fn.Obj, error) {
+	b, err := json.Marshal(node)
 	if err != nil {
 		return nil, err
 	}
@@ -67,14 +66,14 @@ func unmarshal(node *ajson.Node) (fn.Obj, error) {
 	return *in, nil
 }
 
-func marshal(obj fn.Obj) (*ajson.Node, error) {
+func marshal(obj fn.Obj) (interface{}, error) {
 	b, err := json.Marshal(obj)
 	if err != nil {
 		return nil, err
 	}
 
-	node, err := ajson.Unmarshal(b)
-	if err != nil {
+	var node interface{}
+	if err := json.Unmarshal(b, &node); err != nil {
 		return nil, err
 	}
 

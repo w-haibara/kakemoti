@@ -4,20 +4,19 @@ import (
 	"context"
 	"sync"
 
-	"github.com/spyzhov/ajson"
 	"github.com/w-haibara/kuirejo/compiler"
 	"golang.org/x/sync/errgroup"
 )
 
 type outputs struct {
 	mu sync.Mutex
-	v  []*ajson.Node
+	v  []interface{}
 }
 
-func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelState, input *ajson.Node) (*ajson.Node, error) {
+func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelState, input interface{}) (interface{}, error) {
 	var eg errgroup.Group
 	var outputs outputs
-	outputs.v = make([]*ajson.Node, len(state.Branches))
+	outputs.v = make([]interface{}, len(state.Branches))
 	for i := range state.Branches {
 		i := i
 		eg.Go(func() error {
@@ -43,5 +42,5 @@ func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelStat
 		return nil, err
 	}
 
-	return ajson.ArrayNode(w.ID, outputs.v), nil
+	return outputs.v, nil
 }
