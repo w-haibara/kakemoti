@@ -7,8 +7,6 @@ import (
 	"os/exec"
 )
 
-type Obj map[string]interface{}
-
 func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, error) {
 	exe, err := exec.LookPath(path)
 	if err != nil {
