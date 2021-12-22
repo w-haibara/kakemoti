@@ -3,13 +3,13 @@ package worker
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/spyzhov/ajson"
 	"github.com/w-haibara/kuirejo/compiler"
 	"github.com/w-haibara/kuirejo/log"
 )
@@ -33,8 +33,8 @@ func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger 
 		input = bytes.NewBuffer(EmptyJSON)
 	}
 
-	in, err := ajson.Unmarshal(input.Bytes())
-	if err != nil {
+	var in interface{}
+	if err := json.Unmarshal(input.Bytes(), &in); err != nil {
 		workflow.errorLog(err)
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger 
 		return nil, err
 	}
 
-	b, err := ajson.Marshal(out)
+	b, err := json.Marshal(out)
 	if err != nil {
 		workflow.errorLog(err)
 		return nil, err
@@ -78,7 +78,7 @@ func (w Workflow) loggerWithInfo() *logrus.Entry {
 }
 
 func (w Workflow) errorLog(err error) {
-	w.loggerWithInfo().WithField("line", log.Line()).Println("Error:", err)
+	w.loggerWithInfo().WithField("line", log.Line()).Fatalln("Error:", err)
 }
 
 func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
@@ -89,7 +89,7 @@ func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
 	})
 }
 
-func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, error) {
+func (w Workflow) exec(ctx context.Context, input interface{}) (interface{}, error) {
 	o, err := w.execStates(ctx, &w.States, input)
 	if err != nil {
 		w.errorLog(err)
@@ -99,7 +99,7 @@ func (w Workflow) exec(ctx context.Context, input *ajson.Node) (*ajson.Node, err
 	return o, nil
 }
 
-func (w Workflow) execStates(ctx context.Context, states *compiler.States, input *ajson.Node) (output *ajson.Node, err error) {
+func (w Workflow) execStates(ctx context.Context, states *compiler.States, input interface{}) (output interface{}, err error) {
 	for i := range *states {
 		w.loggerWithStateInfo((*states)[i]).Println("eval state:", (*states)[i].Name)
 		if choice, ok := (*states)[i].Body.(*compiler.ChoiceState); ok {
@@ -130,7 +130,7 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	return output, nil
 }
 
-func (w Workflow) eval(ctx context.Context, state *compiler.State, input *ajson.Node) (*ajson.Node, error) {
+func (w Workflow) eval(ctx context.Context, state *compiler.State, input interface{}) (interface{}, error) {
 	switch body := state.Body.(type) {
 	case *compiler.FailState:
 		output, err := w.evalFail(ctx, body, input)

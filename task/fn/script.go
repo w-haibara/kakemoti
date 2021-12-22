@@ -5,15 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-
-	"github.com/k0kubun/pp"
 )
 
 type Obj map[string]interface{}
 
 func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, error) {
-	_, _ = pp.Println(path, in)
-
 	exe, err := exec.LookPath(path)
 	if err != nil {
 		return nil, err

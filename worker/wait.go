@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spyzhov/ajson"
+	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kuirejo/compiler"
 )
 
 var timeformat = "2006-01-02T15:04:05Z"
 
-func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input *ajson.Node) (*ajson.Node, error) {
+func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input interface{}) (interface{}, error) {
 	d, err := getDulation(state, input)
 	if err != nil {
 		return nil, err
@@ -23,25 +23,26 @@ func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input
 	return input, nil
 }
 
-func getDulation(state *compiler.WaitState, input *ajson.Node) (time.Duration, error) {
+func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, error) {
 	switch {
 	case state.Seconds != nil || state.SecondsPath != nil:
-		var seconds float64
+		var seconds int64
 		if state.Seconds != nil {
-			seconds = float64(*state.Seconds)
+			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			nodes, err := input.JSONPath(*state.SecondsPath)
+			p, err := jp.ParseString(*state.SecondsPath)
 			if err != nil {
-				return 0, fmt.Errorf("input.JSONPath(path) failed: %w", err)
+				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
 			}
+			nodes := p.Get(input)
 
 			if len(nodes) != 1 {
 				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
 			}
 
-			v, err := nodes[0].GetNumeric()
-			if err != nil {
+			v, ok := nodes[0].(int64)
+			if !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
 			}
 
@@ -57,17 +58,18 @@ func getDulation(state *compiler.WaitState, input *ajson.Node) (time.Duration, e
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			nodes, err := input.JSONPath(*state.TimestampPath)
+			p, err := jp.ParseString(*state.TimestampPath)
 			if err != nil {
-				return 0, fmt.Errorf("input.JSONPath(path) failed: %w", err)
+				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
 			}
+			nodes := p.Get(input)
 
 			if len(nodes) != 1 {
 				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
 			}
 
-			v, err := nodes[0].GetString()
-			if err != nil {
+			v, ok := nodes[0].(string)
+			if !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
 			}
 
