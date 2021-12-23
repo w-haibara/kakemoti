@@ -18,8 +18,7 @@ func NewStartExecutionCmd() *cobra.Command {
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			//result, err := cli.StartExecution(ctx, o)
-			result, err := cli.StartExecution2(ctx, o)
+			result, err := cli.StartExecution(ctx, o)
 			if err != nil {
 				log.Fatal(err)
 			}

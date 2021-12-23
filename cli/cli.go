@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/w-haibara/kuirejo/compiler"
 	"github.com/w-haibara/kuirejo/log"
-	"github.com/w-haibara/kuirejo/statemachine"
 	"github.com/w-haibara/kuirejo/worker"
 )
 
@@ -23,7 +22,7 @@ type Options struct {
 	Timeout int64
 }
 
-func StartExecution2(ctx context.Context, opt Options) ([]byte, error) {
+func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -70,50 +69,6 @@ func StartExecution2(ctx context.Context, opt Options) ([]byte, error) {
 	}()
 
 	return worker.Exec(ctx, *workflow, input, logger)
-}
-
-func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	if strings.TrimSpace(opt.Input) == "" {
-		logger.Fatalln("input option value is empty")
-	}
-
-	if strings.TrimSpace(opt.ASL) == "" {
-		logger.Fatalln("ASL option value is empty")
-	}
-
-	f1, input, err := readFile(opt.Input)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	defer func() {
-		if err := f1.Close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
-	f2, asl, err := readFile(opt.ASL)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	defer func() {
-		if err := f2.Close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
-	return statemachine.Start(ctx, asl, input, opt.Timeout, logger)
 }
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {
