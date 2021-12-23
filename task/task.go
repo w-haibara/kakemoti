@@ -27,10 +27,10 @@ func Register(name string, fn Fn) {
 	fnMap[name] = fn
 }
 
-func Do(ctx context.Context, resouceType, resoucePath string, input interface{}) (interface{}, error) {
-	f, ok := fnMap[resouceType]
+func Do(ctx context.Context, resourceType, resoucePath string, input interface{}) (interface{}, error) {
+	f, ok := fnMap[resourceType]
 	if !ok {
-		return nil, fmt.Errorf("invalid resouce type: %s", resouceType)
+		return nil, fmt.Errorf("invalid resouce type: %s", resourceType)
 	}
 
 	inMap, ok := input.(map[string]interface{})
@@ -38,9 +38,9 @@ func Do(ctx context.Context, resouceType, resoucePath string, input interface{})
 		return nil, fmt.Errorf("can not cast 'input' to map[string]fn.Obj")
 	}
 
-	in, ok := inMap[resouceType]
+	in, ok := inMap[resourceType]
 	if !ok {
-		return nil, fmt.Errorf("'inObj' not contains the key: %s", resouceType)
+		return nil, fmt.Errorf("'inObj' not contains the key: %s", resourceType)
 	}
 
 	obj, ok := in.(map[string]interface{})
