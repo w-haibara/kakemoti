@@ -7,12 +7,8 @@ import (
 )
 
 type RawParallelState struct {
-	CommonState
-	Branches       []json.RawMessage `json:"Branches"`
-	ResultPath     string            `json:"ResultPath"`
-	ResultSelector string            `json:"ResultSelector"`
-	Retry          string            `json:"Retry"`
-	Catch          string            `json:"Catch"`
+	CommonState5
+	Branches []json.RawMessage `json:"Branches"`
 }
 
 func (raw RawParallelState) decode() (*ParallelState, error) {
@@ -42,20 +38,12 @@ func (raw RawParallelState) decode() (*ParallelState, error) {
 	}
 
 	return &ParallelState{
-		CommonState:    raw.CommonState,
-		Branches:       branches,
-		ResultPath:     raw.ResultPath,
-		ResultSelector: raw.ResultSelector,
-		Retry:          raw.Retry,
-		Catch:          raw.Catch,
+		CommonState5: raw.CommonState5,
+		Branches:     branches,
 	}, nil
 }
 
 type ParallelState struct {
-	CommonState
-	Branches       []Workflow `json:"Branches"`
-	ResultPath     string     `json:"ResultPath"`
-	ResultSelector string     `json:"ResultSelector"`
-	Retry          string     `json:"Retry"`
-	Catch          string     `json:"Catch"`
+	CommonState5
+	Branches []Workflow `json:"Branches"`
 }

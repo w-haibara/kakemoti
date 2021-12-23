@@ -1,7 +1,7 @@
 package compiler
 
 type FailState struct {
-	CommonState
+	CommonState1
 	Cause string `json:"Cause"`
 	Error string `json:"Error"`
 }
