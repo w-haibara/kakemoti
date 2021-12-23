@@ -33,22 +33,12 @@ func Do(ctx context.Context, resourceType, resoucePath string, input interface{}
 		return nil, fmt.Errorf("invalid resouce type: %s", resourceType)
 	}
 
-	inMap, ok := input.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("can not cast 'input' to map[string]fn.Obj")
-	}
-
-	in, ok := inMap[resourceType]
-	if !ok {
-		return nil, fmt.Errorf("'inObj' not contains the key: %s", resourceType)
-	}
-
-	obj, ok := in.(map[string]interface{})
+	in, ok := input.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("can not cast 'in' to fn.Obj")
 	}
 
-	out, err := f(ctx, resoucePath, obj)
+	out, err := f(ctx, resoucePath, in)
 	if err != nil {
 		return nil, fmt.Errorf("fn() failed: %v", err)
 	}
