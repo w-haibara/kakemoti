@@ -102,7 +102,7 @@ func (w Workflow) exec(ctx context.Context, input interface{}) (interface{}, err
 func (w Workflow) execStates(ctx context.Context, states *compiler.States, input interface{}) (output interface{}, err error) {
 	for i := range *states {
 		var branch *compiler.States
-		output, branch, err = w.execState(ctx, (*states)[i], input)
+		output, branch, err = w.execStateWithFilter(ctx, (*states)[i], input)
 		if err != nil {
 			return nil, err
 		}
@@ -114,8 +114,7 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	}
 	return output, nil
 }
-
-func (w Workflow) execState(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
+func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
 	input, err := FilterByInputPath(state, rawinput)
@@ -124,6 +123,15 @@ func (w Workflow) execState(ctx context.Context, state compiler.State, rawinput 
 		return nil, nil, err
 	}
 
+	output, branch, err := w.execState(ctx, state, input)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return output, branch, nil
+}
+
+func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
 	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
 		next := ""
 		next, out, err := w.evalChoice(ctx, choice, input)
