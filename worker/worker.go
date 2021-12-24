@@ -114,6 +114,7 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	}
 	return output, nil
 }
+
 func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
