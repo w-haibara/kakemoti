@@ -56,13 +56,7 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 	return result, nil
 }
 
-func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	var err error
-	result, err = FilterByResultSelector(state, result)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
-	}
-
+func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() >= compiler.FieldsType4 {
 		v := state.Body.Common().CommonState4
 		if v.OutputPath != "" {
@@ -75,6 +69,20 @@ func GenerateEffectiveResult(state compiler.State, rawinput, result interface{})
 			}
 			return rawinput, nil
 		}
+	}
+	return result, nil
+}
+
+func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	var err error
+	result, err = FilterByResultSelector(state, result)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
+	}
+
+	result, err = FilterByResultPath(state, rawinput, result)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
 	}
 
 	return result, nil
