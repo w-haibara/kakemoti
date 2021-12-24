@@ -32,5 +32,5 @@ func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, error) {
 		return nil, err
 	}
 
-	return Obj{"Output": string(out)}, nil
+	return Obj{"Payload": string(out)}, nil
 }
