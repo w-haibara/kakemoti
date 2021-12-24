@@ -1,7 +1,9 @@
 package worker
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kuirejo/compiler"
@@ -24,8 +26,42 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	}
 	return input, nil
 }
+
+func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() >= compiler.FieldsType5 {
+		v := state.Body.Common()
+		if v.ResultSelector != nil {
+			selector := make(map[string]interface{})
+			if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
+				return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
+			}
+
+			for key, val := range selector {
+				if strings.HasSuffix(key, ".$") {
+					s, ok := val.(string)
+					if !ok {
+						continue
+					}
+					p, err := jp.ParseString(s)
+					if err != nil {
+						return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
+					}
+					if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(selector, p.Get(result)); err != nil {
+						return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
+					}
+				}
+			}
+		}
+	}
+	return result, nil
+}
+
 func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	// TODO: filter by ResultSelector
+	var err error
+	result, err = FilterByResultSelector(state, result)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
+	}
 
 	if state.Body.FieldsType() >= compiler.FieldsType4 {
 		v := state.Body.Common().CommonState4
@@ -40,6 +76,7 @@ func GenerateEffectiveResult(state compiler.State, rawinput, result interface{})
 			return rawinput, nil
 		}
 	}
+
 	return result, nil
 }
 
