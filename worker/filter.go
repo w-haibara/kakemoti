@@ -27,8 +27,9 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	return input, nil
 }
 
-func GenerateEffectiveInput(state compiler.State, rawinput interface{}) (interface{}, error) {
-	input, err := FilterByInputPath(state, rawinput)
+func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
+	var err error
+	input, err = FilterByInputPath(state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
