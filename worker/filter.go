@@ -27,12 +27,47 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	return input, nil
 }
 
+func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() >= compiler.FieldsType4 {
+		v := state.Body.Common().CommonState4
+		if v.Parameters != nil {
+			parameter := make(map[string]interface{})
+			if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
+				return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
+			}
+
+			for key, val := range parameter {
+				if strings.HasSuffix(key, ".$") {
+					s, ok := val.(string)
+					if !ok {
+						continue
+					}
+					p, err := jp.ParseString(s)
+					if err != nil {
+						return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
+					}
+					if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(parameter, p.Get(input)); err != nil {
+						return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
+					}
+				}
+			}
+		}
+	}
+	return input, nil
+}
+
 func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
 	var err error
 	input, err = FilterByInputPath(state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
+
+	input, err = FilterByParameters(state, input)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
+	}
+
 	return input, nil
 }
 
