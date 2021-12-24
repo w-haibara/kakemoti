@@ -27,6 +27,14 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	return input, nil
 }
 
+func GenerateEffectiveInput(state compiler.State, rawinput interface{}) (interface{}, error) {
+	input, err := FilterByInputPath(state, rawinput)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
+	}
+	return input, nil
+}
+
 func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() >= compiler.FieldsType5 {
 		v := state.Body.Common()

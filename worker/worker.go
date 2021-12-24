@@ -117,13 +117,13 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
-	input, err := FilterByInputPath(state, rawinput)
+	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
 	if err != nil {
 		w.errorLog(err)
 		return nil, nil, err
 	}
 
-	result, branch, err := w.execState(ctx, state, input)
+	result, branch, err := w.execState(ctx, state, effectiveInput)
 	if err != nil {
 		return nil, nil, err
 	}
