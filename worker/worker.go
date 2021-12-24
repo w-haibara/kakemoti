@@ -115,8 +115,14 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	return output, nil
 }
 
-func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
+func (w Workflow) execState(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
+
+	input, err := FilterByInputPath(state, rawinput)
+	if err != nil {
+		w.errorLog(err)
+		return nil, nil, err
+	}
 
 	var output interface{}
 	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
