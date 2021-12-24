@@ -24,6 +24,24 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	}
 	return input, nil
 }
+func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	// TODO: filter by ResultSelector
+
+	if state.Body.FieldsType() >= compiler.FieldsType4 {
+		v := state.Body.Common().CommonState4
+		if v.OutputPath != "" {
+			path, err := jp.ParseString(v.ResultPath)
+			if err != nil {
+				return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+			}
+			if err := path.Set(rawinput, result); err != nil {
+				return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+			}
+			return rawinput, nil
+		}
+	}
+	return result, nil
+}
 
 func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
 	if state.Body.FieldsType() >= compiler.FieldsType2 {

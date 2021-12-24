@@ -123,18 +123,24 @@ func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, nil, err
 	}
 
-	rawoutput, branch, err := w.execState(ctx, state, input)
+	result, branch, err := w.execState(ctx, state, input)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	output, err := FilterByOutputPath(state, rawoutput)
+	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
 	if err != nil {
 		w.errorLog(err)
 		return nil, nil, err
 	}
 
-	return output, branch, nil
+	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
+	if err != nil {
+		w.errorLog(err)
+		return nil, nil, err
+	}
+
+	return effectiveOutput, branch, nil
 }
 
 func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
