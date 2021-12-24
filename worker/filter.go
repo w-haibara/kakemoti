@@ -24,3 +24,21 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	}
 	return input, nil
 }
+
+func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
+	if state.Body.FieldsType() >= compiler.FieldsType2 {
+		v := state.Body.Common().CommonState2
+		if v.OutputPath != "" {
+			path, err := jp.ParseString(v.OutputPath)
+			if err != nil {
+				return nil, fmt.Errorf("jp.ParseString(v.OutputPath) failed: %v", err)
+			}
+			nodes := path.Get(output)
+			if len(nodes) != 1 {
+				return nil, fmt.Errorf("invalid length of path.Get(output) result")
+			}
+			return nodes[0], nil
+		}
+	}
+	return output, nil
+}
