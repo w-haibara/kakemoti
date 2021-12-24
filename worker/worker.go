@@ -124,7 +124,6 @@ func (w Workflow) execState(ctx context.Context, state compiler.State, rawinput 
 		return nil, nil, err
 	}
 
-	var output interface{}
 	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
 		next := ""
 		next, out, err := w.evalChoice(ctx, choice, input)
@@ -139,15 +138,14 @@ func (w Workflow) execState(ctx context.Context, state compiler.State, rawinput 
 			return nil, nil, err
 		}
 		return out, s, nil
-	} else {
-		out, err := w.eval(ctx, &state, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, nil, err
-		}
-		output = out
 	}
-	return output, nil, nil
+
+	out, err := w.eval(ctx, &state, input)
+	if err != nil {
+		w.errorLog(err)
+		return nil, nil, err
+	}
+	return out, nil, nil
 }
 
 func (w Workflow) eval(ctx context.Context, state *compiler.State, input interface{}) (interface{}, error) {
