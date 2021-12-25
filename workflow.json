@@ -1,0 +1,31 @@
+{
+  "StartAt": "Pass State",
+  "States": {
+    "Pass State": {
+      "Type": "Pass",
+      "Next": "Parallel State"
+    },
+    "Parallel State": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "Succeed State",
+          "States": {
+            "Succeed State": {
+              "Type": "Succeed"
+            }
+          }
+        },
+        {
+          "StartAt": "Fail State",
+          "States": {
+            "Fail State": {
+              "Type": "Fail"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
