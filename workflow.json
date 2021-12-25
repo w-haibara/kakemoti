@@ -1,31 +1,13 @@
 {
-  "StartAt": "Pass State",
+  "StartAt": "Pass State 1",
   "States": {
-    "Pass State": {
+    "Pass State 1": {
       "Type": "Pass",
-      "Next": "Parallel State"
+      "Next": "Pass State 2"
     },
-    "Parallel State": {
-      "Type": "Parallel",
-      "End": true,
-      "Branches": [
-        {
-          "StartAt": "Succeed State",
-          "States": {
-            "Succeed State": {
-              "Type": "Succeed"
-            }
-          }
-        },
-        {
-          "StartAt": "Fail State",
-          "States": {
-            "Fail State": {
-              "Type": "Fail"
-            }
-          }
-        }
-      ]
+    "Pass State 2": {
+      "Type": "Pass",
+      "End": true
     }
   }
 }

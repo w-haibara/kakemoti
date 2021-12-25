@@ -2,7 +2,7 @@ kuirejo: *.go */*.go */*/*.go go.mod
 	go mod tidy
 	go fmt ./...
 	go vet ./...
-	gosec ./...
+	gosec -exclude-dir=_workflow ./...
 	go build -o kuirejo
 
 .PHONY: test
@@ -11,14 +11,10 @@ test: kuirejo
 
 .PHONY: build-workflow-gen
 build-workflow-gen:
-	cd workflow && yarn install && tsc index.ts
+	cd _workflow && yarn install && tsc index.ts
 
 asl = ""
-input = ""
-.PHONY: run
-run: kuirejo
-	node ./workflow/index.js ${asl} > workflow.json
-	./kuirejo start-execution \
-	--asl workflow.json \
-	--input ${input}
+.PHONY: workflow-gen
+workflow-gen: kuirejo
+	node ./_workflow/index.js ${asl} > workflow.json
 

@@ -9,6 +9,11 @@ function render(sm: sfn.IChainable) {
 
 function case1(): sfn.Chain {
   const stack = new cdk.Stack();
+  const pass1 = new sfn.Pass(stack, "Pass State 1");
+  const pass2 = new sfn.Pass(stack, "Pass State 2");
+  return pass1.next(pass2)
+  /*
+  const stack = new cdk.Stack();
   const pass = new sfn.Pass(stack, "Pass State");
   const succeed = new sfn.Succeed(stack, "Succeed State");
   const fail = new sfn.Fail(stack, "Fail State");
@@ -16,6 +21,7 @@ function case1(): sfn.Chain {
     .branch(succeed)
     .branch(fail);
   return pass.next(parallel);
+  */
 }
 
 const args = process.argv.slice(2);
