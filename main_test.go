@@ -20,6 +20,7 @@ func Test(t *testing.T) {
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"choice", "choice", "_workflow/inputs/input2.json", "_workflow/outputs/output2.json"},
+		{"parallel", "parallel", "_workflow/inputs/input1.json", "_workflow/outputs/output3.json"},
 	}
 	_, _ = runString(t, "make build-workflow-gen")
 	for _, tt := range tests {

@@ -25,11 +25,11 @@ function task(stack: cdk.Stack): sfn.IChainable {
   return undefined;
 }
 */
-/*
 function parallel(stack: cdk.Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State");
+  return new sfn.Parallel(stack, "Parallel State")
+    .branch(pass(stack))
+    .branch(succeed(stack));
 }
-*/
 /*
 function map(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
@@ -42,6 +42,7 @@ const workflows = {
   succeed: succeed,
   fail: fail,
   choice: choice,
+  parallel: parallel,
 };
 
 function render(sm: sfn.IChainable) {

@@ -1,0 +1,12 @@
+[
+  {
+    "script": {
+      "args": ["arg0", "arg1", "arg2"]
+    }
+  },
+  {
+    "script": {
+      "args": ["arg0", "arg1", "arg2"]
+    }
+  }
+]
