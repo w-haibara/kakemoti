@@ -1,27 +1,22 @@
 import * as cdk from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 
+function pass(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State 1");
+}
+
+const workflows = {
+  pass: pass,
+};
+
 function render(sm: sfn.IChainable) {
   return new cdk.Stack().resolve(
     new sfn.StateGraph(sm.startState, "Graph").toGraphJson()
   );
 }
 
-function case1(): sfn.Chain {
-  const stack = new cdk.Stack();
-  const pass1 = new sfn.Pass(stack, "Pass State 1");
-  const pass2 = new sfn.Pass(stack, "Pass State 2");
-  return pass1.next(pass2)
-  /*
-  const stack = new cdk.Stack();
-  const pass = new sfn.Pass(stack, "Pass State");
-  const succeed = new sfn.Succeed(stack, "Succeed State");
-  const fail = new sfn.Fail(stack, "Fail State");
-  const parallel = new sfn.Parallel(stack, "Parallel State")
-    .branch(succeed)
-    .branch(fail);
-  return pass.next(parallel);
-  */
+function print(sm: sfn.IChainable) {
+  console.log(JSON.stringify(render(sm), null, "  "));
 }
 
 const args = process.argv.slice(2);
@@ -30,11 +25,12 @@ if (args.length == 0) {
   process.exit(1);
 }
 
-switch (args[0]) {
-  case "case1":
-    console.log(JSON.stringify(render(case1()), null, "  "));
-    break;
-  default:
-    console.error("unknown type");
-    process.exit(1);
+const stack = new cdk.Stack();
+for (const [key, wf] of Object.entries(workflows)) {
+  if (key == args[0]) {
+    print(wf(stack));
+    process.exit(0);
+  }
 }
+
+console.error("unknown key:", args[0]);
