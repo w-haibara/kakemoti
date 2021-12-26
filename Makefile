@@ -7,7 +7,7 @@ kuirejo: *.go */*.go */*/*.go go.mod
 
 .PHONY: test
 test: kuirejo
-	go test ./...
+	go test -count=1 ./...
 
 .PHONY: build-workflow-gen
 build-workflow-gen:
@@ -15,6 +15,6 @@ build-workflow-gen:
 
 asl = ""
 .PHONY: workflow-gen
-workflow-gen: kuirejo
+workflow-gen: kuirejo build-workflow-gen
 	node ./_workflow/index.js ${asl} > workflow.json
 

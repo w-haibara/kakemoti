@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -15,12 +14,11 @@ func Test(t *testing.T) {
 	tests := []struct {
 		name, asl, inputFile, wantFile string
 	}{
-		{"basic", "case1", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
+		{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 	}
 	_, _ = runString(t, "make build-workflow-gen")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _ = runString(t, fmt.Sprintf("make workflow-gen asl=%s", tt.asl))
 			args := []string{
 				"./kuirejo", "start-execution",
 				"--asl", "workflow.json",
