@@ -103,6 +103,9 @@ func (w Workflow) execStates(ctx context.Context, states *compiler.States, input
 	for i := range *states {
 		var branch *compiler.States
 		output, branch, err = w.execStateWithFilter(ctx, (*states)[i], input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, nil
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -124,7 +127,10 @@ func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, nil, err
 	}
 
-	result, branch, err := w.execState(ctx, state, effectiveInput)
+	result, branch, err := w.execStateWithRetry(ctx, state, effectiveInput)
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return result, nil, err
+	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -144,84 +150,120 @@ func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State,
 	return effectiveOutput, branch, nil
 }
 
-func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
+func (w Workflow) execStateWithRetry(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
+	result, branch, stateserr, err := w.execState(ctx, state, input)
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return result, nil, err
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if stateserr != "" {
+		// TODO: implement retry & catch
+		return result, nil, ErrStateMachineTerminated
+	}
+
+	return result, branch, nil
+}
+
+func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, statesError, error) {
 	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
 		next := ""
 		next, out, err := w.evalChoice(ctx, choice, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return out, nil, "", err
+		}
 		if err != nil {
 			w.errorLog(err)
-			return nil, nil, err
+			return nil, nil, "", err
 		}
 		s, ok := state.Choices[next]
 		if !ok {
 			err = fmt.Errorf("'next' key is invalid: %s", next)
 			w.errorLog(err)
-			return nil, nil, err
+			return nil, nil, "", err
 		}
-		return out, s, nil
+		return out, s, "", nil
 	}
 
-	out, err := w.eval(ctx, &state, input)
-	if err != nil {
-		w.errorLog(err)
-		return nil, nil, err
+	out, stateserr, err := w.eval(ctx, &state, input)
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return out, nil, stateserr, err
 	}
-	return out, nil, nil
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return out, nil, stateserr, nil
 }
 
-func (w Workflow) eval(ctx context.Context, state *compiler.State, input interface{}) (interface{}, error) {
+func (w Workflow) eval(ctx context.Context, state *compiler.State, input interface{}) (interface{}, statesError, error) {
 	switch body := state.Body.(type) {
 	case *compiler.FailState:
 		output, err := w.evalFail(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.MapState:
 		output, err := w.evalMap(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.ParallelState:
 		output, err := w.evalParallel(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.PassState:
 		output, err := w.evalPass(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.SucceedState:
 		output, err := w.evalSucceed(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.TaskState:
 		output, err := w.evalTask(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	case *compiler.WaitState:
 		output, err := w.evalWait(ctx, body, input)
-		if err != nil {
-			w.errorLog(err)
-			return nil, err
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
 		}
-		return output, nil
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
 	}
 
 	w.errorLog(ErrUnknownStateType)
-	return nil, ErrUnknownStateType
+	return nil, "", ErrUnknownStateType
 }

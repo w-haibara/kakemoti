@@ -8,5 +8,5 @@ import (
 )
 
 func (w Workflow) evalFail(ctx context.Context, state *compiler.FailState, input interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("state machine failed: %w", ErrStateMachineTerminated)
+	return input, fmt.Errorf("Fail: %w", ErrStateMachineTerminated)
 }
