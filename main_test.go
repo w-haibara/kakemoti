@@ -27,12 +27,7 @@ func Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, _ = runString(t, fmt.Sprintf("make workflow-gen asl=%s", tt.asl))
-			args := []string{
-				"./kuirejo", "start-execution",
-				"--asl", "workflow.json",
-				"--input", tt.inputFile,
-			}
-			out, _ := run(t, args[0], args[1:])
+			out, _ := runString(t, "./kuirejo start-execution --asl workflow.json --input", tt.inputFile)
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
 				t.Fatal("os.ReadFile(tt.wantFile) failed", err)
@@ -44,8 +39,11 @@ func Test(t *testing.T) {
 	}
 }
 
-func runString(t *testing.T, str string) (out1, out2 string) {
-	s := strings.Split(str, " ")
+func runString(t *testing.T, str ...string) (out1, out2 string) {
+	s := make([]string, 0)
+	for _, v := range str {
+		s = append(s, strings.Split(v, " ")...)
+	}
 	return run(t, s[0], s[1:])
 }
 
