@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/w-haibara/kuirejo/cli"
@@ -16,9 +18,11 @@ func NewStartExecutionCmd() *cobra.Command {
 		Short: "Starts a statemachine execution",
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if _, err := cli.StartExecution(ctx, o); err != nil {
+			result, err := cli.StartExecution(ctx, o)
+			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Fprintln(os.Stdout, string(result))
 		},
 	}
 

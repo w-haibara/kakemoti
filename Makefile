@@ -1,43 +1,26 @@
-kuirejo: *.go */*.go go.mod
+kuirejo: *.go */*.go */*/*.go go.mod
 	go mod tidy
 	go fmt ./...
 	go vet ./...
-	gosec ./...
+	gosec -exclude-dir=_workflow ./...
 	go build -o kuirejo
 
 .PHONY: test
 test: kuirejo
-	go test ./...
+	go test -count=1 ./...
 
-.PHONY: run
-run: run5
+.PHONY: build-workflow-gen
+build-workflow-gen:
+	cd _workflow && yarn install && tsc
 
-.PHONY: run1
-run1: kuirejo
+asl = ""
+.PHONY: workflow-gen
+workflow-gen: kuirejo
+	node ./_workflow/index.js ${asl} > workflow.json
+
+input = ""
+.PHONY: run-workflow
+workflow-run: kuirejo workflow-gen
 	./kuirejo start-execution \
-	--asl  "./workflows/HelloWorld/statemachine.asl.json" \
-	--input "./workflows/HelloWorld/input1.json"
-
-.PHONY: run2
-run2: kuirejo
-	./kuirejo start-execution \
-	--asl  "./workflows/HelloWorld2/statemachine.asl.json" \
-	--input "./workflows/HelloWorld2/input1.json"
-
-.PHONY: run3
-run3: kuirejo
-	./kuirejo start-execution \
-	--asl  "./workflows/task-script1/statemachine.asl.json" \
-	--input "./workflows/task-script1/input1.json"
-
-.PHONY: run4
-run4: kuirejo
-	./kuirejo start-execution \
-	--asl  "./workflows/task-script2/statemachine.asl.json" \
-	--input "./workflows/task-script2/input1.json"
-
-.PHONY: run5
-run5: kuirejo
-	./kuirejo start-execution \
-	--asl  "./workflows/task-script3/statemachine.asl.json" \
-	--input "./workflows/task-script3/input1.json"
+		--asl workflow.json \
+		--input ${input}
