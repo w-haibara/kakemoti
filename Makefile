@@ -11,7 +11,7 @@ test: kuirejo
 
 .PHONY: build-workflow-gen
 build-workflow-gen:
-	cd _workflow && yarn install && tsc index.ts
+	cd _workflow && yarn install && tsc
 
 asl = ""
 .PHONY: workflow-gen
