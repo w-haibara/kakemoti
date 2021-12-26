@@ -15,6 +15,6 @@ build-workflow-gen:
 
 asl = ""
 .PHONY: workflow-gen
-workflow-gen: kuirejo build-workflow-gen
+workflow-gen: kuirejo
 	node ./_workflow/index.js ${asl} > workflow.json
 
