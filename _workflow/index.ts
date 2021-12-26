@@ -2,11 +2,46 @@ import * as cdk from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 
 function pass(stack: cdk.Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State 1");
+  return new sfn.Pass(stack, "Pass State");
 }
+function wait(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Wait(stack, "Wait State", {
+    time: sfn.WaitTime.duration(cdk.Duration.seconds(1)),
+  });
+}
+function succeed(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State");
+}
+function fail(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State");
+}
+function choice(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Choice(stack, "Choice State")
+    .when(sfn.Condition.booleanEquals("$.bool", true), succeed(stack))
+    .otherwise(fail(stack));
+}
+/*
+function task(stack: cdk.Stack): sfn.IChainable {
+  return undefined;
+}
+*/
+/*
+function parallel(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State");
+}
+*/
+/*
+function map(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State");
+}
+*/
 
 const workflows = {
   pass: pass,
+  wait: wait,
+  succeed: succeed,
+  fail: fail,
+  choice: choice,
 };
 
 function render(sm: sfn.IChainable) {
