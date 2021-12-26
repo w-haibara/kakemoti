@@ -10,10 +10,10 @@ function wait(stack: cdk.Stack): sfn.IChainable {
   });
 }
 function succeed(stack: cdk.Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Succeed State");
+  return new sfn.Succeed(stack, "Succeed State");
 }
 function fail(stack: cdk.Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Fail State");
+  return new sfn.Fail(stack, "Fail State");
 }
 function choice(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Choice(stack, "Choice State")
