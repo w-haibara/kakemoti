@@ -1,9 +1,20 @@
 import * as cdk from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
-import * as custom from "./custom-task.js"
+import * as custom from "./custom-task.js";
 
 function pass(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
+}
+function pass_result(stack: cdk.Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State(result)", {
+    result: sfn.Result.fromObject({
+      result: {
+        aaa: 111,
+        bbb: 222,
+      },
+    }),
+    resultPath: "$.resultpath",
+  });
 }
 function wait(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Wait(stack, "Wait State", {
@@ -24,7 +35,13 @@ function choice(stack: cdk.Stack): sfn.IChainable {
 function task(stack: cdk.Stack): sfn.IChainable {
   return new custom.Task(stack, "Task State", {
     resource: "script:_workflow/script/script1.sh",
-  })
+  });
+}
+function task_resultPath(stack: cdk.Stack): sfn.IChainable {
+  return new custom.Task(stack, "Task State", {
+    resource: "script:_workflow/script/script1.sh",
+    resultPath: "$.resultpath",
+  });
 }
 function parallel(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Parallel(stack, "Parallel State")
@@ -39,11 +56,13 @@ function map(stack: cdk.Stack): sfn.IChainable {
 
 const workflows = {
   pass: pass,
+  pass_result: pass_result,
   wait: wait,
   succeed: succeed,
   fail: fail,
   choice: choice,
   task: task,
+  task_resultPath: task_resultPath,
   parallel: parallel,
 };
 

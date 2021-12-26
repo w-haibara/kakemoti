@@ -16,12 +16,14 @@ func Test(t *testing.T) {
 		name, asl, inputFile, wantFile string
 	}{
 		{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
+		{"pass(result)", "pass_result", "_workflow/inputs/input1.json", "_workflow/outputs/output5.json"},
 		{"wait", "wait", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"choice", "choice", "_workflow/inputs/input2.json", "_workflow/outputs/output2.json"},
 		{"parallel", "parallel", "_workflow/inputs/input2.json", "_workflow/outputs/output3.json"},
 		{"task", "task", "_workflow/inputs/input1.json", "_workflow/outputs/output4.json"},
+		{"task(resultPath)", "task_resultPath", "_workflow/inputs/input1.json", "_workflow/outputs/output6.json"},
 	}
 	_, _ = runString(t, "make build-workflow-gen")
 	for _, tt := range tests {
