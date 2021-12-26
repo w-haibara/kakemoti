@@ -1,12 +1,22 @@
 [
   {
-    "script": {
-      "args": ["arg0", "arg1", "arg2"]
+    "bool": true,
+    "int": 10,
+    "string": "hello",
+    "object": {
+      "bool": false,
+      "int": 10000,
+      "string": "world"
     }
   },
   {
-    "script": {
-      "args": ["arg0", "arg1", "arg2"]
+    "bool": true,
+    "int": 10,
+    "string": "hello",
+    "object": {
+      "bool": false,
+      "int": 10000,
+      "string": "world"
     }
   }
 ]
