@@ -1,5 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
+import * as custom from "./custom-task.js"
 
 function pass(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
@@ -20,11 +21,11 @@ function choice(stack: cdk.Stack): sfn.IChainable {
     .when(sfn.Condition.booleanEquals("$.bool", true), succeed(stack))
     .otherwise(fail(stack));
 }
-/*
 function task(stack: cdk.Stack): sfn.IChainable {
-  return undefined;
+  return new custom.Task(stack, "Task State", {
+    resource: "script:_workflow/script/script1.sh",
+  })
 }
-*/
 function parallel(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Parallel(stack, "Parallel State")
     .branch(pass(stack))
@@ -42,6 +43,7 @@ const workflows = {
   succeed: succeed,
   fail: fail,
   choice: choice,
+  task: task,
   parallel: parallel,
 };
 
