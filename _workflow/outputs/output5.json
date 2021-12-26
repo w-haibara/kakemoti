@@ -1,0 +1,6 @@
+{
+  "args": ["arg0", "arg1", "arg2"],
+  "resultpath": {
+    "result": { "aaa": 111, "bbb": 222 }
+  }
+}
