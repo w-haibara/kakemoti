@@ -7,5 +7,9 @@ import (
 )
 
 func (w Workflow) evalPass(ctx context.Context, state *compiler.PassState, input interface{}) (interface{}, error) {
-	return input, nil
+	output := state.Result
+	if output == nil {
+		output = input
+	}
+	return output, nil
 }
