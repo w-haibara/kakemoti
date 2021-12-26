@@ -103,7 +103,7 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() >= compiler.FieldsType4 {
 		v := state.Body.Common().CommonState4
-		if v.OutputPath != "" {
+		if v.ResultPath != "" {
 			path, err := jp.ParseString(v.ResultPath)
 			if err != nil {
 				return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
