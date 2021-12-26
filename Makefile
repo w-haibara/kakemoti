@@ -18,3 +18,9 @@ asl = ""
 workflow-gen: kuirejo
 	node ./_workflow/index.js ${asl} > workflow.json
 
+input = ""
+.PHONY: run-workflow
+workflow-run: kuirejo workflow-gen
+	./kuirejo start-execution \
+		--asl workflow.json \
+		--input ${input}
