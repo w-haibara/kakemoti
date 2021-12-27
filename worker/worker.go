@@ -184,7 +184,7 @@ func (w Workflow) execState(ctx context.Context, state compiler.State, input int
 			w.errorLog(err)
 			return nil, nil, "", err
 		}
-		return out, s, "", nil
+		return out, &s, "", nil
 	}
 
 	out, stateserr, err := w.eval(ctx, &state, input)
