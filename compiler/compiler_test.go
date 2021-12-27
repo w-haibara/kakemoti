@@ -46,6 +46,35 @@ func TestCompile(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"choice(fallback)",
+			`{
+				"StartAt": "State1",
+				"States": {
+				  "State1": {
+					"Type": "Pass",
+					"Next": "State2"
+				  },
+				  "Choice State": {
+					"Type": "Choice",
+					"Choices": [
+					  {
+						"Variable": "$.bool",
+						"BooleanEquals": false,
+						"Next": "State1"
+					  }
+					],
+					"Default": "State2"
+				  },
+				  "State2": {
+					"Type": "Pass",
+					"Next": "Choice State"
+				  }
+				}
+			  }`,
+			nil,
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

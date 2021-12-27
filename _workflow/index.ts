@@ -32,6 +32,14 @@ function choice(stack: cdk.Stack): sfn.IChainable {
     .when(sfn.Condition.booleanEquals("$.bool", true), succeed(stack))
     .otherwise(fail(stack));
 }
+function choice_fallback(stack: cdk.Stack): sfn.IChainable {
+  const s1 = new sfn.Pass(stack, "State1");
+  const s2 = new sfn.Pass(stack, "State2");
+  const choice = new sfn.Choice(stack, "Choice State")
+    .when(sfn.Condition.booleanEquals("$.bool", false), s1)
+    .otherwise(s2);
+  return s1.next(s2).next(choice);
+}
 function task(stack: cdk.Stack): sfn.IChainable {
   return new custom.Task(stack, "Task State", {
     resource: "script:_workflow/script/script1.sh",
@@ -61,6 +69,7 @@ const workflows = {
   succeed: succeed,
   fail: fail,
   choice: choice,
+  choice_fallback: choice_fallback,
   task: task,
   task_resultPath: task_resultPath,
   parallel: parallel,
