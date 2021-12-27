@@ -150,6 +150,24 @@ func (asl *ASL) compile() (*Workflow, error) {
 		Version:        *asl.Version,
 	}
 
+	states, err := asl.makeStates()
+	if err != nil {
+		return nil, err
+	}
+
+	workflow.States = make([]State, 0, len(states))
+	cur := states[workflow.StartAt]
+	workflow.States = append(workflow.States, cur)
+
+	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return workflow, nil
+}
+
+func (asl *ASL) makeStates() (map[string]State, error) {
 	states := make(map[string]State)
 	for name, state := range asl.States {
 		v := &struct {
@@ -254,14 +272,5 @@ func (asl *ASL) compile() (*Workflow, error) {
 		}
 	}
 
-	workflow.States = make([]State, 0, len(states))
-	cur := states[workflow.StartAt]
-	workflow.States = append(workflow.States, cur)
-
-	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return workflow, nil
+	return states, nil
 }
