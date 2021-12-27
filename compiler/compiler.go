@@ -155,11 +155,9 @@ func (asl *ASL) compile() (*Workflow, error) {
 		return nil, err
 	}
 
-	workflow.States = make([]State, 0, len(states))
-	cur := states[workflow.StartAt]
-	workflow.States = append(workflow.States, cur)
-
-	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
+	workflow.States = make([]State, 1, len(states))
+	workflow.States[0] = states[workflow.StartAt]
+	if err := makeStateMachine(&workflow.States, states[workflow.StartAt], states); err != nil {
 		log.Println(err)
 		return nil, err
 	}
