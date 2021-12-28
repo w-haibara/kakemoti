@@ -3,10 +3,9 @@ package compiler
 import (
 	"bytes"
 	"context"
-	"reflect"
 	"testing"
 
-	"github.com/andreyvit/diff"
+	"github.com/google/go-cmp/cmp"
 	"github.com/k0kubun/pp"
 )
 
@@ -14,7 +13,7 @@ func TestCompile(t *testing.T) {
 	tests := []struct {
 		name       string
 		asl        string
-		wantStates States
+		wantStates []States
 		wantErr    bool
 	}{
 		{
@@ -28,22 +27,15 @@ func TestCompile(t *testing.T) {
 	  }
 	}
 }`,
-			States{
-				State{"Pass", "Pass State", "",
-					&PassState{
-						CommonState4: CommonState4{
-							CommonState3: CommonState3{
-								End: true,
-								CommonState2: CommonState2{
-									CommonState1: CommonState1{
-										Type: "Pass",
-									},
-								},
-							},
-						}},
-					nil,
-				},
-			},
+			[]States{{State{"Pass", "Pass State", "",
+				&PassState{
+					CommonState4: CommonState4{
+						CommonState3: CommonState3{
+							End: true,
+							CommonState2: CommonState2{
+								CommonState1: CommonState1{
+									Type: "Pass",
+								}}}}}}}},
 			false,
 		},
 		{
@@ -64,15 +56,68 @@ func TestCompile(t *testing.T) {
 						"Next": "State1"
 					  }
 					],
-					"Default": "State2"
+					"Default": "State3"
 				  },
 				  "State2": {
 					"Type": "Pass",
 					"Next": "Choice State"
+				  },
+				  "State3": {
+					"Type": "Pass",
+					"End": true
 				  }
 				}
 			  }`,
-			nil,
+			[]States{
+				{
+					State{"Pass", "State1", "State2",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									Next: "State2",
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+					State{"Pass", "State2", "Choice State",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									Next: "Choice State",
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+					State{"Choice", "Choice State", "",
+						&ChoiceState{
+							Choices: []Choice{{
+								Rule: Rule{
+									Variable1: "$.bool",
+									Variable2: false,
+									Operator:  "BooleanEquals",
+								},
+								BoolExpr: nil,
+								Next:     "State1",
+							}},
+							Default: "State3",
+							CommonState2: CommonState2{
+								CommonState1: CommonState1{
+									Type: "Choice",
+								},
+							}}},
+				},
+				{
+					State{"Pass", "State3", "",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									End: true,
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+				},
+			},
 			false,
 		},
 	}
@@ -84,9 +129,11 @@ func TestCompile(t *testing.T) {
 				return
 			}
 			gotStates := got.States
-			if !reflect.DeepEqual(gotStates, tt.wantStates) {
+			if diff := cmp.Diff(gotStates, tt.wantStates); diff != "" {
 				t.Errorf("Compile() = \n%#v\n want = \n%#v\n", gotStates, tt.wantStates)
-				t.Errorf("====== diff ======\n%s\n", diff.LineDiff(pp.Sprint(gotStates), pp.Sprint(tt.wantStates)))
+				t.Errorf("====== diff ======\n%s\n", diff)
+				t.Errorf(pp.Sprint(gotStates))
+				t.Errorf(pp.Sprint(tt.wantStates))
 			}
 		})
 	}
