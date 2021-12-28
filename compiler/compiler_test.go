@@ -91,7 +91,7 @@ func TestCompile(t *testing.T) {
 					State{"Choice", "Choice State", "",
 						&ChoiceState{
 							Choices: []Choice{{
-								Rule: Rule{
+								Rule: &Rule{
 									Variable1: "$.bool",
 									Variable2: false,
 									Operator:  "BooleanEquals",
