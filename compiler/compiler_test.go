@@ -3,6 +3,7 @@ package compiler
 import (
 	"bytes"
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -129,11 +130,9 @@ func TestCompile(t *testing.T) {
 				return
 			}
 			gotStates := got.States
-			if diff := cmp.Diff(gotStates, tt.wantStates); diff != "" {
-				t.Errorf("Compile() = \n%#v\n want = \n%#v\n", gotStates, tt.wantStates)
-				t.Errorf("====== diff ======\n%s\n", diff)
-				t.Errorf(pp.Sprint(gotStates))
-				t.Errorf(pp.Sprint(tt.wantStates))
+			if !reflect.DeepEqual(gotStates, tt.wantStates) {
+				t.Errorf("Compile() = \n%s\n want = \n%s\n", pp.Sprint(gotStates), pp.Sprint(tt.wantStates))
+				t.Error(cmp.Diff(gotStates, tt.wantStates))
 			}
 		})
 	}
