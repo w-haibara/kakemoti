@@ -284,8 +284,7 @@ func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]strin
 			for i, state := range states {
 				wf.StatesIndexMap[state.Name] = [2]int{len(wf.States) - 1, i}
 			}
-			if choice, ok := cur.Body.(*ChoiceState); ok {
-				bn := choice.GetBranchNext()
+			if bn := GetNexts(cur.Body); bn != nil {
 				nexts := make([]string, 0, len(bn))
 				for _, next := range bn {
 					if _, ok := wf.StatesIndexMap[next]; !ok {
@@ -312,4 +311,12 @@ func (wf *Workflow) stateIsExistInBranch(name string) bool {
 		}
 	}
 	return false
+}
+
+func GetNexts(body StateBody) []string {
+	if choice, ok := body.(*ChoiceState); ok {
+		return choice.GetNexts()
+	}
+
+	return nil
 }

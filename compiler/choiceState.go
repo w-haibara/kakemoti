@@ -86,7 +86,7 @@ func (state ChoiceState) GetNext() string {
 	return ""
 }
 
-func (state ChoiceState) GetBranchNext() []string {
+func (state ChoiceState) GetNexts() []string {
 	nexts := make([]string, len(state.Choices)+1)
 	for i, choice := range state.Choices {
 		nexts[i] = choice.Next
