@@ -46,7 +46,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 		}
 
 		choices[i] = Choice{
-			Rule: &Rule{
+			Rule: Rule{
 				Variable1: var1,
 				Variable2: var2,
 				Operator:  op,
@@ -69,7 +69,7 @@ type ChoiceState struct {
 }
 
 type Choice struct {
-	Rule     *Rule
+	Rule     Rule
 	BoolExpr BoolExpr
 	Next     string
 }
@@ -84,4 +84,13 @@ type Rule struct {
 
 func (state ChoiceState) GetNext() string {
 	return ""
+}
+
+func (state ChoiceState) GetBranchNext() []string {
+	nexts := make([]string, len(state.Choices)+1)
+	for i, choice := range state.Choices {
+		nexts[i] = choice.Next
+	}
+	nexts[len(nexts)-1] = state.Default
+	return nexts
 }
