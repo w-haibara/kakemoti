@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ohler55/ojg/jp"
-	"github.com/w-haibara/kuirejo/compiler"
+	"github.com/w-haibara/kakemoti/compiler"
 )
 
 func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, input interface{}) (string, interface{}, error) {

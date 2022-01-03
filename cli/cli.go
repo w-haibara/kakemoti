@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/w-haibara/kuirejo/compiler"
-	"github.com/w-haibara/kuirejo/log"
-	"github.com/w-haibara/kuirejo/worker"
+	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/log"
+	"github.com/w-haibara/kakemoti/worker"
 )
 
 type Options struct {
