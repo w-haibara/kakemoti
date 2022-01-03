@@ -85,3 +85,12 @@ type Rule struct {
 func (state ChoiceState) GetNext() string {
 	return ""
 }
+
+func (state ChoiceState) GetNexts() []string {
+	nexts := make([]string, len(state.Choices)+1)
+	for i, choice := range state.Choices {
+		nexts[i] = choice.Next
+	}
+	nexts[len(nexts)-1] = state.Default
+	return nexts
+}

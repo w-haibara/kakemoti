@@ -39,7 +39,7 @@ func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger 
 		return nil, err
 	}
 
-	out, err := workflow.exec(ctx, in)
+	out, err := workflow.Exec(ctx, in)
 	if err != nil {
 		workflow.errorLog(err)
 		return nil, err
@@ -89,181 +89,139 @@ func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
 	})
 }
 
-func (w Workflow) exec(ctx context.Context, input interface{}) (interface{}, error) {
-	o, err := w.execStates(ctx, &w.States, input)
-	if err != nil {
-		w.errorLog(err)
-		return nil, err
-	}
-
-	return o, nil
-}
-
-func (w Workflow) execStates(ctx context.Context, states *compiler.States, input interface{}) (output interface{}, err error) {
-	for i := range *states {
-		var branch *compiler.States
-		output, branch, err = w.execStateWithFilter(ctx, (*states)[i], input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, nil
-		}
+func (w Workflow) Exec(ctx context.Context, input interface{}) (interface{}, error) {
+	output := input
+	branch := w.States[0]
+	for {
+		out, b, err := w.evalBranch(ctx, branch, output)
 		if err != nil {
 			return nil, err
 		}
-		input = output
 
-		if branch != nil {
-			return w.execStates(ctx, branch, input)
+		output = out
+
+		if b == nil {
+			break
 		}
+
+		branch = b
 	}
+
 	return output, nil
 }
 
-func (w Workflow) execStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, *compiler.States, error) {
+func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input interface{}) (interface{}, []compiler.State, error) {
+	output := input
+	for _, state := range branch {
+		out, next, err := w.evalStateWithFilter(ctx, state, output)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		output = out
+
+		if next == "" {
+			continue
+		}
+
+		b, err := w.nextBranchFromString(next)
+		if err != nil {
+			return nil, nil, err
+		}
+		if b != nil {
+			return out, b, nil
+		}
+	}
+
+	branch, err := w.nextBranch(branch[len(branch)-1])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return output, branch, nil
+}
+
+func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, string, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
 	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
 	if err != nil {
 		w.errorLog(err)
-		return nil, nil, err
+		return nil, "", err
 	}
 
-	result, branch, err := w.execStateWithRetry(ctx, state, effectiveInput)
+	result, next, err := w.evalState(ctx, state, effectiveInput)
 	if errors.Is(err, ErrStateMachineTerminated) {
-		return result, nil, err
+		return result, "", err
 	}
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 
 	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
 	if err != nil {
 		w.errorLog(err)
-		return nil, nil, err
+		return nil, "", err
 	}
 
 	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
 	if err != nil {
 		w.errorLog(err)
-		return nil, nil, err
+		return nil, "", err
 	}
 
-	return effectiveOutput, branch, nil
+	return effectiveOutput, next, nil
 }
 
-func (w Workflow) execStateWithRetry(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, error) {
-	result, branch, stateserr, err := w.execState(ctx, state, input)
-	if errors.Is(err, ErrStateMachineTerminated) {
-		return result, nil, err
-	}
-	if err != nil {
-		return nil, nil, err
-	}
+func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
+	var (
+		next   string
+		output interface{}
+		err    error
+	)
 
-	if stateserr != "" {
-		// TODO: implement retry & catch
-		return result, nil, ErrStateMachineTerminated
-	}
-
-	return result, branch, nil
-}
-
-func (w Workflow) execState(ctx context.Context, state compiler.State, input interface{}) (interface{}, *compiler.States, statesError, error) {
-	if choice, ok := state.Body.(*compiler.ChoiceState); ok {
-		next := ""
-		next, out, err := w.evalChoice(ctx, choice, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return out, nil, "", err
-		}
-		if err != nil {
-			w.errorLog(err)
-			return nil, nil, "", err
-		}
-		s, ok := state.Choices[next]
-		if !ok {
-			err = fmt.Errorf("'next' key is invalid: %s", next)
-			w.errorLog(err)
-			return nil, nil, "", err
-		}
-		return out, s, "", nil
-	}
-
-	out, stateserr, err := w.eval(ctx, &state, input)
-	if errors.Is(err, ErrStateMachineTerminated) {
-		return out, nil, stateserr, err
-	}
-	if err != nil {
-		return nil, nil, "", err
-	}
-	return out, nil, stateserr, nil
-}
-
-func (w Workflow) eval(ctx context.Context, state *compiler.State, input interface{}) (interface{}, statesError, error) {
 	switch body := state.Body.(type) {
-	case *compiler.FailState:
-		output, err := w.evalFail(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
-	case *compiler.MapState:
-		output, err := w.evalMap(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
-	case *compiler.ParallelState:
-		output, err := w.evalParallel(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
 	case *compiler.PassState:
-		output, err := w.evalPass(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
-	case *compiler.SucceedState:
-		output, err := w.evalSucceed(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
+		output, err = w.evalPass(ctx, body, input)
 	case *compiler.TaskState:
-		output, err := w.evalTask(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
+		output, err = w.evalTask(ctx, body, input)
+	case *compiler.ChoiceState:
+		next, output, err = w.evalChoice(ctx, body, input)
 	case *compiler.WaitState:
-		output, err := w.evalWait(ctx, body, input)
-		if errors.Is(err, ErrStateMachineTerminated) {
-			return output, "", nil
-		}
-		if err != nil {
-			return nil, "", err
-		}
-		return output, "", nil
+		output, err = w.evalWait(ctx, body, input)
+	case *compiler.SucceedState:
+		output, err = w.evalSucceed(ctx, body, input)
+	case *compiler.FailState:
+		output, err = w.evalFail(ctx, body, input)
+	case *compiler.ParallelState:
+		output, err = w.evalParallel(ctx, body, input)
+	case *compiler.MapState:
+		output, err = w.evalMap(ctx, body, input)
 	}
 
-	w.errorLog(ErrUnknownStateType)
-	return nil, "", ErrUnknownStateType
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return output, next, nil
+	}
+	if err != nil {
+		return nil, "", err
+	}
+
+	return output, next, nil
+}
+
+func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
+	if state.Next == "" {
+		return nil, nil
+	}
+
+	return w.nextBranchFromString(state.Next)
+}
+
+func (w Workflow) nextBranchFromString(next string) ([]compiler.State, error) {
+	index, ok := w.StatesIndexMap[next]
+	if !ok {
+		return nil, fmt.Errorf("the state name is not in the Workflow.StatesIndexMap: %s", next)
+	}
+
+	return w.States[index[0]][index[1]:], nil
 }

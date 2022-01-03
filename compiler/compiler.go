@@ -11,81 +11,13 @@ import (
 
 var ErrStateMachineTerminated = errors.New("state machine terminated")
 
-type ASL struct {
-	Comment        string                     `json:"Comment"`
-	StartAt        *string                    `json:"StartAt"`
-	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
-	Version        *string                    `json:"Version"`
-	States         map[string]json.RawMessage `json:"States"`
-}
-
-type Workflow struct {
-	Comment        string
-	StartAt        string
-	TimeoutSeconds int64
-	Version        string
-	States         States
-}
-
 type States []State
 
 type State struct {
-	Type    string
-	Name    string
-	Next    string
-	Body    StateBody
-	Choices map[string]*States
-}
-
-func makeStateMachine(s *States, state State, states map[string]State) error {
-	if state.Type == "Choice" {
-		if err := setChoices(s, state, states); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if state.Next == "" {
-		return nil
-	}
-
-	cur, ok := states[state.Next]
-	if !ok {
-		return fmt.Errorf("Next state is not found: %s", cur.Next)
-	}
-	*s = append(*s, cur)
-	return makeStateMachine(s, cur, states)
-}
-
-func setChoices(s *States, state State, states map[string]State) error {
-	body, ok := state.Body.(*ChoiceState)
-	if !ok {
-		return fmt.Errorf("can't covert to type ChoiceState")
-	}
-
-	choices := make(map[string]*States)
-	for _, choice := range body.Choices {
-		if choice.Next == "" {
-			continue
-		}
-
-		state, ok := states[choice.Next]
-		if !ok {
-			return fmt.Errorf("Next state is not found: %s", choice.Next)
-		}
-		choices[state.Name] = &States{state}
-
-		if err := makeStateMachine(choices[state.Name], state, states); err != nil {
-			return err
-		}
-	}
-
-	state.Choices = choices
-
-	var s1 []State = *s
-	s1[len(s1)-1] = state
-
-	return nil
+	Type string
+	Name string
+	Next string
+	Body StateBody
 }
 
 func init() {
@@ -106,6 +38,14 @@ func Compile(ctx context.Context, aslBytes *bytes.Buffer) (*Workflow, error) {
 	}
 
 	return workflow, nil
+}
+
+type ASL struct {
+	Comment        string                     `json:"Comment"`
+	StartAt        *string                    `json:"StartAt"`
+	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
+	Version        *string                    `json:"Version"`
+	States         map[string]json.RawMessage `json:"States"`
 }
 
 func NewASL(aslBytes *bytes.Buffer) (*ASL, error) {
@@ -142,13 +82,22 @@ func (asl *ASL) validate() error {
 }
 
 func (asl *ASL) compile() (*Workflow, error) {
-	workflow := &Workflow{
-		Comment:        asl.Comment,
-		StartAt:        *asl.StartAt,
-		TimeoutSeconds: *asl.TimeoutSeconds,
-		Version:        *asl.Version,
+	states, err := asl.makeStates()
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
+	workflow, err := asl.makeWorkflow(states)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return workflow, nil
+}
+
+func (asl *ASL) makeStates() (map[string]State, error) {
 	states := make(map[string]State)
 	for name, state := range asl.States {
 		v := &struct {
@@ -253,14 +202,121 @@ func (asl *ASL) compile() (*Workflow, error) {
 		}
 	}
 
-	workflow.States = make([]State, 0, len(states))
-	cur := states[workflow.StartAt]
-	workflow.States = append(workflow.States, cur)
+	return states, nil
+}
 
-	if err := makeStateMachine(&workflow.States, cur, states); err != nil {
-		log.Println(err)
-		return nil, err
+func (asl *ASL) makeWorkflow(statesMap map[string]State) (*Workflow, error) {
+	workflow := NewWorkflow(*asl)
+	nexts := []string{workflow.StartAt}
+	for {
+		if nexts == nil || (nexts != nil && len(nexts) == 0) {
+			return workflow, nil
+		}
+
+		states, nss, err := workflow.makeBranches(nexts, statesMap)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		workflow.States = append(workflow.States, states...)
+		if nss == nil || (nss != nil && len(nss) == 0) {
+			return workflow, nil
+		}
+
+		nexts = make([]string, 0)
+		for _, ns := range nss {
+			for _, n := range ns {
+				if n == "" {
+					continue
+				}
+				nexts = append(nexts, n)
+			}
+		}
+	}
+}
+
+type Workflow struct {
+	Comment        string
+	StartAt        string
+	TimeoutSeconds int64
+	Version        string
+	States         []States
+	StatesIndexMap map[string][2]int
+}
+
+func NewWorkflow(asl ASL) *Workflow {
+	m := make(map[string][2]int)
+	return &Workflow{
+		Comment:        asl.Comment,
+		StartAt:        *asl.StartAt,
+		TimeoutSeconds: *asl.TimeoutSeconds,
+		Version:        *asl.Version,
+		StatesIndexMap: m,
+	}
+}
+
+func (wf *Workflow) makeBranches(starts []string, statesMap map[string]State) ([]States, [][]string, error) {
+	branches := make([]States, 0)
+	nexts := make([][]string, 0)
+	for _, next := range starts {
+		ns, err := wf.makeBranch(statesMap[next], statesMap)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		nexts = append(nexts, ns)
 	}
 
-	return workflow, nil
+	return branches, nexts, nil
+}
+
+func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]string, error) {
+	states := make(States, 0)
+	cur := start
+	for {
+		states = append(states, cur)
+		if cur.Next == "" {
+			if wf.stateIsExistInBranch(cur.Name) {
+				return nil, nil
+			}
+			wf.States = append(wf.States, states)
+			for i, state := range states {
+				wf.StatesIndexMap[state.Name] = [2]int{len(wf.States) - 1, i}
+			}
+			if bn := GetNexts(cur.Body); bn != nil {
+				nexts := make([]string, 0, len(bn))
+				for _, next := range bn {
+					if _, ok := wf.StatesIndexMap[next]; !ok {
+						nexts = append(nexts, next)
+					}
+				}
+				return nexts, nil
+			}
+			return nil, nil
+		}
+		var ok bool
+		cur, ok = statesMap[cur.Next]
+		if !ok {
+			return nil, fmt.Errorf("key not found: %v", cur.Next)
+		}
+	}
+}
+
+func (wf *Workflow) stateIsExistInBranch(name string) bool {
+	i := wf.StatesIndexMap[name]
+	if len(wf.States) > i[0] && len(wf.States[i[0]]) > i[1] {
+		if wf.States[i[0]][i[1]].Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func GetNexts(body StateBody) []string {
+	if choice, ok := body.(*ChoiceState); ok {
+		return choice.GetNexts()
+	}
+
+	return nil
 }

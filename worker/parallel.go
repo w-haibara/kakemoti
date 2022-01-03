@@ -25,7 +25,7 @@ func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelStat
 				return err
 			}
 
-			o, err := w.exec(ctx, input)
+			o, err := w.Exec(ctx, input)
 			if err != nil {
 				return err
 			}
