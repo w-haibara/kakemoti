@@ -121,6 +121,90 @@ func TestCompile(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"fallback",
+			`{
+				"StartAt": "State2",
+				"States": {
+				  "State2": {
+					"Type": "Pass",
+					"Next": "Choice State"
+				  },
+				  "State1": {
+					"Type": "Pass",
+					"Next": "State2"
+				  },
+				  "Choice State": {
+					"Type": "Choice",
+					"Choices": [
+					  {
+						"Variable": "$.bool",
+						"BooleanEquals": false,
+						"Next": "State3"
+					  }
+					],
+					"Default": "State1"
+				  },
+				  "State3": {
+					"Type": "Pass",
+					"End": true
+				  }
+				}
+			  }`,
+			[]States{
+				{
+					State{"Pass", "State2", "Choice State",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									Next: "Choice State",
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+					State{"Choice", "Choice State", "",
+						&ChoiceState{
+							Choices: []Choice{{
+								Rule: &Rule{
+									Variable1: "$.bool",
+									Variable2: false,
+									Operator:  "BooleanEquals",
+								},
+								BoolExpr: nil,
+								Next:     "State3",
+							}},
+							Default: "State1",
+							CommonState2: CommonState2{
+								CommonState1: CommonState1{
+									Type: "Choice",
+								},
+							}}},
+				},
+				{
+					State{"Pass", "State3", "",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									End: true,
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+				},
+				{
+					State{"Pass", "State1", "State2",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									Next: "State2",
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
