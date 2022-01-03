@@ -17,6 +17,7 @@ func Test(t *testing.T) {
 	}{
 		{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"pass(result)", "pass_result", "_workflow/inputs/input1.json", "_workflow/outputs/output5.json"},
+		{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"wait", "wait", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},

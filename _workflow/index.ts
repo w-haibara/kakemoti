@@ -5,6 +5,14 @@ import * as custom from "./custom-task.js";
 function pass(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
 }
+function pass_chain(stack: cdk.Stack): sfn.IChainable {
+  const p1 = new sfn.Pass(stack, "P1");
+  const p2 = new sfn.Pass(stack, "P2");
+  const p3 = new sfn.Pass(stack, "P3");
+  const p4 = new sfn.Pass(stack, "P4");
+  const p5 = new sfn.Pass(stack, "P5");
+  return p1.next(p2).next(p3).next(p4).next(p5)
+}
 function pass_result(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State(result)", {
     result: sfn.Result.fromObject({
@@ -64,6 +72,7 @@ function map(stack: cdk.Stack): sfn.IChainable {
 
 const workflows = {
   pass: pass,
+  pass_chain: pass_chain,
   pass_result: pass_result,
   wait: wait,
   succeed: succeed,
