@@ -17,14 +17,23 @@ export class Task extends sfn.State implements sfn.INextable {
   public readonly endStates: sfn.INextable[];
   private readonly taskProps: TaskProps;
 
-
   constructor(scope: core.Construct, id: string, props: TaskProps = {}) {
     super(scope, id, props);
     if (props.resource === undefined) {
-      throw new Error('Task Resource is not found');
+      throw new Error("Task Resource is not found");
     }
     this.taskProps = props;
     this.endStates = [this];
+  }
+
+  public addRetry(props: sfn.RetryProps = {}): Task {
+    super._addRetry(props);
+    return this;
+  }
+
+  public addCatch(handler: sfn.IChainable, props: sfn.CatchProps = {}): Task {
+    super._addCatch(handler.startState, props);
+    return this;
   }
 
   public next(next: sfn.IChainable): sfn.Chain {
@@ -44,7 +53,8 @@ export class Task extends sfn.State implements sfn.INextable {
         this.taskProps.parameters &&
         sfn.FieldUtils.renderObject(this.taskProps.parameters),
       ResultPath: sfn.renderJsonPath(this.resultPath),
-      TimeoutSeconds: this.taskProps.timeout && this.taskProps.timeout.toSeconds(),
+      TimeoutSeconds:
+        this.taskProps.timeout && this.taskProps.timeout.toSeconds(),
       HeartbeatSeconds:
         this.taskProps.heartbeat && this.taskProps.heartbeat.toSeconds(),
     };
