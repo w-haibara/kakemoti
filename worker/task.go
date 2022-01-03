@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/task"
+	"github.com/w-haibara/kuirejo/compiler"
+	"github.com/w-haibara/kuirejo/task"
 )
 
 func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, error) {

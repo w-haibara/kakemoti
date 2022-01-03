@@ -8,7 +8,7 @@ import (
 
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "kakemoti",
+		Use:   "kuirejo",
 		Short: "Orchestration tool for scripts",
 	}
 

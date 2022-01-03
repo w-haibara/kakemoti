@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kuirejo/compiler"
 	"golang.org/x/sync/errgroup"
 )
 
