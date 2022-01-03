@@ -113,7 +113,7 @@ func (w Workflow) Exec(ctx context.Context, input interface{}) (interface{}, err
 func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input interface{}) (interface{}, []compiler.State, error) {
 	output := input
 	for _, state := range branch {
-		out, next, err := w.evalState(ctx, state, output)
+		out, next, err := w.evalStateWithFilter(ctx, state, output)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -139,6 +139,38 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 	}
 
 	return output, branch, nil
+}
+
+func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, string, error) {
+	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
+
+	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
+	if err != nil {
+		w.errorLog(err)
+		return nil, "", err
+	}
+
+	result, next, err := w.evalState(ctx, state, effectiveInput)
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return result, "", err
+	}
+	if err != nil {
+		return nil, "", err
+	}
+
+	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
+	if err != nil {
+		w.errorLog(err)
+		return nil, "", err
+	}
+
+	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
+	if err != nil {
+		w.errorLog(err)
+		return nil, "", err
+	}
+
+	return effectiveOutput, next, nil
 }
 
 func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
