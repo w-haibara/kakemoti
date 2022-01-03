@@ -11,7 +11,7 @@ function pass_chain(stack: cdk.Stack): sfn.IChainable {
   const p3 = new sfn.Pass(stack, "P3");
   const p4 = new sfn.Pass(stack, "P4");
   const p5 = new sfn.Pass(stack, "P5");
-  return p1.next(p2).next(p3).next(p4).next(p5)
+  return p1.next(p2).next(p3).next(p4).next(p5);
 }
 function pass_result(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State(result)", {
@@ -41,12 +41,18 @@ function choice(stack: cdk.Stack): sfn.IChainable {
     .otherwise(fail(stack));
 }
 function choice_fallback(stack: cdk.Stack): sfn.IChainable {
-  const s1 = new sfn.Pass(stack, "State1");
+  const s1 = new sfn.Pass(stack, "State1", {
+    result: sfn.Result.fromObject({
+      bool: false,
+    }),
+  });
   const s2 = new sfn.Pass(stack, "State2");
+  const s3 = new sfn.Pass(stack, "State3");
+  const pass = s1.next(s2);
   const choice = new sfn.Choice(stack, "Choice State")
-    .when(sfn.Condition.booleanEquals("$.bool", false), s1)
-    .otherwise(s2);
-  return s1.next(s2).next(choice);
+    .when(sfn.Condition.booleanEquals("$.bool", false), s3)
+    .otherwise(pass);
+  return s2.next(choice);
 }
 function task(stack: cdk.Stack): sfn.IChainable {
   return new custom.Task(stack, "Task State", {
