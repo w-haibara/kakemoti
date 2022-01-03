@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/k0kubun/pp"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kuirejo/compiler"
 	"github.com/w-haibara/kuirejo/log"
@@ -90,34 +90,141 @@ func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
 }
 
 func (w Workflow) Exec(ctx context.Context, input interface{}) (interface{}, error) {
+	output := input
 	branch := w.States[0]
 	for {
-		index, err := w.evalBranch(ctx, branch)
+		out, b, err := w.evalBranch(ctx, branch, output)
 		if err != nil {
 			return nil, err
 		}
-		if index == [2]int{} {
+
+		output = out
+
+		if b == nil {
 			break
 		}
 
-		branch = w.States[index[0]][index[1]:]
+		branch = b
 	}
 
-	return input, nil
+	return output, nil
 }
 
-func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State) ([2]int, error) {
+func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input interface{}) (interface{}, []compiler.State, error) {
+	output := input
 	for _, state := range branch {
-		if err := w.evalState(ctx, state); err != nil {
-			return [2]int{}, err
+		out, next, err := w.evalState(ctx, state, output)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		output = out
+
+		if next == "" {
+			continue
+		}
+
+		b, err := w.nextBranchFromString(next)
+		if err != nil {
+			return nil, nil, err
+		}
+		if b != nil {
+			return out, b, nil
 		}
 	}
 
-	return w.StatesIndexMap[branch[len(branch)-1].Next], nil
+	branch, err := w.nextBranch(branch[len(branch)-1])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return output, branch, nil
 }
 
-func (w Workflow) evalState(ctx context.Context, state compiler.State) error {
-	_, _ = pp.Println(state.Name, state.Type)
+func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
+	switch body := state.Body.(type) {
+	case *compiler.FailState:
+		output, err := w.evalFail(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.MapState:
+		output, err := w.evalMap(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.ParallelState:
+		output, err := w.evalParallel(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.PassState:
+		output, err := w.evalPass(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.SucceedState:
+		output, err := w.evalSucceed(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.TaskState:
+		output, err := w.evalTask(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	case *compiler.WaitState:
+		output, err := w.evalWait(ctx, body, input)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return output, "", nil
+		}
+		if err != nil {
+			return nil, "", err
+		}
+		return output, "", nil
+	}
 
-	return nil
+	w.errorLog(ErrUnknownStateType)
+	return nil, "", ErrUnknownStateType
+}
+
+func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
+	if state.Next == "" {
+		return nil, nil
+	}
+
+	return w.nextBranchFromString(state.Next)
+}
+
+func (w Workflow) nextBranchFromString(next string) ([]compiler.State, error) {
+	index, ok := w.StatesIndexMap[next]
+	if !ok {
+		return nil, fmt.Errorf("the state name is not in the Workflow.StatesIndexMap: %s", next)
+	}
+
+	return w.States[index[0]][index[1]:], nil
 }
