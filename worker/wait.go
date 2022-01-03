@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ohler55/ojg/jp"
-	"github.com/w-haibara/kuirejo/compiler"
+	"github.com/w-haibara/kakemoti/compiler"
 )
 
 var timeformat = "2006-01-02T15:04:05Z"

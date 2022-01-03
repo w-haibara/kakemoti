@@ -31,7 +31,7 @@ func Test(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, _ = runString(t, fmt.Sprintf("make workflow-gen asl=%s", tt.asl))
-			out, _ := runString(t, "./kuirejo start-execution --asl workflow.json --input", tt.inputFile)
+			out, _ := runString(t, "./kakemoti start-execution --asl workflow.json --input", tt.inputFile)
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
 				t.Fatal("os.ReadFile(tt.wantFile) failed", err)
