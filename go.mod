@@ -1,4 +1,4 @@
-module github.com/w-haibara/kuirejo
+module github.com/w-haibara/kakemoti
 
 go 1.17
 

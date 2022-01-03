@@ -3,7 +3,7 @@ package worker
 import (
 	"context"
 
-	"github.com/w-haibara/kuirejo/compiler"
+	"github.com/w-haibara/kakemoti/compiler"
 )
 
 func (w Workflow) evalPass(ctx context.Context, state *compiler.PassState, input interface{}) (interface{}, error) {
