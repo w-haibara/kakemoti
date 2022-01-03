@@ -294,6 +294,12 @@ func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]strin
 				return nexts, nil
 			}
 			return nil, nil
+		} else if wf.stateIsExistInBranch(cur.Next) {
+			wf.States = append(wf.States, states)
+			for i, state := range states {
+				wf.StatesIndexMap[state.Name] = [2]int{len(wf.States) - 1, i}
+			}
+			return nil, nil
 		}
 		var ok bool
 		cur, ok = statesMap[cur.Next]
