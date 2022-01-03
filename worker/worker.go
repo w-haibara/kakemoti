@@ -150,7 +150,7 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, "", err
 	}
 
-	result, next, err := w.evalState(ctx, state, effectiveInput)
+	result, next, err := w.evalStateWithRetry(ctx, state, effectiveInput)
 	if errors.Is(err, ErrStateMachineTerminated) {
 		return result, "", err
 	}
@@ -173,7 +173,24 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 	return effectiveOutput, next, nil
 }
 
-func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
+func (w Workflow) evalStateWithRetry(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
+	result, next, stateserr, err := w.evalState(ctx, state, input)
+	if errors.Is(err, ErrStateMachineTerminated) {
+		return result, "", err
+	}
+	if err != nil {
+		return nil, "", err
+	}
+
+	if stateserr != "" {
+		// TODO: implement retry & catch
+		return result, "", ErrStateMachineTerminated
+	}
+
+	return result, next, nil
+}
+
+func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError, error) {
 	var (
 		next   string
 		output interface{}
@@ -200,13 +217,13 @@ func (w Workflow) evalState(ctx context.Context, state compiler.State, input int
 	}
 
 	if errors.Is(err, ErrStateMachineTerminated) {
-		return output, next, nil
+		return output, next, "", nil
 	}
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
-	return output, next, nil
+	return output, next, "", nil
 }
 
 func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
