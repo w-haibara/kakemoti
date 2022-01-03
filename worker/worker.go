@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/log"
+	"github.com/w-haibara/kuirejo/compiler"
+	"github.com/w-haibara/kuirejo/log"
 )
 
 var (

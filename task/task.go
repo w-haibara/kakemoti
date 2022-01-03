@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/w-haibara/kakemoti/task/fn"
+	"github.com/w-haibara/kuirejo/task/fn"
 )
 
 type (

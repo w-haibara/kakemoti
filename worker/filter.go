@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/ohler55/ojg/jp"
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kuirejo/compiler"
 )
 
 func FilterByInputPath(state compiler.State, input interface{}) (interface{}, error) {
