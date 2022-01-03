@@ -175,35 +175,38 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 
 func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
 	var (
+		next   string
 		output interface{}
 		err    error
 	)
 
 	switch body := state.Body.(type) {
-	case *compiler.FailState:
-		output, err = w.evalFail(ctx, body, input)
-	case *compiler.MapState:
-		output, err = w.evalMap(ctx, body, input)
-	case *compiler.ParallelState:
-		output, err = w.evalParallel(ctx, body, input)
 	case *compiler.PassState:
 		output, err = w.evalPass(ctx, body, input)
-	case *compiler.SucceedState:
-		output, err = w.evalSucceed(ctx, body, input)
 	case *compiler.TaskState:
 		output, err = w.evalTask(ctx, body, input)
+	case *compiler.ChoiceState:
+		next, output, err = w.evalChoice(ctx, body, input)
 	case *compiler.WaitState:
 		output, err = w.evalWait(ctx, body, input)
+	case *compiler.SucceedState:
+		output, err = w.evalSucceed(ctx, body, input)
+	case *compiler.FailState:
+		output, err = w.evalFail(ctx, body, input)
+	case *compiler.ParallelState:
+		output, err = w.evalParallel(ctx, body, input)
+	case *compiler.MapState:
+		output, err = w.evalMap(ctx, body, input)
 	}
 
 	if errors.Is(err, ErrStateMachineTerminated) {
-		return output, "", nil
+		return output, next, nil
 	}
 	if err != nil {
 		return nil, "", err
 	}
 
-	return output, "", nil
+	return output, next, nil
 }
 
 func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
