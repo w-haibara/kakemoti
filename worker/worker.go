@@ -40,7 +40,7 @@ func Exec(ctx context.Context, w compiler.Workflow, input *bytes.Buffer, logger 
 	}
 
 	out, err := workflow.Exec(ctx, in)
-	if err != nil {
+	if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
 		workflow.errorLog(err)
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (w Workflow) errorLog(err error) {
 }
 
 func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
-	return w.loggerWithInfo().WithFields(logrus.Fields{
+	return w.loggerWithInfo().WithField("line", log.Line()).WithFields(logrus.Fields{
 		"Type": s.Type,
 		"Name": s.Name,
 		"Next": s.Next,
@@ -94,7 +94,11 @@ func (w Workflow) Exec(ctx context.Context, input interface{}) (interface{}, err
 	branch := w.States[0]
 	for {
 		out, b, err := w.evalBranch(ctx, branch, output)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return out, err
+		}
 		if err != nil {
+			w.errorLog(err)
 			return nil, err
 		}
 
@@ -114,7 +118,11 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 	output := input
 	for _, state := range branch {
 		out, next, err := w.evalStateWithFilter(ctx, state, output)
+		if errors.Is(err, ErrStateMachineTerminated) {
+			return out, nil, err
+		}
 		if err != nil {
+			w.errorLog(err)
 			return nil, nil, err
 		}
 
@@ -126,6 +134,7 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 
 		b, err := w.nextBranchFromString(next)
 		if err != nil {
+			w.errorLog(err)
 			return nil, nil, err
 		}
 		if b != nil {
@@ -150,11 +159,12 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, "", err
 	}
 
-	result, next, err := w.evalStateWithRetry(ctx, state, effectiveInput)
+	result, next, err := w.evalStateWithRetryAndCatch(ctx, state, effectiveInput)
 	if errors.Is(err, ErrStateMachineTerminated) {
 		return result, "", err
 	}
 	if err != nil {
+		w.errorLog(err)
 		return nil, "", err
 	}
 
@@ -173,28 +183,36 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 	return effectiveOutput, next, nil
 }
 
-func (w Workflow) evalStateWithRetry(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
-	result, next, stateserr, err := w.evalState(ctx, state, input)
-	if errors.Is(err, ErrStateMachineTerminated) {
-		return result, "", err
-	}
-	if err != nil {
-		return nil, "", err
-	}
+func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
+	result, next, err := w.evalState(ctx, state, input)
+	if err.statesErr != "" {
+		if state.Body.FieldsType() >= compiler.FieldsType5 {
+			common := state.Body.Common()
+			for _, v := range common.Catch {
+				for _, target := range v.ErrorEquals {
+					if target == StatesErrorALL || target == err.statesErr {
+						result, err := FilterByResultPath(state, input, result)
+						if err != nil {
+							return nil, "", fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
+						}
 
-	if stateserr != "" {
-		// TODO: implement retry & catch
+						return result, v.Next, nil
+					}
+				}
+			}
+		}
+
 		return result, "", ErrStateMachineTerminated
 	}
 
-	return result, next, nil
+	return result, next, err.err
 }
 
-func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError, error) {
+func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError) {
 	var (
 		next   string
 		output interface{}
-		err    error
+		err    statesError
 	)
 
 	switch body := state.Body.(type) {
@@ -216,14 +234,7 @@ func (w Workflow) evalState(ctx context.Context, state compiler.State, input int
 		output, err = w.evalMap(ctx, body, input)
 	}
 
-	if errors.Is(err, ErrStateMachineTerminated) {
-		return output, next, "", nil
-	}
-	if err != nil {
-		return nil, "", "", err
-	}
-
-	return output, next, "", nil
+	return output, next, err
 }
 
 func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
