@@ -207,20 +207,11 @@ func (asl *ASL) makeStates() (map[string]State, error) {
 
 func (asl *ASL) makeWorkflow(statesMap map[string]State) (*Workflow, error) {
 	workflow := NewWorkflow(*asl)
-	nexts := []string{workflow.StartAt}
-	for {
-		ns, err := workflow.makeBranches(nexts, statesMap)
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		if len(ns) == 0 {
-			return workflow, nil
-		}
-
-		nexts = ns
+	if err := workflow.makeStates(statesMap); err != nil {
+		return nil, err
 	}
+
+	return workflow, nil
 }
 
 type Workflow struct {
@@ -243,15 +234,50 @@ func NewWorkflow(asl ASL) *Workflow {
 	}
 }
 
+func (wf *Workflow) makeStates(statesMap map[string]State) error {
+	nexts := []string{wf.StartAt}
+	for {
+		ns, err := wf.makeBranches(nexts, statesMap)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		if len(ns) == 0 {
+			return nil
+		}
+
+		nexts = ns
+	}
+}
+
 func (wf *Workflow) makeBranches(starts []string, statesMap map[string]State) ([]string, error) {
+	if len(starts) == 0 {
+		return []string{}, nil
+	}
+
 	nexts := []string{}
 	for _, next := range starts {
-		ns, err := wf.makeBranch(statesMap[next], statesMap)
+		if next == "" {
+			continue
+		}
+
+		if _, ok := statesMap[next]; !ok {
+			return nil, fmt.Errorf("invalid state name: %s", next)
+		}
+
+		ns1, err := wf.makeBranch(statesMap[next], statesMap)
 		if err != nil {
 			return nil, err
 		}
 
-		nexts = append(nexts, ns...)
+		ns2, err := wf.makeCatchBranch(statesMap[next], statesMap)
+		if err != nil {
+			return nil, err
+		}
+
+		nexts = append(nexts, ns1...)
+		nexts = append(nexts, ns2...)
 	}
 
 	return nexts, nil
@@ -293,6 +319,18 @@ func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]strin
 			return nil, fmt.Errorf("key not found: %v", cur.Next)
 		}
 	}
+}
+
+func (wf *Workflow) makeCatchBranch(state State, statesMap map[string]State) ([]string, error) {
+	nexts := []string{}
+	if state.Body.FieldsType() >= FieldsType5 {
+		for _, catch := range state.Body.Common().Catch {
+			if _, ok := wf.StatesIndexMap[catch.Next]; !ok {
+				nexts = append(nexts, catch.Next)
+			}
+		}
+	}
+	return nexts, nil
 }
 
 func (wf *Workflow) stateIsExistInBranch(name string) bool {
