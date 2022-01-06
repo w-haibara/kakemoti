@@ -209,29 +209,17 @@ func (asl *ASL) makeWorkflow(statesMap map[string]State) (*Workflow, error) {
 	workflow := NewWorkflow(*asl)
 	nexts := []string{workflow.StartAt}
 	for {
-		if nexts == nil || (nexts != nil && len(nexts) == 0) {
-			return workflow, nil
-		}
-
-		nss, err := workflow.makeBranches(nexts, statesMap)
+		ns, err := workflow.makeBranches(nexts, statesMap)
 		if err != nil {
 			log.Println(err)
 			return nil, err
 		}
 
-		if nss == nil || (nss != nil && len(nss) == 0) {
+		if len(ns) == 0 {
 			return workflow, nil
 		}
 
-		nexts = make([]string, 0)
-		for _, ns := range nss {
-			for _, n := range ns {
-				if n == "" {
-					continue
-				}
-				nexts = append(nexts, n)
-			}
-		}
+		nexts = ns
 	}
 }
 
@@ -255,15 +243,15 @@ func NewWorkflow(asl ASL) *Workflow {
 	}
 }
 
-func (wf *Workflow) makeBranches(starts []string, statesMap map[string]State) ([][]string, error) {
-	nexts := make([][]string, 0)
+func (wf *Workflow) makeBranches(starts []string, statesMap map[string]State) ([]string, error) {
+	nexts := []string{}
 	for _, next := range starts {
 		ns, err := wf.makeBranch(statesMap[next], statesMap)
 		if err != nil {
 			return nil, err
 		}
 
-		nexts = append(nexts, ns)
+		nexts = append(nexts, ns...)
 	}
 
 	return nexts, nil
