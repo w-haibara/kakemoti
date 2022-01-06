@@ -187,31 +187,35 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
 	result, next, err := w.evalState(ctx, state, input)
 	if err.statesErr != "" {
-		if state.Body.FieldsType() >= compiler.FieldsType5 {
-			common := state.Body.Common()
-			for _, v := range common.Catch {
-				for _, target := range v.ErrorEquals {
-					if target == StatesErrorALL || target == err.statesErr {
-						if v.ResultPath != "" {
-							path, err := jp.ParseString(v.ResultPath)
-							if err != nil {
-								return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-							}
-							if err := path.Set(input, result); err != nil {
-								return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-							}
-						}
-
-						return input, v.Next, nil
-					}
-				}
-			}
-		}
-
-		return result, "", ErrStateMachineTerminated
+		return w.catch(ctx, state, input, result, err)
 	}
 
 	return result, next, err.err
+}
+
+func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
+	if state.Body.FieldsType() >= compiler.FieldsType5 {
+		common := state.Body.Common()
+		for _, catch := range common.Catch {
+			for _, target := range catch.ErrorEquals {
+				if target == StatesErrorALL || target == stateserr.statesErr {
+					if catch.ResultPath != "" {
+						path, err := jp.ParseString(catch.ResultPath)
+						if err != nil {
+							return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+						}
+						if err := path.Set(input, result); err != nil {
+							return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+						}
+					}
+
+					return input, catch.Next, nil
+				}
+			}
+		}
+	}
+
+	return result, "", fmt.Errorf("workflow.catch() failed")
 }
 
 func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError) {
