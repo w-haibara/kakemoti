@@ -8,11 +8,11 @@ import (
 	"github.com/w-haibara/kakemoti/task"
 )
 
-func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, error) {
+func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, statesError) {
 	out, err := task.Do(ctx, state.Resouce.Type, state.Resouce.Path, input)
 	if err != nil {
-		return nil, fmt.Errorf("task.Do() failed: %v", err)
+		return nil, NewStatesError(StatesErrorTaskFailed, fmt.Errorf("task.Do() failed: %v", err))
 	}
 
-	return out, nil
+	return out, NewStatesError("", nil)
 }

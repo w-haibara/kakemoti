@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/w-haibara/kakemoti/compiler"
@@ -13,7 +14,7 @@ type outputs struct {
 	v  []interface{}
 }
 
-func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelState, input interface{}) (interface{}, error) {
+func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelState, input interface{}) (interface{}, statesError) {
 	var eg errgroup.Group
 	var outputs outputs
 	outputs.v = make([]interface{}, len(state.Branches))
@@ -26,7 +27,7 @@ func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelStat
 			}
 
 			o, err := w.Exec(ctx, input)
-			if err != nil {
+			if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
 				return err
 			}
 
@@ -39,8 +40,8 @@ func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelStat
 	}
 
 	if err := eg.Wait(); err != nil {
-		return nil, err
+		return nil, NewStatesError("", err)
 	}
 
-	return outputs.v, nil
+	return outputs.v, NewStatesError("", nil)
 }

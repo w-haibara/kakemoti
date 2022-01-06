@@ -1,7 +1,5 @@
 package worker
 
-type statesError string
-
 const (
 	StatesErrorALL                    = "States.ALL"
 	StatesErrorHeartbeatTimeout       = "States.HeartbeatTimeout"
@@ -14,3 +12,23 @@ const (
 	StatesErrorNoChoiceMatched        = "States.NoChoiceMatched"
 	StatesErrorIntrinsicFailure       = "States.IntrinsicFailure"
 )
+
+type statesError struct {
+	statesErr string
+	err       error
+}
+
+func NewStatesError(statesErr string, err error) statesError {
+	return statesError{
+		statesErr: statesErr,
+		err:       err,
+	}
+}
+
+func (e statesError) StatesError() string {
+	return e.statesErr
+}
+
+func (e statesError) Error() string {
+	return e.err.Error()
+}
