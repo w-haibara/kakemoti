@@ -187,7 +187,7 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
 	result, next, stateserr := w.evalState(ctx, state, input)
 	if !stateserr.IsEmpty() {
-		result, next, err := w.retry(ctx, state, input, stateserr)
+		result, next, err := w.retry(ctx, state, input, result, next, stateserr)
 		if !err.IsEmpty() {
 			return w.catch(ctx, state, input, result, stateserr)
 		}
@@ -197,10 +197,14 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler
 	return result, next, nil
 }
 
-func (w Workflow) retry(ctx context.Context, state compiler.State, input interface{}, stateserr statesError) (interface{}, string, statesError) {
-	result, next, err := w.evalState(ctx, state, input)
+func (w Workflow) retry(ctx context.Context, state compiler.State, input, result interface{}, next string, stateserr statesError) (interface{}, string, statesError) {
+	if state.Body.FieldsType() < compiler.FieldsType5 {
+		return result, next, stateserr
+	}
 
-	return result, next, err
+	result, next2, err := w.evalState(ctx, state, input)
+
+	return result, next2, err
 }
 
 func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
