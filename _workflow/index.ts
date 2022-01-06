@@ -65,6 +65,16 @@ function task_resultPath(stack: cdk.Stack): sfn.IChainable {
     resultPath: "$.resultpath",
   });
 }
+function task_catch(stack: cdk.Stack): sfn.IChainable {
+  const p1 = new sfn.Pass(stack, "Pass State1");
+  const task = new custom.Task(stack, "Task State", {
+    resource: "script:...", // invalid resource path
+  });
+  task.addCatch(p1, {
+    errors: ["States.ALL"],
+  });
+  return task;
+}
 function parallel(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Parallel(stack, "Parallel State")
     .branch(pass(stack))
@@ -87,6 +97,7 @@ const workflows = {
   choice_fallback: choice_fallback,
   task: task,
   task_resultPath: task_resultPath,
+  task_catch: task_catch,
   parallel: parallel,
 };
 
