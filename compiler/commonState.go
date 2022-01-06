@@ -98,12 +98,18 @@ func (state CommonState4) Common() CommonState5 {
 type CommonState5 struct {
 	CommonState4
 	ResultSelector *json.RawMessage `json:"ResultSelector"`
-	Retry          string           `json:"Retry"`
-	Catch          string           `json:"Catch"`
+	Retry          interface{}      `json:"Retry"`
+	Catch          []Catch          `json:"Catch"`
 }
 
 func (state CommonState5) FieldsType() int {
 	return FieldsType5
+}
+
+type Catch struct {
+	ErrorEquals []string
+	ResultPath  string
+	Next        string
 }
 
 func (state CommonState5) Common() CommonState5 {
