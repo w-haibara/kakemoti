@@ -32,3 +32,7 @@ func (e statesError) StatesError() string {
 func (e statesError) Error() string {
 	return e.err.Error()
 }
+
+func (e statesError) IsEmpty() bool {
+	return e.statesErr == "" && e.err == nil
+}

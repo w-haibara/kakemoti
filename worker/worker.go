@@ -185,37 +185,49 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 }
 
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
-	result, next, err := w.evalState(ctx, state, input)
-	if err.statesErr != "" {
-		return w.catch(ctx, state, input, result, err)
+	result, next, stateserr := w.evalState(ctx, state, input)
+	if !stateserr.IsEmpty() {
+		result, next, err := w.retry(ctx, state, input, stateserr)
+		if !err.IsEmpty() {
+			return w.catch(ctx, state, input, result, stateserr)
+		}
+		return result, next, nil
 	}
 
-	return result, next, err.err
+	return result, next, nil
+}
+
+func (w Workflow) retry(ctx context.Context, state compiler.State, input interface{}, stateserr statesError) (interface{}, string, statesError) {
+	result, next, err := w.evalState(ctx, state, input)
+
+	return result, next, err
 }
 
 func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType5 {
-		common := state.Body.Common()
-		for _, catch := range common.Catch {
-			for _, target := range catch.ErrorEquals {
-				if target == StatesErrorALL || target == stateserr.statesErr {
-					if catch.ResultPath != "" {
-						path, err := jp.ParseString(catch.ResultPath)
-						if err != nil {
-							return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-						}
-						if err := path.Set(input, result); err != nil {
-							return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-						}
-					}
+	if state.Body.FieldsType() < compiler.FieldsType5 {
+		return result, "", stateserr.err
+	}
 
-					return input, catch.Next, nil
+	common := state.Body.Common()
+	for _, catch := range common.Catch {
+		for _, target := range catch.ErrorEquals {
+			if target == StatesErrorALL || target == stateserr.statesErr {
+				if catch.ResultPath != "" {
+					path, err := jp.ParseString(catch.ResultPath)
+					if err != nil {
+						return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+					}
+					if err := path.Set(input, result); err != nil {
+						return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+					}
 				}
+
+				return input, catch.Next, nil
 			}
 		}
 	}
 
-	return result, "", fmt.Errorf("workflow.catch() failed")
+	return result, "", stateserr.err
 }
 
 func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError) {
