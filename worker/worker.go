@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/ohler55/ojg/jp"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/log"
@@ -191,12 +192,17 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler
 			for _, v := range common.Catch {
 				for _, target := range v.ErrorEquals {
 					if target == StatesErrorALL || target == err.statesErr {
-						result, err := FilterByResultPath(state, input, result)
-						if err != nil {
-							return nil, "", fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
+						if v.ResultPath != "" {
+							path, err := jp.ParseString(v.ResultPath)
+							if err != nil {
+								return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+							}
+							if err := path.Set(input, result); err != nil {
+								return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+							}
 						}
 
-						return result, v.Next, nil
+						return input, v.Next, nil
 					}
 				}
 			}
