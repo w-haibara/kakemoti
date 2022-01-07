@@ -239,6 +239,11 @@ func (w Workflow) retry(ctx context.Context, state compiler.State, input interfa
 				ind += math.Pow(backoffRate, float64(count))
 			}
 
+			w.loggerWithStateInfo(state).WithFields(
+				logrus.Fields{
+					"retry-interval": ind,
+					"retry-count":    count,
+				}).Println("retry:", state.Name)
 			r, n, err := w.retryWithInterval(ctx, state, input, ind)
 			if err.IsEmpty() {
 				return r, n, err
@@ -255,7 +260,6 @@ func (w Workflow) retry(ctx context.Context, state compiler.State, input interfa
 }
 
 func (w Workflow) retryWithInterval(ctx context.Context, state compiler.State, input interface{}, interval float64) (interface{}, string, statesError) {
-	w.loggerWithStateInfo(state).WithField("interval", interval).Println("retry:", state.Name)
 	time.Sleep(time.Duration(interval) * time.Second)
 	return w.evalState(ctx, state, input)
 }
