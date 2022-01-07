@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/ohler55/ojg/jp"
@@ -185,24 +187,77 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 }
 
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
-	result, next, stateserr := w.retry(ctx, state,
-		func() (interface{}, string, statesError) {
-			return w.evalState(ctx, state, input)
-		})
-	if !stateserr.IsEmpty() {
-		return w.catch(ctx, state, input, result, stateserr)
+	result, next, stateserr := w.evalState(ctx, state, input)
+	if stateserr.IsEmpty() {
+		return result, next, nil
 	}
 
-	return result, next, nil
+	if state.Body.FieldsType() < compiler.FieldsType5 {
+		return result, next, stateserr.err
+	}
+
+	result, next, stateserr = w.retry(ctx, state, input, state.Body.Common().Retry, stateserr)
+	if stateserr.IsEmpty() {
+		return result, next, nil
+	}
+
+	return w.catch(ctx, state, input, result, stateserr)
 }
 
-func (w Workflow) retry(ctx context.Context, state compiler.State, fn func() (interface{}, string, statesError)) (interface{}, string, statesError) {
-	result, next, stateserr := fn()
-	if state.Body.FieldsType() >= compiler.FieldsType5 {
-		return result, next, stateserr
+func (w Workflow) retry(ctx context.Context, state compiler.State, input interface{}, retry []compiler.Retry, stateserr statesError) (interface{}, string, statesError) {
+	for _, retry := range retry {
+		maxAttempts := 3
+		if retry.MaxAttempts != nil {
+			maxAttempts = *retry.MaxAttempts
+		}
+
+		backoffRate := 2.0
+		if retry.BackoffRate != nil {
+			backoffRate = *retry.BackoffRate
+		}
+
+		intervalSeconds := 1
+		if retry.IntervalSeconds != nil {
+			intervalSeconds = *retry.IntervalSeconds
+		}
+
+		for count := 0; count < maxAttempts; count++ {
+			if !func() bool {
+				for _, target := range retry.ErrorEquals {
+					switch target {
+					case StatesErrorALL, stateserr.statesErr, "":
+						return true
+					}
+				}
+				return false
+			}() {
+				break
+			}
+
+			ind := float64(intervalSeconds)
+			if count > 0 {
+				ind += math.Pow(backoffRate, float64(count))
+			}
+
+			r, n, err := w.retryWithInterval(ctx, state, input, ind)
+			if err.IsEmpty() {
+				return r, n, err
+			}
+
+			if count == maxAttempts-1 {
+				return r, n, err
+			}
+		}
 	}
 
-	return result, next, stateserr
+	err := errors.New("retry() failed")
+	return nil, "", NewStatesError(err.Error(), err)
+}
+
+func (w Workflow) retryWithInterval(ctx context.Context, state compiler.State, input interface{}, interval float64) (interface{}, string, statesError) {
+	w.loggerWithStateInfo(state).WithField("interval", interval).Println("retry:", state.Name)
+	time.Sleep(time.Duration(interval) * time.Second)
+	return w.evalState(ctx, state, input)
 }
 
 func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
