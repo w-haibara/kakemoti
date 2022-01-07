@@ -202,7 +202,7 @@ func (w Workflow) retry(ctx context.Context, state compiler.State, fn func() (in
 		return result, next, stateserr
 	}
 
-	return result, next, NewStatesError("", nil)
+	return result, next, stateserr
 }
 
 func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
