@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	Fn    func(context.Context, string, fn.Obj) (fn.Obj, error)
+	Fn    func(context.Context, string, fn.Obj) (fn.Obj, string, error)
 	FnMap map[string]Fn
 )
 
@@ -27,21 +27,21 @@ func Register(name string, fn Fn) {
 	fnMap[name] = fn
 }
 
-func Do(ctx context.Context, resourceType, resoucePath string, input interface{}) (interface{}, error) {
+func Do(ctx context.Context, resourceType, resoucePath string, input interface{}) (interface{}, string, error) {
 	f, ok := fnMap[resourceType]
 	if !ok {
-		return nil, fmt.Errorf("invalid resouce type: %s", resourceType)
+		return nil, "", fmt.Errorf("invalid resouce type: %s", resourceType)
 	}
 
 	in, ok := input.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("can not cast 'in' to fn.Obj")
+		return nil, "", fmt.Errorf("can not cast 'in' to fn.Obj")
 	}
 
-	out, err := f(ctx, resoucePath, in)
+	out, stateserr, err := f(ctx, resoucePath, in)
 	if err != nil {
-		return nil, fmt.Errorf("fn() failed: %v", err)
+		return nil, stateserr, fmt.Errorf("fn() failed: %v", err)
 	}
 
-	return out, nil
+	return out, "", nil
 }
