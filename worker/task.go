@@ -2,17 +2,16 @@ package worker
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/task"
 )
 
-func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, error) {
-	out, err := task.Do(ctx, state.Resouce.Type, state.Resouce.Path, input)
+func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, statesError) {
+	out, stateserr, err := task.Do(ctx, state.Resouce.Type, state.Resouce.Path, input)
 	if err != nil {
-		return nil, fmt.Errorf("task.Do() failed: %v", err)
+		return nil, NewStatesError(StatesErrorTaskFailed, err)
 	}
 
-	return out, nil
+	return out, NewStatesError(stateserr, nil)
 }

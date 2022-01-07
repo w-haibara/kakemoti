@@ -9,7 +9,7 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, input interface{}) (string, interface{}, error) {
+func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, input interface{}) (string, interface{}, statesError) {
 	for _, choice := range state.Choices {
 		/*
 			if choice.BoolExpr != nil {
@@ -24,12 +24,12 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 			case "BooleanEquals":
 				next, output, err := BooleanEquals(choice, input)
 				if err != nil {
-					return "", nil, err
+					return "", nil, NewStatesError("", nil)
 				}
 				if next == "" {
 					continue
 				}
-				return next, output, nil
+				return next, output, NewStatesError("", nil)
 			case "BooleanEqualsPath":
 				panic("Not Implemented")
 			case "IsBoolean":
@@ -106,7 +106,7 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 		}
 	}
 
-	return state.Default, input, nil
+	return state.Default, input, NewStatesError("", nil)
 }
 
 func BooleanEquals(choice compiler.Choice, input interface{}) (string, interface{}, error) {

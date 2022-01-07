@@ -19,7 +19,7 @@ workflow-gen: kakemoti
 	node ./_workflow/index.js ${asl} > workflow.json
 
 input = ""
-.PHONY: run-workflow
+.PHONY: workflow-run
 workflow-run: kakemoti workflow-gen
 	./kakemoti start-execution \
 		--asl workflow.json \

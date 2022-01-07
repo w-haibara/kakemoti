@@ -205,6 +205,76 @@ func TestCompile(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"choice",
+			`{
+				"StartAt": "Task State",
+				"States": {
+					"Task State": {
+						"End": true,
+						"Catch": [
+							{
+								"ErrorEquals": [
+									"States.ALL"
+								],
+								"Next": "Pass State1"
+							}
+						],
+						"Type": "Task",
+						"Resource": "script:..."
+					},
+					"Pass State1": {
+						"Type": "Pass",
+						"End": true
+					}
+				}
+			}`,
+			[]States{
+				{
+					State{"Task", "Task State", "",
+						&TaskState{
+							&RawTaskState{
+								RawResource: "script:...",
+								CommonState5: CommonState5{
+									Catch: []Catch{
+										{
+											ErrorEquals: []string{"States.ALL"},
+											Next:        "Pass State1",
+										},
+									},
+									CommonState4: CommonState4{
+										CommonState3: CommonState3{
+											End: true,
+											CommonState2: CommonState2{
+												CommonState1: CommonState1{
+													Type: "Task",
+												},
+											},
+										},
+									},
+								},
+							},
+							TaskResouce{
+								"script",
+								"...",
+							},
+						},
+					},
+				},
+				{
+					State{"Pass", "Pass State1", "",
+						&PassState{
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									End: true,
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											Type: "Pass",
+										}}}}}},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
