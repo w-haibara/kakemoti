@@ -1,6 +1,6 @@
 {
   "args": ["arg0", "arg1", "arg2"],
   "resultpath": {
-    "Payload": "args: arg0, arg1, arg2\n"
+    "Payload": "args: arg0, arg1, arg2"
   }
 }

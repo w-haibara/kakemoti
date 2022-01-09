@@ -9,6 +9,9 @@ import (
 
 func (w Workflow) evalTask(ctx context.Context, state *compiler.TaskState, input interface{}) (interface{}, statesError) {
 	out, stateserr, err := task.Do(ctx, state.Resouce.Type, state.Resouce.Path, input)
+	if stateserr != "" {
+		return nil, NewStatesError(stateserr, err)
+	}
 	if err != nil {
 		return nil, NewStatesError(StatesErrorTaskFailed, err)
 	}

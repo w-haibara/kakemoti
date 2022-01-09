@@ -1,5 +1,7 @@
 package worker
 
+import "errors"
+
 const (
 	StatesErrorALL                    = "States.ALL"
 	StatesErrorHeartbeatTimeout       = "States.HeartbeatTimeout"
@@ -35,4 +37,12 @@ func (e statesError) Error() string {
 
 func (e statesError) IsEmpty() bool {
 	return e.statesErr == "" && e.err == nil
+}
+
+func (e statesError) Is(target error) bool {
+	return errors.Is(e.err, target)
+}
+
+func (e statesError) As(target interface{}) bool {
+	return errors.As(e.err, target)
 }
