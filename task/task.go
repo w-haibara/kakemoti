@@ -35,7 +35,7 @@ func Do(ctx context.Context, resourceType, resoucePath string, input interface{}
 
 	in, ok := input.(map[string]interface{})
 	if !ok {
-		return nil, "", fmt.Errorf("can not cast 'in' to fn.Obj")
+		return nil, "", fmt.Errorf("invalid input type: %#v", input)
 	}
 
 	out, stateserr, err := f(ctx, resoucePath, in)
