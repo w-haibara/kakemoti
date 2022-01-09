@@ -101,7 +101,6 @@ func (w Workflow) Exec(ctx context.Context, input interface{}) (interface{}, err
 			return out, err
 		}
 		if err != nil {
-			w.errorLog(err)
 			return nil, err
 		}
 
@@ -125,7 +124,6 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 			return out, nil, err
 		}
 		if err != nil {
-			w.errorLog(err)
 			return nil, nil, err
 		}
 
@@ -137,7 +135,6 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 
 		b, err := w.nextBranchFromString(next)
 		if err != nil {
-			w.errorLog(err)
 			return nil, nil, err
 		}
 		if b != nil {
@@ -158,7 +155,6 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 
 	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
 	if err != nil {
-		w.errorLog(err)
 		return nil, "", err
 	}
 
@@ -167,19 +163,16 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return result, "", err
 	}
 	if err != nil {
-		w.errorLog(err)
 		return nil, "", err
 	}
 
 	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
 	if err != nil {
-		w.errorLog(err)
 		return nil, "", err
 	}
 
 	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
 	if err != nil {
-		w.errorLog(err)
 		return nil, "", err
 	}
 
@@ -187,21 +180,21 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 }
 
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, error) {
-	result, next, stateserr := w.evalState(ctx, state, input)
-	if stateserr.IsEmpty() {
-		return result, next, nil
+	origresult, next, origerr := w.evalState(ctx, state, input)
+	if origerr.IsEmpty() {
+		return origresult, next, nil
 	}
 
 	if state.Body.FieldsType() < compiler.FieldsType5 {
-		return result, next, stateserr.err
+		return origresult, next, origerr
 	}
 
-	result, next, stateserr = w.retry(ctx, state, input, state.Body.Common().Retry, stateserr)
+	result, next, stateserr := w.retry(ctx, state, input, state.Body.Common().Retry, origerr)
 	if stateserr.IsEmpty() {
 		return result, next, nil
 	}
 
-	return w.catch(ctx, state, input, result, stateserr)
+	return w.catch(ctx, state, input, origresult, origerr)
 }
 
 func (w Workflow) retry(ctx context.Context, state compiler.State, input interface{}, retry []compiler.Retry, stateserr statesError) (interface{}, string, statesError) {
@@ -266,7 +259,7 @@ func (w Workflow) retryWithInterval(ctx context.Context, state compiler.State, i
 
 func (w Workflow) catch(ctx context.Context, state compiler.State, input, result interface{}, stateserr statesError) (interface{}, string, error) {
 	if state.Body.FieldsType() < compiler.FieldsType5 {
-		return result, "", stateserr.err
+		return result, "", stateserr
 	}
 
 	common := state.Body.Common()
@@ -288,7 +281,7 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 		}
 	}
 
-	return result, "", stateserr.err
+	return result, "", stateserr
 }
 
 func (w Workflow) evalState(ctx context.Context, state compiler.State, input interface{}) (interface{}, string, statesError) {
