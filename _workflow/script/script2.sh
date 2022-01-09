@@ -1,7 +1,7 @@
 #!/bin/bash
 
 outprefix="KAKEMOTI_OUT_"
-errprefix="KAKEMOTI_ERR_"
+errprefix="KAKEMOTI_ERR"
 
 tmpfiledir="/tmp/kakemoti/script2"
 tmpfile=${tmpfiledir}"/tmp"
@@ -19,5 +19,5 @@ if [[ `cat ${tmpfile}` = "aaaaa" ]]
         echo ${outprefix}"Payload=OK"
         echo -n "" > ${tmpfile}
     else
-        echo ${errprefix}"SCRIPT.DUMMY.ERROR"
+        echo ${errprefix}"=SCRIPT.DUMMY.ERROR"
 fi

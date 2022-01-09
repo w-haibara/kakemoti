@@ -41,8 +41,8 @@ func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error)
 	output := Obj{}
 	stateserror := ""
 	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, scriptErrorPrefix+"_") {
-			stateserror = strings.TrimPrefix(line, scriptErrorPrefix+"_")
+		if strings.HasPrefix(line, scriptErrorPrefix+"=") {
+			stateserror = strings.TrimPrefix(line, scriptErrorPrefix+"=")
 			continue
 		}
 
