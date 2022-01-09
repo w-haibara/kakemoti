@@ -33,14 +33,22 @@ func Do(ctx context.Context, resourceType, resoucePath string, input interface{}
 		return nil, "", fmt.Errorf("invalid resouce type: %s", resourceType)
 	}
 
-	in, ok := input.(map[string]interface{})
-	if !ok {
-		return nil, "", fmt.Errorf("invalid input type: %#v", input)
+	var in fn.Obj
+	switch v := input.(type) {
+	case map[string]interface{}:
+		in = v
+	case fn.Obj:
+		in = v
+	default:
+		return nil, "", fmt.Errorf("invalid input type: %T, %#v", input, input)
 	}
 
 	out, stateserr, err := f(ctx, resoucePath, in)
-	if stateserr != "" || err != nil {
-		return nil, stateserr, fmt.Errorf("fn() failed: %v", err)
+	if stateserr != "" {
+		return nil, stateserr, fmt.Errorf("fn() failed: %s", stateserr)
+	}
+	if err != nil {
+		return nil, "", fmt.Errorf("fn() failed: %v", err)
 	}
 
 	return out, "", nil
