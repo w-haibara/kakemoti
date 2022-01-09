@@ -185,6 +185,8 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler
 		return origresult, next, nil
 	}
 
+	w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name, origerr)
+
 	if state.Body.FieldsType() < compiler.FieldsType5 {
 		return origresult, next, origerr
 	}
@@ -193,6 +195,8 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler
 	if stateserr.IsEmpty() {
 		return result, next, nil
 	}
+
+	w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name, stateserr)
 
 	return w.catch(ctx, state, input, origresult, origerr)
 }
@@ -241,6 +245,8 @@ func (w Workflow) retry(ctx context.Context, state compiler.State, input interfa
 			if err.IsEmpty() {
 				return r, n, err
 			}
+
+			w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name, err)
 
 			if count == maxAttempts-1 {
 				return r, n, err
