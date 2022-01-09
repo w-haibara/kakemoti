@@ -39,7 +39,7 @@ func Do(ctx context.Context, resourceType, resoucePath string, input interface{}
 	}
 
 	out, stateserr, err := f(ctx, resoucePath, in)
-	if err != nil {
+	if stateserr != "" || err != nil {
 		return nil, stateserr, fmt.Errorf("fn() failed: %v", err)
 	}
 

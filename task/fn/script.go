@@ -14,8 +14,7 @@ import (
 const (
 	scriptInputPrefix  = "KAKEMOTI_IN"
 	scriptOutputPrefix = "KAKEMOTI_OUT"
-
-//	scriptErrorPrefix  = "KAKEMOTI_ERR"
+	scriptErrorPrefix  = "KAKEMOTI_ERR"
 )
 
 func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error) {
@@ -40,7 +39,13 @@ func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error)
 	}
 
 	output := Obj{}
+	stateserror := ""
 	for _, line := range strings.Split(string(out), "\n") {
+		if strings.HasPrefix(line, scriptErrorPrefix+"_") {
+			stateserror = strings.TrimPrefix(line, scriptErrorPrefix+"_")
+			continue
+		}
+
 		if !strings.HasPrefix(line, scriptOutputPrefix) {
 			continue
 		}
@@ -55,7 +60,7 @@ func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error)
 		output[s[0]] = s[1]
 	}
 
-	return output, "", nil
+	return output, stateserror, nil
 }
 
 func marshalArgs(args interface{}) []string {
