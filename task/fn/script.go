@@ -5,6 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
+)
+
+const (
+	scriptPrefix = "kakemoti_"
 )
 
 func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error) {
@@ -32,5 +37,18 @@ func DoScriptTask(ctx context.Context, path string, in Obj) (Obj, string, error)
 		return nil, "", err
 	}
 
-	return Obj{"Payload": string(out)}, "", nil
+	output := Obj{}
+	for _, line := range strings.Split(string(out), "\n") {
+		if !strings.HasPrefix(line, scriptPrefix) {
+			continue
+		}
+
+		s := strings.SplitN(strings.TrimPrefix(line, scriptPrefix), "=", 2)
+		if len(s) < 2 {
+			continue
+		}
+		output[s[0]] = s[1]
+	}
+
+	return output, "", nil
 }

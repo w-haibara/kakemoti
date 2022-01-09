@@ -1,3 +1,3 @@
 #!/bin/bash
 
-echo "args: "$1", "$2", "$3
+echo "kakemoti_Payload=args: "$1", "$2", "$3
