@@ -65,6 +65,19 @@ function task_resultPath(stack: cdk.Stack): sfn.IChainable {
     resultPath: "$.resultpath",
   });
 }
+function task_retry(stack: cdk.Stack): sfn.IChainable {
+  const task = new custom.Task(stack, "Task State", {
+    resource: "script:_workflow/script/script2.sh",
+    resultPath: "$.args",
+  });
+  const chain = new sfn.Parallel(stack, "Chain").branch(task);
+  chain.addRetry({
+    maxAttempts: 10,
+    backoffRate: 0,
+    interval: cdk.Duration.seconds(0),
+  });
+  return chain;
+}
 function task_catch(stack: cdk.Stack): sfn.IChainable {
   const p1 = new sfn.Pass(stack, "Pass State1");
   const task = new custom.Task(stack, "Task State", {
@@ -97,6 +110,7 @@ const workflows = {
   choice_fallback: choice_fallback,
   task: task,
   task_resultPath: task_resultPath,
+  task_retry: task_retry,
   task_catch: task_catch,
   parallel: parallel,
 };
