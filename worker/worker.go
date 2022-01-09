@@ -196,8 +196,6 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, state compiler
 		return result, next, nil
 	}
 
-	w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name, stateserr)
-
 	return w.catch(ctx, state, input, origresult, origerr)
 }
 
