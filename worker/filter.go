@@ -16,11 +16,12 @@ func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
 	}
+
 	if err := p.Set(v1, v2); err != nil {
 		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
 	}
-	return v1, nil
 
+	return v1, nil
 }
 
 func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
@@ -28,10 +29,12 @@ func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
 	}
+
 	nodes := p.Get(v)
 	if len(nodes) != 1 {
 		return nil, fmt.Errorf("invalid length of path.Get(input) result")
 	}
+
 	return nodes[0], nil
 }
 
