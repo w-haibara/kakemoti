@@ -30,6 +30,47 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	return nodes[0], nil
 }
 
+func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType4 {
+		return result, nil
+	}
+
+	v := state.Body.Common().CommonState4
+	if v.ResultPath == "" {
+		return result, nil
+	}
+
+	path, err := jp.ParseString(v.ResultPath)
+	if err != nil {
+		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+	}
+	if err := path.Set(rawinput, result); err != nil {
+		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+	}
+	return rawinput, nil
+}
+
+func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType2 {
+		return output, nil
+	}
+
+	v := state.Body.Common().CommonState2
+	if v.OutputPath == "" {
+		return output, nil
+	}
+
+	path, err := jp.ParseString(v.OutputPath)
+	if err != nil {
+		return nil, fmt.Errorf("jp.ParseString(v.OutputPath) failed: %v", err)
+	}
+	nodes := path.Get(output)
+	if len(nodes) != 1 {
+		return nil, fmt.Errorf("invalid length of path.Get(output) result")
+	}
+	return nodes[0], nil
+}
+
 func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
 	out := make([]interface{}, 1)
 	out[0] = make(map[string]interface{})
@@ -100,47 +141,6 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 	}
 
 	return FilterByPayloadTemplate(state, result, selector)
-}
-
-func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType4 {
-		return result, nil
-	}
-
-	v := state.Body.Common().CommonState4
-	if v.ResultPath == "" {
-		return result, nil
-	}
-
-	path, err := jp.ParseString(v.ResultPath)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-	}
-	if err := path.Set(rawinput, result); err != nil {
-		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-	}
-	return rawinput, nil
-}
-
-func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType2 {
-		return output, nil
-	}
-
-	v := state.Body.Common().CommonState2
-	if v.OutputPath == "" {
-		return output, nil
-	}
-
-	path, err := jp.ParseString(v.OutputPath)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.OutputPath) failed: %v", err)
-	}
-	nodes := path.Get(output)
-	if len(nodes) != 1 {
-		return nil, fmt.Errorf("invalid length of path.Get(output) result")
-	}
-	return nodes[0], nil
 }
 
 func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
