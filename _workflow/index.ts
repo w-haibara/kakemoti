@@ -58,10 +58,21 @@ function task(stack: Stack): sfn.IChainable {
     scriptPath: "_workflow/script/script1.sh",
   });
 }
-function task_resultPath(stack: Stack): sfn.IChainable {
+function task_filter(stack: Stack): sfn.IChainable {
   return new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
-    resultPath: "$.resultpath",
+    inputPath: "$.inputpath",
+    parameters: sfn.TaskInput.fromObject({
+      aaa: 111,
+      "old.$": "$.args",
+      args: ["param0", "param1", "param2"],
+    }),
+    resultSelector: {
+      bbb: 222,
+      "resultselector.$": "$",
+    },
+    resultPath: "$.resultpath.outputpath",
+    outputPath: "$.resultpath",
   });
 }
 function task_retry(stack: Stack): sfn.IChainable {
@@ -108,7 +119,7 @@ const workflows = {
   choice: choice,
   choice_fallback: choice_fallback,
   task: task,
-  task_resultPath: task_resultPath,
+  task_filter: task_filter,
   task_retry: task_retry,
   task_catch: task_catch,
   parallel: parallel,
