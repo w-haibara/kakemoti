@@ -103,7 +103,7 @@ function task_ctx(stack: Stack): sfn.IChainable {
     scriptPath: "_workflow/script/script1.sh",
     resultSelector: {
       ctx: {
-        ctx_aaa: "$$.aaa",
+        "ctx_aaa.$": "$$.aaa",
       },
     },
   });
