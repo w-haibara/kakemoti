@@ -84,21 +84,6 @@ func FilterByParameters(state compiler.State, input interface{}) (interface{}, e
 	return FilterByPayloadTemplate(state, input, parameter)
 }
 
-func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
-	var err error
-	input, err = FilterByInputPath(state, input)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
-	}
-
-	input, err = FilterByParameters(state, input)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
-	}
-
-	return input, nil
-}
-
 func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType5 {
 		return result, nil
@@ -137,21 +122,6 @@ func FilterByResultPath(state compiler.State, rawinput, result interface{}) (int
 	return rawinput, nil
 }
 
-func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	var err error
-	result, err = FilterByResultSelector(state, result)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
-	}
-
-	result, err = FilterByResultPath(state, rawinput, result)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
-	}
-
-	return result, nil
-}
-
 func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType2 {
 		return output, nil
@@ -171,4 +141,34 @@ func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, 
 		return nil, fmt.Errorf("invalid length of path.Get(output) result")
 	}
 	return nodes[0], nil
+}
+
+func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	var err error
+	result, err = FilterByResultSelector(state, result)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
+	}
+
+	result, err = FilterByResultPath(state, rawinput, result)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
+	}
+
+	return result, nil
+}
+
+func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
+	var err error
+	input, err = FilterByInputPath(state, input)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
+	}
+
+	input, err = FilterByParameters(state, input)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
+	}
+
+	return input, nil
 }
