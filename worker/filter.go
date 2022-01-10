@@ -27,29 +27,10 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 	return input, nil
 }
 
-func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType4 {
-		return input, nil
-	}
-
-	v := state.Body.Common().CommonState4
-	if v.Parameters == nil {
-		return input, nil
-	}
-
-	str := ""
-	if err := json.Unmarshal(*v.Parameters, &str); err == nil {
-		return input, nil
-	}
-
-	parameter := make(map[string]interface{})
-	if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
-	}
-
+func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
 	out := make([]interface{}, 1)
 	out[0] = make(map[string]interface{})
-	for key, val := range parameter {
+	for key, val := range template {
 		if !strings.HasSuffix(key, ".$") {
 			out[0].(map[string]interface{})[key] = val
 			continue
@@ -75,6 +56,29 @@ func FilterByParameters(state compiler.State, input interface{}) (interface{}, e
 	}
 
 	return out[0], nil
+}
+
+func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType4 {
+		return input, nil
+	}
+
+	v := state.Body.Common().CommonState4
+	if v.Parameters == nil {
+		return input, nil
+	}
+
+	str := ""
+	if err := json.Unmarshal(*v.Parameters, &str); err == nil {
+		return input, nil
+	}
+
+	parameter := make(map[string]interface{})
+	if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
+		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
+	}
+
+	return FilterByPayloadTemplate(state, input, parameter)
 }
 
 func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
@@ -107,33 +111,7 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
 	}
 
-	out := make([]interface{}, 1)
-	out[0] = make(map[string]interface{})
-	for key, val := range selector {
-		if !strings.HasSuffix(key, ".$") {
-			out[0].(map[string]interface{})[key] = val
-			continue
-		}
-
-		s, ok := val.(string)
-		if !ok {
-			continue
-		}
-		p, err := jp.ParseString(s)
-		if err != nil {
-			return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
-		}
-		got := p.Get(result)
-		if len(got) < 1 {
-			return nil, fmt.Errorf("p.Get(input) failed")
-		}
-
-		if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(out, got[0]); err != nil {
-			return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
-		}
-	}
-
-	return out[0], nil
+	return FilterByPayloadTemplate(state, result, selector)
 }
 
 func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
