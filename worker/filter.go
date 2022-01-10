@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -9,11 +10,12 @@ import (
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/contextobj"
 )
 
-func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
+func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return JoinByJsonPath(v1, CtxObj.Get(), strings.TrimPrefix(path, "$"))
+		return JoinByJsonPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)
@@ -28,9 +30,9 @@ func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
 	return v1, nil
 }
 
-func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
+func UnjoinByJsonPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return UnjoinByJsonPath(CtxObj.Get(), strings.TrimPrefix(path, "$"))
+		return UnjoinByJsonPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)
@@ -46,7 +48,7 @@ func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
 	return nodes[0], nil
 }
 
-func FilterByInputPath(state compiler.State, input interface{}) (interface{}, error) {
+func FilterByInputPath(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType2 {
 		return input, nil
 	}
@@ -56,10 +58,10 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 		return input, nil
 	}
 
-	return UnjoinByJsonPath(input, v.InputPath)
+	return UnjoinByJsonPath(ctx, input, v.InputPath)
 }
 
-func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
+func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType4 {
 		return result, nil
 	}
@@ -69,10 +71,10 @@ func FilterByResultPath(state compiler.State, rawinput, result interface{}) (int
 		return result, nil
 	}
 
-	return JoinByJsonPath(rawinput, result, v.ResultPath)
+	return JoinByJsonPath(ctx, rawinput, result, v.ResultPath)
 }
 
-func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
+func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType2 {
 		return output, nil
 	}
@@ -82,7 +84,7 @@ func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, 
 		return output, nil
 	}
 
-	return UnjoinByJsonPath(output, v.OutputPath)
+	return UnjoinByJsonPath(ctx, output, v.OutputPath)
 }
 
 func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
@@ -93,8 +95,8 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
-func resolveJsonPath(template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
-	got, err := UnjoinByJsonPath(input, path)
+func resolveJsonPath(ctx context.Context, template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
+	got, err := UnjoinByJsonPath(ctx, input, path)
 	if err != nil {
 		return nil, err
 	}
@@ -112,9 +114,17 @@ func resolveJsonPath(template map[string]interface{}, input interface{}, key, pa
 	return v1, nil
 }
 
-func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
+func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range template {
+		if temp, ok := val.(map[string]interface{}); ok {
+			v, err := FilterByPayloadTemplate(ctx, input, temp)
+			if err != nil {
+				return nil, err
+			}
+			val = v
+		}
+
 		if !strings.HasSuffix(key, ".$") {
 			out[key] = val
 			continue
@@ -126,7 +136,7 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 		}
 
 		if strings.HasPrefix(path, "$") {
-			v, err := resolveJsonPath(out, input, key, path)
+			v, err := resolveJsonPath(ctx, out, input, key, path)
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +150,7 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 	return out, nil
 }
 
-func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
+func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType4 {
 		return input, nil
 	}
@@ -160,10 +170,10 @@ func FilterByParameters(state compiler.State, input interface{}) (interface{}, e
 		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(state, input, parameter)
+	return FilterByPayloadTemplate(ctx, input, parameter)
 }
 
-func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
+func FilterByResultSelector(ctx context.Context, state compiler.State, result interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType5 {
 		return result, nil
 	}
@@ -178,16 +188,16 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(state, result, selector)
+	return FilterByPayloadTemplate(ctx, result, selector)
 }
 
-func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	v1, err := FilterByResultSelector(state, result)
+func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	v1, err := FilterByResultSelector(ctx, state, result)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
 	}
 
-	v2, err := FilterByResultPath(state, rawinput, v1)
+	v2, err := FilterByResultPath(ctx, state, rawinput, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
 	}
@@ -195,13 +205,13 @@ func GenerateEffectiveResult(state compiler.State, rawinput, result interface{})
 	return v2, nil
 }
 
-func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
-	v1, err := FilterByInputPath(state, input)
+func GenerateEffectiveInput(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+	v1, err := FilterByInputPath(ctx, state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
 
-	v2, err := FilterByParameters(state, v1)
+	v2, err := FilterByParameters(ctx, state, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
 	}

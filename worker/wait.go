@@ -11,7 +11,7 @@ import (
 var timeformat = "2006-01-02T15:04:05Z"
 
 func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input interface{}) (interface{}, statesError) {
-	d, err := getDulation(state, input)
+	d, err := getDulation(ctx, state, input)
 	if err != nil {
 		return nil, NewStatesError("", err)
 	}
@@ -22,7 +22,7 @@ func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input
 	return input, NewStatesError("", nil)
 }
 
-func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, error) {
+func getDulation(ctx context.Context, state *compiler.WaitState, input interface{}) (time.Duration, error) {
 	switch {
 	case state.Seconds != nil || state.SecondsPath != nil:
 		var seconds int64
@@ -30,7 +30,7 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			v, err := UnjoinByJsonPath(input, *state.SecondsPath)
+			v, err := UnjoinByJsonPath(ctx, input, *state.SecondsPath)
 			if err != nil {
 				return 0, err
 			}
@@ -51,7 +51,7 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			v, err := UnjoinByJsonPath(input, *state.TimestampPath)
+			v, err := UnjoinByJsonPath(ctx, input, *state.TimestampPath)
 			if err != nil {
 				return 0, err
 			}

@@ -13,14 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/log"
 )
 
 var (
 	ErrStateMachineTerminated = errors.New("state machine terminated")
 	ErrUnknownStateType       = errors.New("unknown state type")
-	CtxObj                    = contextobj.NewContextObj()
 )
 
 var (
@@ -154,7 +152,7 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, string, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
-	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
+	effectiveInput, err := GenerateEffectiveInput(ctx, state, rawinput)
 	if err != nil {
 		return nil, "", err
 	}
@@ -167,12 +165,12 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, "", err
 	}
 
-	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
+	effectiveResult, err := GenerateEffectiveResult(ctx, state, rawinput, result)
 	if err != nil {
 		return nil, "", err
 	}
 
-	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
+	effectiveOutput, err := FilterByOutputPath(ctx, state, effectiveResult)
 	if err != nil {
 		return nil, "", err
 	}
@@ -278,7 +276,7 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 				return input, catch.Next, nil
 			}
 
-			v, err := JoinByJsonPath(input, result, catch.ResultPath)
+			v, err := JoinByJsonPath(ctx, input, result, catch.ResultPath)
 			if err != nil {
 				return nil, "", err
 			}

@@ -21,7 +21,7 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 		if choice.Rule != nil {
 			switch choice.Rule.Operator {
 			case "BooleanEquals":
-				next, output, err := BooleanEquals(choice, input)
+				next, output, err := BooleanEquals(ctx, choice, input)
 				if err != nil {
 					return "", nil, NewStatesError("", nil)
 				}
@@ -108,13 +108,13 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 	return state.Default, input, NewStatesError("", nil)
 }
 
-func BooleanEquals(choice compiler.Choice, input interface{}) (string, interface{}, error) {
+func BooleanEquals(ctx context.Context, choice compiler.Choice, input interface{}) (string, interface{}, error) {
 	path, ok := choice.Rule.Variable1.(string)
 	if !ok {
 		return "", nil, errors.New("type of choice.Rule.Variable1 is not string")
 	}
 
-	v, err := UnjoinByJsonPath(input, path)
+	v, err := UnjoinByJsonPath(ctx, input, path)
 	if err != nil {
 		return "", nil, err
 	}

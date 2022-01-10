@@ -1,17 +1,48 @@
 package contextobj
 
-type ContextObj struct {
+import (
+	"context"
+)
+
+type Key struct {
+	key string
+}
+
+var contextObjectKey Key = Key{"context object key"}
+
+type Obj struct {
 	obj map[string]interface{}
 }
 
-func NewContextObj() ContextObj {
-	return ContextObj{make(map[string]interface{})}
+func New(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextObjectKey, Obj{map[string]interface{}{}})
 }
 
-func (c ContextObj) Set(key string, val interface{}) {
-	c.obj[key] = val
+func Set(ctx context.Context, key string, val interface{}) context.Context {
+	v := ctx.Value(contextObjectKey)
+	if v == nil {
+		return ctx
+	}
+
+	obj, ok := v.(Obj)
+	if !ok {
+		return ctx
+	}
+
+	obj.obj[key] = val
+	return context.WithValue(ctx, contextObjectKey, obj)
 }
 
-func (c ContextObj) Get() map[string]interface{} {
-	return c.obj
+func Get(ctx context.Context) map[string]interface{} {
+	v := ctx.Value(contextObjectKey)
+	if v == nil {
+		return nil
+	}
+
+	obj, ok := v.(Obj)
+	if !ok {
+		return nil
+	}
+
+	return obj.obj
 }
