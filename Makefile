@@ -10,12 +10,12 @@ test: kakemoti
 	go test -count=1 ./...
 
 .PHONY: build-workflow-gen
-build-workflow-gen:
+build-workflow-gen: _workflow/*
 	cd _workflow && yarn install && tsc
 
 asl = ""
 .PHONY: workflow-gen
-workflow-gen: kakemoti
+workflow-gen: kakemoti build-workflow-gen
 	node ./_workflow/index.js ${asl} > workflow.json
 
 input = ""
