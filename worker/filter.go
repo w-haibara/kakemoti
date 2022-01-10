@@ -9,6 +9,30 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
+func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
+	p, err := jp.ParseString(path)
+	if err != nil {
+		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+	}
+	if err := p.Set(v1, v2); err != nil {
+		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+	}
+	return v1, nil
+
+}
+
+func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
+	p, err := jp.ParseString(path)
+	if err != nil {
+		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
+	}
+	nodes := p.Get(v)
+	if len(nodes) != 1 {
+		return nil, fmt.Errorf("invalid length of path.Get(input) result")
+	}
+	return nodes[0], nil
+}
+
 func FilterByInputPath(state compiler.State, input interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < compiler.FieldsType2 {
 		return input, nil
@@ -19,15 +43,7 @@ func FilterByInputPath(state compiler.State, input interface{}) (interface{}, er
 		return input, nil
 	}
 
-	path, err := jp.ParseString(v.InputPath)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
-	}
-	nodes := path.Get(input)
-	if len(nodes) != 1 {
-		return nil, fmt.Errorf("invalid length of path.Get(input) result")
-	}
-	return nodes[0], nil
+	return UnjoinByJsonPath(input, v.InputPath)
 }
 
 func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
@@ -40,14 +56,7 @@ func FilterByResultPath(state compiler.State, rawinput, result interface{}) (int
 		return result, nil
 	}
 
-	path, err := jp.ParseString(v.ResultPath)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-	}
-	if err := path.Set(rawinput, result); err != nil {
-		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-	}
-	return rawinput, nil
+	return JoinByJsonPath(rawinput, result, v.ResultPath)
 }
 
 func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
@@ -60,15 +69,7 @@ func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, 
 		return output, nil
 	}
 
-	path, err := jp.ParseString(v.OutputPath)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.OutputPath) failed: %v", err)
-	}
-	nodes := path.Get(output)
-	if len(nodes) != 1 {
-		return nil, fmt.Errorf("invalid length of path.Get(output) result")
-	}
-	return nodes[0], nil
+	return UnjoinByJsonPath(output, v.OutputPath)
 }
 
 func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
