@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
@@ -31,22 +30,16 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			p, err := jp.ParseString(*state.SecondsPath)
+			v, err := UnjoinByJsonPath(input, *state.SecondsPath)
 			if err != nil {
-				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
-			}
-			nodes := p.Get(input)
-
-			if len(nodes) != 1 {
-				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
+				return 0, err
 			}
 
-			v, ok := nodes[0].(int64)
-			if !ok {
+			if v, ok := v.(int64); !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+			} else {
+				seconds = v
 			}
-
-			seconds = v
 		}
 		if seconds == 0 {
 			return 0, nil
@@ -58,22 +51,16 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			p, err := jp.ParseString(*state.TimestampPath)
+			v, err := UnjoinByJsonPath(input, *state.TimestampPath)
 			if err != nil {
-				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
-			}
-			nodes := p.Get(input)
-
-			if len(nodes) != 1 {
-				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
+				return 0, err
 			}
 
-			v, ok := nodes[0].(string)
-			if !ok {
+			if v, ok := v.(string); !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+			} else {
+				timestamp = v
 			}
-
-			timestamp = v
 		}
 		t, err := time.ParseInLocation(timeformat, timestamp, time.Now().Location())
 		if err != nil {
