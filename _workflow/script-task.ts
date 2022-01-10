@@ -2,7 +2,7 @@ import { Construct } from "constructs";
 import { aws_stepfunctions as sfn } from "aws-cdk-lib";
 
 export interface ScriptTaskProps extends sfn.TaskStateBaseProps {
-  readonly payload?: sfn.TaskInput;
+  readonly parameters?: sfn.TaskInput;
   readonly scriptPath: string;
 }
 
@@ -21,11 +21,9 @@ export class ScriptTask extends sfn.TaskStateBase {
   protected _renderTask(): any {
     return {
       Resource: "script:" + this.props.scriptPath,
-      Parameters: sfn.FieldUtils.renderObject({
-        Payload: this.props.payload
-          ? this.props.payload.value
-          : sfn.TaskInput.fromJsonPathAt("$").value,
-      }),
+      Parameters: this.props.parameters
+        ? this.props.parameters.value
+        : sfn.TaskInput.fromJsonPathAt("$").value,
     };
   }
 }

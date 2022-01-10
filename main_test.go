@@ -25,7 +25,7 @@ func Test(t *testing.T) {
 		{"choice(fallback)", "choice_fallback", "_workflow/inputs/input2.json", "_workflow/outputs/output7.json"},
 		{"parallel", "parallel", "_workflow/inputs/input2.json", "_workflow/outputs/output3.json"},
 		{"task", "task", "_workflow/inputs/input1.json", "_workflow/outputs/output4.json"},
-		{"task(resultPath)", "task_resultPath", "_workflow/inputs/input1.json", "_workflow/outputs/output6.json"},
+		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},
 		{"task(catch)", "task_catch", "_workflow/inputs/input1.json", "_workflow/inputs/input1.json"},
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
 	}
