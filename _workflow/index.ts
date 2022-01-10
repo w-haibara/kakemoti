@@ -115,6 +115,10 @@ const workflows = {
   parallel: parallel,
 };
 
+function list() {
+  console.log(Object.keys(workflows).join('\n'));
+}
+
 function render(sm: sfn.IChainable) {
   return new cdk.Stack().resolve(
     new sfn.StateGraph(sm.startState, "Graph").toGraphJson()
@@ -129,6 +133,11 @@ const args = process.argv.slice(2);
 if (args.length == 0) {
   console.error("not enough args");
   process.exit(1);
+}
+
+if (args[0] == "list") {
+  list();
+  process.exit(0);
 }
 
 const stack = new cdk.Stack();
