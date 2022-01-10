@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
 var timeformat = "2006-01-02T15:04:05Z"
 
 func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input interface{}) (interface{}, statesError) {
-	d, err := getDulation(state, input)
+	d, err := getDulation(ctx, state, input)
 	if err != nil {
 		return nil, NewStatesError("", err)
 	}
@@ -23,7 +22,7 @@ func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input
 	return input, NewStatesError("", nil)
 }
 
-func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, error) {
+func getDulation(ctx context.Context, state *compiler.WaitState, input interface{}) (time.Duration, error) {
 	switch {
 	case state.Seconds != nil || state.SecondsPath != nil:
 		var seconds int64
@@ -31,22 +30,16 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			p, err := jp.ParseString(*state.SecondsPath)
+			v, err := UnjoinByJsonPath(ctx, input, *state.SecondsPath)
 			if err != nil {
-				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
-			}
-			nodes := p.Get(input)
-
-			if len(nodes) != 1 {
-				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
+				return 0, err
 			}
 
-			v, ok := nodes[0].(int64)
-			if !ok {
+			if v, ok := v.(int64); !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+			} else {
+				seconds = v
 			}
-
-			seconds = v
 		}
 		if seconds == 0 {
 			return 0, nil
@@ -58,22 +51,16 @@ func getDulation(state *compiler.WaitState, input interface{}) (time.Duration, e
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			p, err := jp.ParseString(*state.TimestampPath)
+			v, err := UnjoinByJsonPath(ctx, input, *state.TimestampPath)
 			if err != nil {
-				return 0, fmt.Errorf("jp.ParseString(path) failed: %w", err)
-			}
-			nodes := p.Get(input)
-
-			if len(nodes) != 1 {
-				return 0, fmt.Errorf("invalid length of input.JSONPath(path) result")
+				return 0, err
 			}
 
-			v, ok := nodes[0].(string)
-			if !ok {
+			if v, ok := v.(string); !ok {
 				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+			} else {
+				timestamp = v
 			}
-
-			timestamp = v
 		}
 		t, err := time.ParseInLocation(timeformat, timestamp, time.Now().Location())
 		if err != nil {

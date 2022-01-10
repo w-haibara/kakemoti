@@ -1,6 +1,7 @@
-package main
+package cli
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,9 +10,11 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/w-haibara/kakemoti/contextobj"
 )
 
-func Test(t *testing.T) {
+func TestStartExecution(t *testing.T) {
 	tests := []struct {
 		name, asl, inputFile, wantFile string
 	}{
@@ -28,15 +31,30 @@ func Test(t *testing.T) {
 		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},
 		{"task(catch)", "task_catch", "_workflow/inputs/input1.json", "_workflow/inputs/input1.json"},
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
+		{"task(ctx)", "task_ctx", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 	}
-	_, _ = runString(t, "make build-workflow-gen")
+
+	if err := os.Chdir("../"); err != nil {
+		t.Fatal(`os.Chdir("../"):`, err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, _ = runString(t, fmt.Sprintf("make workflow-gen asl=%s", tt.asl))
-			out, _ := runString(t, "./kakemoti start-execution --asl workflow.json --input", tt.inputFile)
+			ctx := contextobj.New(context.Background())
+			ctx = contextobj.Set(ctx, "aaa", 111)
+			out, err := StartExecution(ctx, Options{
+				Logfile: "",
+				Input:   tt.inputFile,
+				ASL:     "workflow.json",
+				Timeout: 0,
+			})
+			if err != nil {
+				t.Fatal("StartExecution() failed:", err)
+			}
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
-				t.Fatal("os.ReadFile(tt.wantFile) failed", err)
+				t.Fatal("os.ReadFile(tt.wantFile) failed:", err)
 			}
 			if !jsonEqual(t, []byte(out), want) {
 				t.Fatalf("FATAL\nWANT: [%s]\nGOT : [%s]\n", want, out)

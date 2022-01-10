@@ -98,6 +98,16 @@ function task_catch(stack: Stack): sfn.IChainable {
   });
   return task;
 }
+function task_ctx(stack: Stack): sfn.IChainable {
+  return new ScriptTask(stack, "Task State", {
+    scriptPath: "_workflow/script/script1.sh",
+    resultSelector: {
+      ctx: {
+        "ctx_aaa.$": "$$.aaa",
+      },
+    },
+  });
+}
 function parallel(stack: Stack): sfn.IChainable {
   return new sfn.Parallel(stack, "Parallel State")
     .branch(pass(stack))
@@ -122,6 +132,7 @@ const workflows = {
   task_filter: task_filter,
   task_retry: task_retry,
   task_catch: task_catch,
+  task_ctx: task_ctx,
   parallel: parallel,
 };
 
