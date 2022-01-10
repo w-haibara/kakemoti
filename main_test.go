@@ -9,7 +9,15 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/w-haibara/kakemoti/contextobj"
 )
+
+func init() {
+	contextobj.Set("aaa", 111)
+	contextobj.Set("bbb", 222)
+	contextobj.Set("ccc", 333)
+}
 
 func Test(t *testing.T) {
 	tests := []struct {
@@ -28,6 +36,7 @@ func Test(t *testing.T) {
 		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},
 		{"task(catch)", "task_catch", "_workflow/inputs/input1.json", "_workflow/inputs/input1.json"},
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
+		{"task(ctx)", "task_ctx", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 	}
 	_, _ = runString(t, "make build-workflow-gen")
 	for _, tt := range tests {

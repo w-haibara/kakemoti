@@ -9,9 +9,14 @@ import (
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/contextobj"
 )
 
 func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
+	if strings.HasPrefix(path, "$$") {
+		return JoinByJsonPath(v1, contextobj.Get(), strings.TrimPrefix(path, "$"))
+	}
+
 	p, err := jp.ParseString(path)
 	if err != nil {
 		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
@@ -25,6 +30,10 @@ func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
 }
 
 func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
+	if strings.HasPrefix(path, "$$") {
+		return UnjoinByJsonPath(contextobj.Get(), strings.TrimPrefix(path, "$"))
+	}
+
 	p, err := jp.ParseString(path)
 	if err != nil {
 		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
@@ -117,16 +126,16 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 			return nil, fmt.Errorf("value of payload template is not string: %v", path)
 		}
 
-		switch {
-		case strings.HasPrefix(path, "$"):
+		if strings.HasPrefix(path, "$") {
 			v, err := resolveJsonPath(out, input, key, path)
 			if err != nil {
 				return nil, err
 			}
 			out = v
-		default:
-			return nil, fmt.Errorf("invalid value of payload template: %v", path)
+			continue
 		}
+
+		return nil, fmt.Errorf("invalid value of payload template: %v", path)
 	}
 
 	return out, nil
