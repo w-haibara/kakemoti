@@ -72,32 +72,39 @@ func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{
 }
 
 func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType5 {
-		v := state.Body.Common()
-		if v.ResultSelector != nil {
-			selector := make(map[string]interface{})
-			if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
-				return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
-			}
+	if state.Body.FieldsType() < compiler.FieldsType5 {
+		return result, nil
+	}
 
-			for key, val := range selector {
-				if strings.HasSuffix(key, ".$") {
-					s, ok := val.(string)
-					if !ok {
-						continue
-					}
-					p, err := jp.ParseString(s)
-					if err != nil {
-						return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
-					}
-					if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(selector, p.Get(result)); err != nil {
-						return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
-					}
-				}
-			}
+	v := state.Body.Common()
+	if v.ResultSelector == nil {
+		return result, nil
+	}
+
+	selector := make(map[string]interface{})
+	if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
+		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
+	}
+
+	for key, val := range selector {
+		if !strings.HasSuffix(key, ".$") {
+			continue
+		}
+
+		s, ok := val.(string)
+		if !ok {
+			continue
+		}
+		p, err := jp.ParseString(s)
+		if err != nil {
+			return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
+		}
+		if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(selector, p.Get(result)); err != nil {
+			return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
 		}
 	}
-	return result, nil
+
+	return selector, nil
 }
 
 func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
