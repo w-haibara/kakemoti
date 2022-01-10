@@ -1,5 +1,5 @@
-import * as core from "@aws-cdk/core";
-import * as sfn from "@aws-cdk/aws-stepfunctions";
+import { Construct } from "constructs";
+import { aws_stepfunctions as sfn } from "aws-cdk-lib";
 
 export interface ScriptTaskProps extends sfn.TaskStateBaseProps {
   readonly payload?: sfn.TaskInput;
@@ -10,7 +10,11 @@ export class ScriptTask extends sfn.TaskStateBase {
   protected readonly taskMetrics?: undefined;
   protected readonly taskPolicies?: undefined;
 
-  constructor(scope: core.Construct, id: string, private readonly props: ScriptTaskProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    private readonly props: ScriptTaskProps
+  ) {
     super(scope, id, props);
   }
 
