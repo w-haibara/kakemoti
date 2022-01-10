@@ -81,22 +81,23 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 			continue
 		}
 
-		s, ok := val.(string)
+		path, ok := val.(string)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("value of payload template is not string: %v", path)
 		}
 
-		p, err := jp.ParseString(s)
-		if err != nil {
-			return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
-		}
-		got := p.Get(input)
-		if len(got) < 1 {
-			return nil, fmt.Errorf("p.Get(input) failed")
-		}
+		switch {
+		case strings.HasPrefix(path, "$"):
+			got, err := UnjoinByJsonPath(input, path)
+			if err != nil {
+				return nil, err
+			}
 
-		if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(out, got[0]); err != nil {
-			return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
+			if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(out, got); err != nil {
+				return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
+			}
+		default:
+			return nil, fmt.Errorf("invalid value of payload template: %v", path)
 		}
 	}
 
