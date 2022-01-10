@@ -2,36 +2,34 @@ import * as cdk from "@aws-cdk/core";
 import * as core from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
 
-export interface TaskProps {
+export interface ScriptTaskProps {
   readonly comment?: string;
   readonly inputPath?: string;
   readonly outputPath?: string;
   readonly resultPath?: string;
+  readonly resultSelector?: { [name: string]: any };
   readonly parameters?: { [name: string]: any };
-  readonly resource?: string;
+  readonly scriptPath: string;
   readonly timeout?: cdk.Duration;
   readonly heartbeat?: cdk.Duration;
 }
 
-export class Task extends sfn.State implements sfn.INextable {
+export class ScriptTask extends sfn.State implements sfn.INextable {
   public readonly endStates: sfn.INextable[];
-  private readonly taskProps: TaskProps;
+  private readonly taskProps: ScriptTaskProps;
 
-  constructor(scope: core.Construct, id: string, props: TaskProps = {}) {
+  constructor(scope: core.Construct, id: string, props: ScriptTaskProps) {
     super(scope, id, props);
-    if (props.resource === undefined) {
-      throw new Error("Task Resource is not found");
-    }
     this.taskProps = props;
     this.endStates = [this];
   }
 
-  public addRetry(props: sfn.RetryProps = {}): Task {
+  public addRetry(props: sfn.RetryProps = {}): ScriptTask {
     super._addRetry(props);
     return this;
   }
 
-  public addCatch(handler: sfn.IChainable, props: sfn.CatchProps = {}): Task {
+  public addCatch(handler: sfn.IChainable, props: sfn.CatchProps = {}): ScriptTask {
     super._addCatch(handler.startState, props);
     return this;
   }
@@ -48,7 +46,7 @@ export class Task extends sfn.State implements sfn.INextable {
       ...this.renderInputOutput(),
       Type: "Task",
       Comment: this.taskProps.comment,
-      Resource: this.taskProps.resource,
+      Resource: "script:"+this.taskProps.scriptPath,
       Parameters:
         this.taskProps.parameters &&
         sfn.FieldUtils.renderObject(this.taskProps.parameters),

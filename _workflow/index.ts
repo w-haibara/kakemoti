@@ -1,6 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as sfn from "@aws-cdk/aws-stepfunctions";
-import * as custom from "./custom-task.js";
+import {ScriptTask} from "./script-task.js";
 
 function pass(stack: cdk.Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
@@ -55,19 +55,19 @@ function choice_fallback(stack: cdk.Stack): sfn.IChainable {
   return s2.next(choice);
 }
 function task(stack: cdk.Stack): sfn.IChainable {
-  return new custom.Task(stack, "Task State", {
-    resource: "script:_workflow/script/script1.sh",
+  return new ScriptTask(stack, "Task State", {
+    scriptPath: "_workflow/script/script1.sh",
   });
 }
 function task_resultPath(stack: cdk.Stack): sfn.IChainable {
-  return new custom.Task(stack, "Task State", {
-    resource: "script:_workflow/script/script1.sh",
+  return new ScriptTask(stack, "Task State", {
+    scriptPath: "_workflow/script/script1.sh",
     resultPath: "$.resultpath",
   });
 }
 function task_retry(stack: cdk.Stack): sfn.IChainable {
-  const task = new custom.Task(stack, "Task State", {
-    resource: "script:_workflow/script/script2.sh",
+  const task = new ScriptTask(stack, "Task State", {
+    scriptPath: "_workflow/script/script2.sh",
     resultPath: "$.args",
   });
   const chain = new sfn.Parallel(stack, "Chain").branch(task);
@@ -80,8 +80,8 @@ function task_retry(stack: cdk.Stack): sfn.IChainable {
 }
 function task_catch(stack: cdk.Stack): sfn.IChainable {
   const p1 = new sfn.Pass(stack, "Pass State1");
-  const task = new custom.Task(stack, "Task State", {
-    resource: "script:...", // invalid resource path
+  const task = new ScriptTask(stack, "Task State", {
+    scriptPath: "::", // invalid resource path
   });
   task.addCatch(p1, {
     errors: ["States.ALL"],
