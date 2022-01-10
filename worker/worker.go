@@ -268,18 +268,22 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 	common := state.Body.Common()
 	for _, catch := range common.Catch {
 		for _, target := range catch.ErrorEquals {
-			if target == StatesErrorALL || target == stateserr.statesErr {
-				if catch.ResultPath != "" {
-					var err error
-					input, err = JoinByJsonPath(input, result, catch.ResultPath)
-					if err != nil {
-						return nil, "", err
-					}
-				}
+			if target != StatesErrorALL && target != stateserr.statesErr {
+				continue
+			}
 
+			if catch.ResultPath == "" {
 				return input, catch.Next, nil
 			}
+
+			v, err := JoinByJsonPath(input, result, catch.ResultPath)
+			if err != nil {
+				return nil, "", err
+			}
+
+			return v, catch.Next, nil
 		}
+
 	}
 
 	return result, "", stateserr
