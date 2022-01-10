@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/jp"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/log"
@@ -271,12 +270,10 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 		for _, target := range catch.ErrorEquals {
 			if target == StatesErrorALL || target == stateserr.statesErr {
 				if catch.ResultPath != "" {
-					path, err := jp.ParseString(catch.ResultPath)
+					var err error
+					input, err = JoinByJsonPath(input, result, catch.ResultPath)
 					if err != nil {
-						return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-					}
-					if err := path.Set(input, result); err != nil {
-						return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+						return nil, "", err
 					}
 				}
 
