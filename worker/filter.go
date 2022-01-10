@@ -171,18 +171,17 @@ func FilterByResultSelector(state compiler.State, result interface{}) (interface
 }
 
 func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	var err error
-	result, err = FilterByResultSelector(state, result)
+	v1, err := FilterByResultSelector(state, result)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
 	}
 
-	result, err = FilterByResultPath(state, rawinput, result)
+	v2, err := FilterByResultPath(state, rawinput, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
 	}
 
-	return result, nil
+	return v2, nil
 }
 
 func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
