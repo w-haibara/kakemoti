@@ -185,16 +185,15 @@ func GenerateEffectiveResult(state compiler.State, rawinput, result interface{})
 }
 
 func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
-	var err error
-	input, err = FilterByInputPath(state, input)
+	v1, err := FilterByInputPath(state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
 
-	input, err = FilterByParameters(state, input)
+	v2, err := FilterByParameters(state, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
 	}
 
-	return input, nil
+	return v2, nil
 }
