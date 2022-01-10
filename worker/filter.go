@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ohler55/ojg"
 	"github.com/ohler55/ojg/jp"
+	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
@@ -72,6 +74,14 @@ func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, 
 	return UnjoinByJsonPath(output, v.OutputPath)
 }
 
+func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
+	if err := jp.C(key).Set(v1, v2); err != nil {
+		return nil, fmt.Errorf("jp.N(0).C(key).Set(v1, v2) failed: %v", err)
+	}
+
+	return v1, nil
+}
+
 func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
 	out := make([]interface{}, 1)
 	out[0] = make(map[string]interface{})
@@ -93,9 +103,16 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 				return nil, err
 			}
 
-			if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(out, got); err != nil {
-				return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
+			v, err := SetObjectByKey(out[0], got, strings.TrimSuffix(key, ".$"))
+			if err != nil {
+				return nil, err
 			}
+
+			v1, ok := v.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+			}
+			out[0] = v1
 		default:
 			return nil, fmt.Errorf("invalid value of payload template: %v", path)
 		}
