@@ -83,11 +83,10 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 }
 
 func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
-	out := make([]interface{}, 1)
-	out[0] = make(map[string]interface{})
+	out := make(map[string]interface{})
 	for key, val := range template {
 		if !strings.HasSuffix(key, ".$") {
-			out[0].(map[string]interface{})[key] = val
+			out[key] = val
 			continue
 		}
 
@@ -103,7 +102,7 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 				return nil, err
 			}
 
-			v, err := SetObjectByKey(out[0], got, strings.TrimSuffix(key, ".$"))
+			v, err := SetObjectByKey(out, got, strings.TrimSuffix(key, ".$"))
 			if err != nil {
 				return nil, err
 			}
@@ -112,13 +111,13 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 			if !ok {
 				return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
 			}
-			out[0] = v1
+			out = v1
 		default:
 			return nil, fmt.Errorf("invalid value of payload template: %v", path)
 		}
 	}
 
-	return out[0], nil
+	return out, nil
 }
 
 func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
