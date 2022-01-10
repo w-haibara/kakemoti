@@ -15,7 +15,7 @@ build-workflow-gen: _workflow/*
 
 asl = ""
 .PHONY: workflow-gen
-workflow-gen: kakemoti build-workflow-gen
+workflow-gen: kakemoti
 	node ./_workflow/index.js ${asl} > workflow.json
 
 input = ""
