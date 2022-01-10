@@ -82,6 +82,25 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
+func resolveJsonPath(template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
+	got, err := UnjoinByJsonPath(input, path)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := SetObjectByKey(template, got, strings.TrimSuffix(key, ".$"))
+	if err != nil {
+		return nil, err
+	}
+
+	v1, ok := v.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+	}
+
+	return v1, nil
+}
+
 func FilterByPayloadTemplate(state compiler.State, input interface{}, template map[string]interface{}) (interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range template {
@@ -97,21 +116,11 @@ func FilterByPayloadTemplate(state compiler.State, input interface{}, template m
 
 		switch {
 		case strings.HasPrefix(path, "$"):
-			got, err := UnjoinByJsonPath(input, path)
+			v, err := resolveJsonPath(out, input, key, path)
 			if err != nil {
 				return nil, err
 			}
-
-			v, err := SetObjectByKey(out, got, strings.TrimSuffix(key, ".$"))
-			if err != nil {
-				return nil, err
-			}
-
-			v1, ok := v.(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
-			}
-			out = v1
+			out = v
 		default:
 			return nil, fmt.Errorf("invalid value of payload template: %v", path)
 		}
