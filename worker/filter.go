@@ -9,12 +9,11 @@ import (
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/contextobj"
 )
 
 func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return JoinByJsonPath(v1, contextobj.Get(), strings.TrimPrefix(path, "$"))
+		return JoinByJsonPath(v1, CtxObj.Get(), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)
@@ -31,7 +30,7 @@ func JoinByJsonPath(v1, v2 interface{}, path string) (interface{}, error) {
 
 func UnjoinByJsonPath(v interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return UnjoinByJsonPath(contextobj.Get(), strings.TrimPrefix(path, "$"))
+		return UnjoinByJsonPath(CtxObj.Get(), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)

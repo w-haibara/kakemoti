@@ -10,13 +10,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/w-haibara/kakemoti/contextobj"
+	"github.com/w-haibara/kakemoti/worker"
 )
 
 func init() {
-	contextobj.Set("aaa", 111)
-	contextobj.Set("bbb", 222)
-	contextobj.Set("ccc", 333)
+	worker.CtxObj.Set("aaa", 111)
+	worker.CtxObj.Set("bbb", 222)
+	worker.CtxObj.Set("ccc", 333)
 }
 
 func Test(t *testing.T) {

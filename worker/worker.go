@@ -13,12 +13,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/log"
 )
 
 var (
 	ErrStateMachineTerminated = errors.New("state machine terminated")
 	ErrUnknownStateType       = errors.New("unknown state type")
+	CtxObj                    = contextobj.NewContextObj()
 )
 
 var (
