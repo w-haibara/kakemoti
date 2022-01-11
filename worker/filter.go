@@ -172,10 +172,6 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 
 		return fnstr[:n1], fnstr[n1+1 : n2], nil
 	}
-	fn, argsstr, err := fnAndArgsStr()
-	if err != nil {
-		return "", nil, err
-	}
 
 	resolvePath := func(path string) (interface{}, error) {
 		v, err := UnjoinByJsonPath(ctx, input, path)
@@ -225,7 +221,26 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	}
 
 	parseArgs := func(str string) ([]interface{}, error) {
-		args := strings.Split(str, ",")
+		args := []string{""}
+		escaped := false
+		for _, s := range str {
+			if escaped && s != '\'' {
+				args[len(args)-1] += string(s)
+				continue
+			}
+
+			if s == ',' {
+				args = append(args, "")
+				continue
+			}
+
+			args[len(args)-1] += string(s)
+
+			if s == '\'' {
+				escaped = !escaped
+			}
+		}
+
 		result := make([]interface{}, len(args))
 		for i, arg := range args {
 			arg = strings.TrimSpace(arg)
@@ -237,9 +252,14 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 
 			result[i] = s
 		}
-
 		return result, nil
 	}
+
+	fn, argsstr, err := fnAndArgsStr()
+	if err != nil {
+		return "", nil, err
+	}
+
 	args, err := parseArgs(argsstr)
 	if err != nil {
 		return "", nil, err
