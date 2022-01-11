@@ -166,10 +166,18 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 			return nil, fmt.Errorf("value of payload template is not string: %v", path)
 		}
 
+		// TODO: implement instrinsic function parser
+		fn, args, err := func(str string, input interface{}) (string, []interface{}, error) {
+			return "name", []interface{}{"aaa", 111}, nil
+		}(path, input)
+		if err != nil {
+			return nil, err
+		}
+
 		// TODO: implement instrinsic function
 		result, err := func(fn string, args ...interface{}) (string, error) {
-			return fn, nil
-		}("func name")
+			return fn + ": " + fmt.Sprint(args...), nil
+		}(fn, args)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +185,7 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 		out[strings.TrimSuffix(key, ".$")] = result
 	}
 
-	return payload, nil
+	return out, nil
 }
 
 func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
