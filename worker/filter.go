@@ -216,15 +216,24 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 			return v, nil
 		}
 
-		// TODO: support nested function
-		return nil, ErrParseFailed
+		fn, args, err := parseIntrinsicFunction(ctx, str, input)
+		if err != nil {
+			return nil, err
+		}
+		result, err := intrinsic.Do(ctx, fn, args)
+		if err != nil {
+			return nil, err
+		}
+
+		return result, nil
 	}
 
 	parseArgs := func(str string) ([]interface{}, error) {
 		args := []string{""}
-		escaped := false
+		parenCount := 0
+		quoted := false
 		for _, s := range str {
-			if escaped && s != '\'' {
+			if (parenCount > 0 && s != '(' && s != ')') || (quoted && s != '\'') {
 				args[len(args)-1] += string(s)
 				continue
 			}
@@ -236,8 +245,18 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 
 			args[len(args)-1] += string(s)
 
+			if s == '(' {
+				parenCount++
+				continue
+			}
+			if s == ')' {
+				parenCount--
+				continue
+			}
+
 			if s == '\'' {
-				escaped = !escaped
+				quoted = !quoted
+				continue
 			}
 		}
 

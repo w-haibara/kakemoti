@@ -20,6 +20,7 @@ func Test_parseIntrinsicFunction(t *testing.T) {
 		{"null", "a(null)", nil, "a", []interface{}{"null"}},
 		{"path", "a($.aaa)", map[string]interface{}{"aaa": 111}, "a", []interface{}{111}},
 		{"all", "abc_XYZ.123('x', 1, 3.14, null, $.aaa)", map[string]interface{}{"aaa": 111}, "abc_XYZ.123", []interface{}{"x", 1, 3.14, "null", 111}},
+		{"nested", "States.Format('[{}][{}]', States.Format('[{}]', $.aaa), $.bbb)", map[string]interface{}{"aaa": 111, "bbb": 222}, "States.Format", []interface{}{"[{}][{}]", "[111]", 222}},
 		{"sample1", "States.Format('Hello, my name is {}.', $.name)", map[string]interface{}{"name": "Alice"}, "States.Format", []interface{}{"Hello, my name is {}.", "Alice"}},
 	}
 	for _, tt := range tests {
