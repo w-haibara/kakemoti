@@ -3,7 +3,9 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ohler55/ojg"
@@ -153,6 +155,78 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 	return out, nil
 }
 
+var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
+
+func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}) (string, []interface{}, error) {
+	fnAndArgsStr := func() (string, string, error) {
+		n1 := strings.Index(fnstr, "(")
+		if n1 < 1 && n1+1 < len(fnstr) {
+			return "", "", ErrParseFailed
+		}
+
+		n2 := strings.LastIndex(fnstr, ")")
+		if n2 < 2 || n1 >= n2 {
+			return "", "", ErrParseFailed
+		}
+
+		return fnstr[:n1], fnstr[n1+1 : n2], nil
+	}
+	fn, argsstr, err := fnAndArgsStr()
+	if err != nil {
+		return "", nil, err
+	}
+
+	parseArg := func(str string) (interface{}, error) {
+		b1 := strings.HasPrefix(str, "'")
+		b2 := strings.HasSuffix(str, "'")
+		if !b1 && !b2 {
+			switch str {
+			case "true":
+				return true, nil
+			case "false":
+				return false, nil
+			}
+
+			if v, err := strconv.Atoi(str); err == nil {
+				return v, nil
+			}
+			if v, err := strconv.ParseFloat(str, 64); err == nil {
+				return v, nil
+			}
+
+			return nil, ErrParseFailed
+		}
+		if (b1 && !b2) || (!b1 && b2) {
+			return nil, ErrParseFailed
+		}
+
+		return strings.TrimPrefix(strings.TrimSuffix(str, "'"), "'"), nil
+	}
+
+	parseArgs := func(str string) ([]interface{}, error) {
+		args := strings.Split(str, ",")
+		result := make([]interface{}, len(args))
+		for i, arg := range args {
+			arg = strings.TrimSpace(arg)
+
+			s, err := parseArg(arg)
+			if err != nil {
+				return nil, err
+			}
+
+			result[i] = s
+		}
+
+		return result, nil
+	}
+	args, err := parseArgs(argsstr)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return fn, args, nil
+}
+
 func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
@@ -161,15 +235,12 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 			continue
 		}
 
-		path, ok := val.(string)
+		fnstr, ok := val.(string)
 		if !ok {
-			return nil, fmt.Errorf("value of payload template is not string: %v", path)
+			return nil, fmt.Errorf("value of payload template is not string: %v", fnstr)
 		}
 
-		// TODO: implement instrinsic function parser
-		fn, args, err := func(str string, input interface{}) (string, []interface{}, error) {
-			return "name", []interface{}{"aaa", 111}, nil
-		}(path, input)
+		fn, args, err := parseIntrinsicFunction(ctx, fnstr, input)
 		if err != nil {
 			return nil, err
 		}
