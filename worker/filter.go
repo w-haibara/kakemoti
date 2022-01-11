@@ -155,9 +155,9 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 	return out, nil
 }
 
-var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
-
 func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}) (string, []interface{}, error) {
+	var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
+
 	fnAndArgsStr := func() (string, string, error) {
 		n1 := strings.Index(fnstr, "(")
 		if n1 < 1 && n1+1 < len(fnstr) {
