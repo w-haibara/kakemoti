@@ -176,10 +176,26 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 		return "", nil, err
 	}
 
+	resolvePath := func(path string) (interface{}, error) {
+		v, err := UnjoinByJsonPath(ctx, input, path)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+
 	parseArg := func(str string) (interface{}, error) {
 		b1 := strings.HasPrefix(str, "'")
 		b2 := strings.HasSuffix(str, "'")
 		if !b1 && !b2 {
+			if strings.HasPrefix(str, "$") {
+				v, err := resolvePath(str)
+				if err != nil {
+					return nil, err
+				}
+				return v, nil
+			}
+
 			switch str {
 			case "true":
 				return true, nil
