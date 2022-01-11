@@ -114,63 +114,64 @@ func ResolvePayloaByJsonPath(ctx context.Context, payload map[string]interface{}
 	return v1, nil
 }
 
-func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
-	fn1 := func(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
-		out := make(map[string]interface{})
-		for key, val := range payload {
-			temp, ok := val.(map[string]interface{})
-			if !ok {
-				out[key] = val
-				continue
-			}
+func resolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range payload {
+		temp, ok := val.(map[string]interface{})
+		if !ok {
+			out[key] = val
+			continue
+		}
 
-			v, err := ResolvePayload(ctx, input, temp)
+		v, err := ResolvePayload(ctx, input, temp)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = v
+	}
+	return out, nil
+}
+
+func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range payload {
+		if !strings.HasSuffix(key, ".$") {
+			out[key] = val
+			continue
+		}
+
+		path, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("value of payload template is not string: %v", path)
+		}
+
+		if strings.HasPrefix(path, "$") {
+			v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
 			if err != nil {
 				return nil, err
 			}
-			out[key] = v
+			out = v
+			continue
 		}
-		return out, nil
+
+		return nil, fmt.Errorf("invalid value of payload template: %v", path)
 	}
-	out1, err := fn1(ctx, input, payload)
+
+	return out, nil
+}
+
+func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
+	payload1, err := resolvePayload(ctx, input, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	fn2 := func(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
-		out := make(map[string]interface{})
-		for key, val := range payload {
-			if !strings.HasSuffix(key, ".$") {
-				out[key] = val
-				continue
-			}
-
-			path, ok := val.(string)
-			if !ok {
-				return nil, fmt.Errorf("value of payload template is not string: %v", path)
-			}
-
-			if strings.HasPrefix(path, "$") {
-				v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
-				if err != nil {
-					return nil, err
-				}
-				out = v
-				continue
-			}
-
-			return nil, fmt.Errorf("invalid value of payload template: %v", path)
-		}
-
-		return out, nil
-	}
-
-	out2, err := fn2(ctx, input, out1)
+	payload2, err := resolvePayloadByJsonPath(ctx, input, payload1)
 	if err != nil {
 		return nil, err
 	}
 
-	return out2, err
+	return payload2, err
 }
 
 func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
