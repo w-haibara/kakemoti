@@ -95,13 +95,13 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
-func resolveJsonPath(ctx context.Context, template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
+func ResolvePayloaByJsonPath(ctx context.Context, payload map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
 	got, err := UnjoinByJsonPath(ctx, input, path)
 	if err != nil {
 		return nil, err
 	}
 
-	v, err := SetObjectByKey(template, got, strings.TrimSuffix(key, ".$"))
+	v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
 	if err != nil {
 		return nil, err
 	}
@@ -114,16 +114,16 @@ func resolveJsonPath(ctx context.Context, template map[string]interface{}, input
 	return v1, nil
 }
 
-func filterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (map[string]interface{}, error) {
+func filterByPayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
-	for key, val := range template {
+	for key, val := range payload {
 		temp, ok := val.(map[string]interface{})
 		if !ok {
 			out[key] = val
 			continue
 		}
 
-		v, err := FilterByPayloadTemplate(ctx, input, temp)
+		v, err := ResolvePayload(ctx, input, temp)
 		if err != nil {
 			return nil, err
 		}
@@ -133,10 +133,10 @@ func filterByPayloadTemplate(ctx context.Context, input interface{}, template ma
 	return out, nil
 }
 
-func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
+func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
 	out := make(map[string]interface{})
 
-	out1, err := filterByPayloadTemplate(ctx, input, template)
+	out1, err := filterByPayload(ctx, input, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func FilterByPayloadTemplate(ctx context.Context, input interface{}, template ma
 		}
 
 		if strings.HasPrefix(path, "$") {
-			v, err := resolveJsonPath(ctx, out, input, key, path)
+			v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
 			if err != nil {
 				return nil, err
 			}
@@ -187,7 +187,7 @@ func FilterByParameters(ctx context.Context, state compiler.State, input interfa
 		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(ctx, input, parameter)
+	return ResolvePayload(ctx, input, parameter)
 }
 
 func FilterByResultSelector(ctx context.Context, state compiler.State, result interface{}) (interface{}, error) {
@@ -205,7 +205,7 @@ func FilterByResultSelector(ctx context.Context, state compiler.State, result in
 		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(ctx, result, selector)
+	return ResolvePayload(ctx, result, selector)
 }
 
 func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
