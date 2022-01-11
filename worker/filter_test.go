@@ -17,7 +17,7 @@ func Test_parseIntrinsicFunction(t *testing.T) {
 		{"basic1", "a('x')", nil, "a", []interface{}{"x"}},
 		{"basic2", "a(1)", nil, "a", []interface{}{1}},
 		{"basic3", "a(3.14)", nil, "a", []interface{}{3.14}},
-		{"basic4", "a('x', 1, 3.14)", nil, "a", []interface{}{"x", 1, 3.14}},
+		{"basic4", "abc_XYZ.123('x', 1, 3.14)", nil, "abc_XYZ.123", []interface{}{"x", 1, 3.14}},
 		//{"", "States.Format('Hello, my name is {}.', $.name)", 0, "", []interface{}{0}},
 	}
 	for _, tt := range tests {
