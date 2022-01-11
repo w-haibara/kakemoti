@@ -201,6 +201,8 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 				return true, nil
 			case "false":
 				return false, nil
+			case "null":
+				return "null", nil
 			}
 
 			if v, err := strconv.Atoi(str); err == nil {
