@@ -23,6 +23,16 @@ function pass_result(stack: Stack): sfn.IChainable {
     resultPath: "$.resultpath",
   });
 }
+function pass_parameters(stack: Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State(parameter)", {
+    parameters: {
+      parameters: {
+        aaa: 111,
+        bbb: 222,
+      },
+    },
+  });
+}
 function wait(stack: Stack): sfn.IChainable {
   return new sfn.Wait(stack, "Wait State", {
     time: sfn.WaitTime.duration(Duration.seconds(1)),
@@ -123,6 +133,7 @@ const workflows = {
   pass: pass,
   pass_chain: pass_chain,
   pass_result: pass_result,
+  pass_parameters: pass_parameters,
   wait: wait,
   succeed: succeed,
   fail: fail,
