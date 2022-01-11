@@ -14,14 +14,12 @@ func Test_parseIntrinsicFunction(t *testing.T) {
 		wantName string
 		wantArgs []interface{}
 	}{
-		{"basic1", "a('x')", nil, "a", []interface{}{"x"}},
-		{"basic2", "a(1)", nil, "a", []interface{}{1}},
-		{"basic3", "a(3.14)", nil, "a", []interface{}{3.14}},
-		{"basic4", "a(null)", nil, "a", []interface{}{"null"}},
-		{"basic5", "abc_XYZ.123('x', 1, 3.14)", nil, "abc_XYZ.123", []interface{}{"x", 1, 3.14}},
-		{"path1", "a($.aaa)", map[string]interface{}{"aaa": 111}, "a", []interface{}{111}},
-		{"path2", "a(1, $.aaa)", map[string]interface{}{"aaa": 111}, "a", []interface{}{1, 111}},
-		//{"", "States.Format('Hello, my name is {}.', $.name)", 0, "", []interface{}{0}},
+		{"quoted string", "a('x')", nil, "a", []interface{}{"x"}},
+		{"int", "a(1)", nil, "a", []interface{}{1}},
+		{"float", "a(3.14)", nil, "a", []interface{}{3.14}},
+		{"null", "a(null)", nil, "a", []interface{}{"null"}},
+		{"path", "a($.aaa)", map[string]interface{}{"aaa": 111}, "a", []interface{}{111}},
+		{"all", "abc_XYZ.123('x', 1, 3.14, null, $.aaa)", map[string]interface{}{"aaa": 111}, "abc_XYZ.123", []interface{}{"x", 1, 3.14, "null", 111}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
