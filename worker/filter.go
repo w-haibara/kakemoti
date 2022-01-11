@@ -13,6 +13,7 @@ import (
 	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/contextobj"
+	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
 func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
@@ -265,10 +266,7 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 			return nil, err
 		}
 
-		// TODO: implement instrinsic function
-		result, err := func(fn string, args ...interface{}) (string, error) {
-			return fn + ": " + fmt.Sprint(args...), nil
-		}(fn, args)
+		result, err := intrinsic.Do(ctx, fn, args)
 		if err != nil {
 			return nil, err
 		}
