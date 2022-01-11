@@ -114,12 +114,12 @@ func ResolvePayloaByJsonPath(ctx context.Context, payload map[string]interface{}
 	return v1, nil
 }
 
-func filterByPayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
-	out := make(map[string]interface{})
+func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
+	out1 := make(map[string]interface{})
 	for key, val := range payload {
 		temp, ok := val.(map[string]interface{})
 		if !ok {
-			out[key] = val
+			out1[key] = val
 			continue
 		}
 
@@ -127,20 +127,10 @@ func filterByPayload(ctx context.Context, input interface{}, payload map[string]
 		if err != nil {
 			return nil, err
 		}
-		out[key] = v
+		out1[key] = v
 	}
 
-	return out, nil
-}
-
-func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
 	out := make(map[string]interface{})
-
-	out1, err := filterByPayload(ctx, input, payload)
-	if err != nil {
-		return nil, err
-	}
-
 	for key, val := range out1 {
 		if !strings.HasSuffix(key, ".$") {
 			out[key] = val
