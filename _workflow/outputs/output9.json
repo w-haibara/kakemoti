@@ -1,0 +1,8 @@
+{
+  "outputpath": {
+    "bbb": 222,
+    "resultselector": {
+      "Payload": "args: param0, param1, param2"
+    }
+  }
+}

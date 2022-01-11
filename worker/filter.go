@@ -1,151 +1,220 @@
 package worker
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/ohler55/ojg"
 	"github.com/ohler55/ojg/jp"
+	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/contextobj"
 )
 
-func FilterByInputPath(state compiler.State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType2 {
-		v := state.Body.Common().CommonState2
-		if v.InputPath != "" {
-			path, err := jp.ParseString(v.InputPath)
-			if err != nil {
-				return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
-			}
-			nodes := path.Get(input)
-			if len(nodes) != 1 {
-				return nil, fmt.Errorf("invalid length of path.Get(input) result")
-			}
-			return nodes[0], nil
-		}
+func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
+	if strings.HasPrefix(path, "$$") {
+		return JoinByJsonPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
 	}
-	return input, nil
-}
 
-func FilterByParameters(state compiler.State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType4 {
-		v := state.Body.Common().CommonState4
-		if v.Parameters != nil {
-			parameter := make(map[string]interface{})
-			if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
-				return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
-			}
-
-			for key, val := range parameter {
-				if strings.HasSuffix(key, ".$") {
-					s, ok := val.(string)
-					if !ok {
-						continue
-					}
-					p, err := jp.ParseString(s)
-					if err != nil {
-						return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
-					}
-					if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(parameter, p.Get(input)); err != nil {
-						return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
-					}
-				}
-			}
-		}
-	}
-	return input, nil
-}
-
-func GenerateEffectiveInput(state compiler.State, input interface{}) (interface{}, error) {
-	var err error
-	input, err = FilterByInputPath(state, input)
+	p, err := jp.ParseString(path)
 	if err != nil {
-		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
+		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
 	}
 
-	input, err = FilterByParameters(state, input)
+	if err := p.Set(v1, v2); err != nil {
+		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+	}
+
+	return v1, nil
+}
+
+func UnjoinByJsonPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
+	if strings.HasPrefix(path, "$$") {
+		return UnjoinByJsonPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+	}
+
+	p, err := jp.ParseString(path)
 	if err != nil {
-		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
+		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
 	}
 
-	return input, nil
-}
-
-func FilterByResultSelector(state compiler.State, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType5 {
-		v := state.Body.Common()
-		if v.ResultSelector != nil {
-			selector := make(map[string]interface{})
-			if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
-				return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
-			}
-
-			for key, val := range selector {
-				if strings.HasSuffix(key, ".$") {
-					s, ok := val.(string)
-					if !ok {
-						continue
-					}
-					p, err := jp.ParseString(s)
-					if err != nil {
-						return nil, fmt.Errorf("jp.ParseString(s) failed: %v", err)
-					}
-					if err := jp.N(0).C(strings.TrimSuffix(key, ".$")).Set(selector, p.Get(result)); err != nil {
-						return nil, fmt.Errorf("jp.N(0).C(strings.TrimSuffix(key, \".$\")).Set(selector, p.Get(result)) failed: %v", err)
-					}
-				}
-			}
-		}
+	nodes := p.Get(v)
+	if len(nodes) != 1 {
+		return nil, fmt.Errorf("invalid length of path.Get(input) result")
 	}
-	return result, nil
+
+	return nodes[0], nil
 }
 
-func FilterByResultPath(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType4 {
-		v := state.Body.Common().CommonState4
-		if v.ResultPath != "" {
-			path, err := jp.ParseString(v.ResultPath)
+func FilterByInputPath(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType2 {
+		return input, nil
+	}
+
+	v := state.Body.Common().CommonState2
+	if v.InputPath == "" {
+		return input, nil
+	}
+
+	return UnjoinByJsonPath(ctx, input, v.InputPath)
+}
+
+func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType4 {
+		return result, nil
+	}
+
+	v := state.Body.Common().CommonState4
+	if v.ResultPath == "" {
+		return result, nil
+	}
+
+	return JoinByJsonPath(ctx, rawinput, result, v.ResultPath)
+}
+
+func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType2 {
+		return output, nil
+	}
+
+	v := state.Body.Common().CommonState2
+	if v.OutputPath == "" {
+		return output, nil
+	}
+
+	return UnjoinByJsonPath(ctx, output, v.OutputPath)
+}
+
+func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
+	if err := jp.C(key).Set(v1, v2); err != nil {
+		return nil, fmt.Errorf("jp.N(0).C(key).Set(v1, v2) failed: %v", err)
+	}
+
+	return v1, nil
+}
+
+func resolveJsonPath(ctx context.Context, template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
+	got, err := UnjoinByJsonPath(ctx, input, path)
+	if err != nil {
+		return nil, err
+	}
+
+	v, err := SetObjectByKey(template, got, strings.TrimSuffix(key, ".$"))
+	if err != nil {
+		return nil, err
+	}
+
+	v1, ok := v.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+	}
+
+	return v1, nil
+}
+
+func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range template {
+		if temp, ok := val.(map[string]interface{}); ok {
+			v, err := FilterByPayloadTemplate(ctx, input, temp)
 			if err != nil {
-				return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
+				return nil, err
 			}
-			if err := path.Set(rawinput, result); err != nil {
-				return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-			}
-			return rawinput, nil
+			val = v
 		}
+
+		if !strings.HasSuffix(key, ".$") {
+			out[key] = val
+			continue
+		}
+
+		path, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("value of payload template is not string: %v", path)
+		}
+
+		if strings.HasPrefix(path, "$") {
+			v, err := resolveJsonPath(ctx, out, input, key, path)
+			if err != nil {
+				return nil, err
+			}
+			out = v
+			continue
+		}
+
+		return nil, fmt.Errorf("invalid value of payload template: %v", path)
 	}
-	return result, nil
+
+	return out, nil
 }
 
-func GenerateEffectiveResult(state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	var err error
-	result, err = FilterByResultSelector(state, result)
+func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType4 {
+		return input, nil
+	}
+
+	v := state.Body.Common().CommonState4
+	if v.Parameters == nil {
+		return input, nil
+	}
+
+	str := ""
+	if err := json.Unmarshal(*v.Parameters, &str); err == nil {
+		return input, nil
+	}
+
+	parameter := make(map[string]interface{})
+	if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
+		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
+	}
+
+	return FilterByPayloadTemplate(ctx, input, parameter)
+}
+
+func FilterByResultSelector(ctx context.Context, state compiler.State, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < compiler.FieldsType5 {
+		return result, nil
+	}
+
+	v := state.Body.Common()
+	if v.ResultSelector == nil {
+		return result, nil
+	}
+
+	selector := make(map[string]interface{})
+	if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
+		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
+	}
+
+	return FilterByPayloadTemplate(ctx, result, selector)
+}
+
+func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
+	v1, err := FilterByResultSelector(ctx, state, result)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
 	}
 
-	result, err = FilterByResultPath(state, rawinput, result)
+	v2, err := FilterByResultPath(ctx, state, rawinput, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
 	}
 
-	return result, nil
+	return v2, nil
 }
 
-func FilterByOutputPath(state compiler.State, output interface{}) (interface{}, error) {
-	if state.Body.FieldsType() >= compiler.FieldsType2 {
-		v := state.Body.Common().CommonState2
-		if v.OutputPath != "" {
-			path, err := jp.ParseString(v.OutputPath)
-			if err != nil {
-				return nil, fmt.Errorf("jp.ParseString(v.OutputPath) failed: %v", err)
-			}
-			nodes := path.Get(output)
-			if len(nodes) != 1 {
-				return nil, fmt.Errorf("invalid length of path.Get(output) result")
-			}
-			return nodes[0], nil
-		}
+func GenerateEffectiveInput(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+	v1, err := FilterByInputPath(ctx, state, input)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
-	return output, nil
+
+	v2, err := FilterByParameters(ctx, state, v1)
+	if err != nil {
+		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
+	}
+
+	return v2, nil
 }

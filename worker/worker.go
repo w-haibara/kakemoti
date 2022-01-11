@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/ohler55/ojg/jp"
 	"github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/log"
@@ -153,7 +152,7 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, string, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
-	effectiveInput, err := GenerateEffectiveInput(state, rawinput)
+	effectiveInput, err := GenerateEffectiveInput(ctx, state, rawinput)
 	if err != nil {
 		return nil, "", err
 	}
@@ -166,12 +165,12 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, "", err
 	}
 
-	effectiveResult, err := GenerateEffectiveResult(state, rawinput, result)
+	effectiveResult, err := GenerateEffectiveResult(ctx, state, rawinput, result)
 	if err != nil {
 		return nil, "", err
 	}
 
-	effectiveOutput, err := FilterByOutputPath(state, effectiveResult)
+	effectiveOutput, err := FilterByOutputPath(ctx, state, effectiveResult)
 	if err != nil {
 		return nil, "", err
 	}
@@ -269,20 +268,22 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 	common := state.Body.Common()
 	for _, catch := range common.Catch {
 		for _, target := range catch.ErrorEquals {
-			if target == StatesErrorALL || target == stateserr.statesErr {
-				if catch.ResultPath != "" {
-					path, err := jp.ParseString(catch.ResultPath)
-					if err != nil {
-						return nil, "", fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-					}
-					if err := path.Set(input, result); err != nil {
-						return nil, "", fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
-					}
-				}
+			if target != StatesErrorALL && target != stateserr.statesErr {
+				continue
+			}
 
+			if catch.ResultPath == "" {
 				return input, catch.Next, nil
 			}
+
+			v, err := JoinByJsonPath(ctx, input, result, catch.ResultPath)
+			if err != nil {
+				return nil, "", err
+			}
+
+			return v, catch.Next, nil
 		}
+
 	}
 
 	return result, "", stateserr

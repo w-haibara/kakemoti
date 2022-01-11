@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
@@ -22,7 +21,7 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 		if choice.Rule != nil {
 			switch choice.Rule.Operator {
 			case "BooleanEquals":
-				next, output, err := BooleanEquals(choice, input)
+				next, output, err := BooleanEquals(ctx, choice, input)
 				if err != nil {
 					return "", nil, NewStatesError("", nil)
 				}
@@ -109,25 +108,20 @@ func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, i
 	return state.Default, input, NewStatesError("", nil)
 }
 
-func BooleanEquals(choice compiler.Choice, input interface{}) (string, interface{}, error) {
+func BooleanEquals(ctx context.Context, choice compiler.Choice, input interface{}) (string, interface{}, error) {
 	path, ok := choice.Rule.Variable1.(string)
 	if !ok {
 		return "", nil, errors.New("type of choice.Rule.Variable1 is not string")
 	}
 
-	p, err := jp.ParseString(path)
+	v, err := UnjoinByJsonPath(ctx, input, path)
 	if err != nil {
-		return "", nil, fmt.Errorf("jp.ParseString(path) failed: %w", err)
-	}
-	nodes := p.Get(input)
-
-	if len(nodes) != 1 {
-		return "", nil, fmt.Errorf("invalid length of path.Get(input) result")
+		return "", nil, err
 	}
 
-	v1, ok := nodes[0].(bool)
+	v1, ok := v.(bool)
 	if !ok {
-		return "", nil, fmt.Errorf("invalid type of path.Get(input) result")
+		return "", nil, fmt.Errorf("invalid type of input.JSONPath(path) result")
 	}
 
 	v2, ok := choice.Rule.Variable2.(bool)
