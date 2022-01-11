@@ -95,25 +95,6 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
-func ResolvePayloaByJsonPath(ctx context.Context, payload map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
-	got, err := UnjoinByJsonPath(ctx, input, path)
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
-	if err != nil {
-		return nil, err
-	}
-
-	v1, ok := v.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
-	}
-
-	return v1, nil
-}
-
 func resolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
@@ -146,11 +127,23 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 		}
 
 		if strings.HasPrefix(path, "$") {
-			v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
+			got, err := UnjoinByJsonPath(ctx, input, path)
 			if err != nil {
 				return nil, err
 			}
-			out = v
+
+			v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
+			if err != nil {
+				return nil, err
+			}
+
+			v1, ok := v.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+			}
+
+			delete(v1, key)
+			out = v1
 			continue
 		}
 
