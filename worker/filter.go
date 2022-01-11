@@ -126,31 +126,58 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 			return nil, fmt.Errorf("value of payload template is not string: %v", path)
 		}
 
-		if strings.HasPrefix(path, "$") {
-			got, err := UnjoinByJsonPath(ctx, input, path)
-			if err != nil {
-				return nil, err
-			}
-
-			v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
-			if err != nil {
-				return nil, err
-			}
-
-			v1, ok := v.(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
-			}
-
-			delete(v1, key)
-			out = v1
+		if !strings.HasPrefix(path, "$") {
+			out[key] = path
 			continue
 		}
 
-		return nil, fmt.Errorf("invalid value of payload template: %v", path)
+		got, err := UnjoinByJsonPath(ctx, input, path)
+		if err != nil {
+			return nil, err
+		}
+
+		v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
+		if err != nil {
+			return nil, err
+		}
+
+		v1, ok := v.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+		}
+
+		delete(v1, key)
+		out = v1
 	}
 
 	return out, nil
+}
+
+func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range payload {
+		if !strings.HasSuffix(key, ".$") {
+			out[key] = val
+			continue
+		}
+
+		path, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("value of payload template is not string: %v", path)
+		}
+
+		// TODO: implement instrinsic function
+		result, err := func(fn string, args ...interface{}) (string, error) {
+			return fn, nil
+		}("func name")
+		if err != nil {
+			return nil, err
+		}
+
+		out[strings.TrimSuffix(key, ".$")] = result
+	}
+
+	return payload, nil
 }
 
 func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
@@ -164,7 +191,12 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 		return nil, err
 	}
 
-	return payload2, err
+	payload3, err := resolveIntrinsicFunction(ctx, input, payload2)
+	if err != nil {
+		return nil, err
+	}
+
+	return payload3, err
 }
 
 func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
