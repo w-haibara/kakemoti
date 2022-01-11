@@ -33,6 +33,18 @@ function pass_parameters(stack: Stack): sfn.IChainable {
     },
   });
 }
+function pass_intrinsic(stack: Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State(intrinsic)", {
+    parameters: {
+      parameters: {
+        aaa: 111,
+        intrinsic: {
+          "format.$": "States.Format('Hello, my name is {}.', $.name)",
+        },
+      },
+    },
+  });
+}
 function wait(stack: Stack): sfn.IChainable {
   return new sfn.Wait(stack, "Wait State", {
     time: sfn.WaitTime.duration(Duration.seconds(1)),
@@ -134,6 +146,7 @@ const workflows = {
   pass_chain: pass_chain,
   pass_result: pass_result,
   pass_parameters: pass_parameters,
+  pass_intrinsic: pass_intrinsic,
   wait: wait,
   succeed: succeed,
   fail: fail,
