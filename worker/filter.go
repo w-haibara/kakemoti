@@ -219,6 +219,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 			return v, nil
 		}
 
+		// TODO: support nested function
 		return nil, ErrParseFailed
 	}
 
