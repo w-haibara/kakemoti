@@ -115,46 +115,62 @@ func ResolvePayloaByJsonPath(ctx context.Context, payload map[string]interface{}
 }
 
 func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
-	out1 := make(map[string]interface{})
-	for key, val := range payload {
-		temp, ok := val.(map[string]interface{})
-		if !ok {
-			out1[key] = val
-			continue
-		}
+	fn1 := func(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+		out := make(map[string]interface{})
+		for key, val := range payload {
+			temp, ok := val.(map[string]interface{})
+			if !ok {
+				out[key] = val
+				continue
+			}
 
-		v, err := ResolvePayload(ctx, input, temp)
-		if err != nil {
-			return nil, err
-		}
-		out1[key] = v
-	}
-
-	out := make(map[string]interface{})
-	for key, val := range out1 {
-		if !strings.HasSuffix(key, ".$") {
-			out[key] = val
-			continue
-		}
-
-		path, ok := val.(string)
-		if !ok {
-			return nil, fmt.Errorf("value of payload template is not string: %v", path)
-		}
-
-		if strings.HasPrefix(path, "$") {
-			v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
+			v, err := ResolvePayload(ctx, input, temp)
 			if err != nil {
 				return nil, err
 			}
-			out = v
-			continue
+			out[key] = v
 		}
-
-		return nil, fmt.Errorf("invalid value of payload template: %v", path)
+		return out, nil
+	}
+	out1, err := fn1(ctx, input, payload)
+	if err != nil {
+		return nil, err
 	}
 
-	return out, nil
+	fn2 := func(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+		out := make(map[string]interface{})
+		for key, val := range payload {
+			if !strings.HasSuffix(key, ".$") {
+				out[key] = val
+				continue
+			}
+
+			path, ok := val.(string)
+			if !ok {
+				return nil, fmt.Errorf("value of payload template is not string: %v", path)
+			}
+
+			if strings.HasPrefix(path, "$") {
+				v, err := ResolvePayloaByJsonPath(ctx, out, input, key, path)
+				if err != nil {
+					return nil, err
+				}
+				out = v
+				continue
+			}
+
+			return nil, fmt.Errorf("invalid value of payload template: %v", path)
+		}
+
+		return out, nil
+	}
+
+	out2, err := fn2(ctx, input, out1)
+	if err != nil {
+		return nil, err
+	}
+
+	return out2, err
 }
 
 func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
