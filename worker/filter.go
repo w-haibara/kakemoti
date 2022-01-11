@@ -114,17 +114,34 @@ func resolveJsonPath(ctx context.Context, template map[string]interface{}, input
 	return v1, nil
 }
 
-func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
+func filterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range template {
-		if temp, ok := val.(map[string]interface{}); ok {
-			v, err := FilterByPayloadTemplate(ctx, input, temp)
-			if err != nil {
-				return nil, err
-			}
-			val = v
+		temp, ok := val.(map[string]interface{})
+		if !ok {
+			out[key] = val
+			continue
 		}
 
+		v, err := FilterByPayloadTemplate(ctx, input, temp)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = v
+	}
+
+	return out, nil
+}
+
+func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
+	out := make(map[string]interface{})
+
+	out1, err := filterByPayloadTemplate(ctx, input, template)
+	if err != nil {
+		return nil, err
+	}
+
+	for key, val := range out1 {
 		if !strings.HasSuffix(key, ".$") {
 			out[key] = val
 			continue
