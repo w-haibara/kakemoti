@@ -187,38 +187,39 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	parseArg := func(str string) (interface{}, error) {
 		b1 := strings.HasPrefix(str, "'")
 		b2 := strings.HasSuffix(str, "'")
-		if !b1 && !b2 {
-			if strings.HasPrefix(str, "$") {
-				v, err := resolvePath(str)
-				if err != nil {
-					return nil, err
-				}
-				return v, nil
-			}
-
-			switch str {
-			case "true":
-				return true, nil
-			case "false":
-				return false, nil
-			case "null":
-				return "null", nil
-			}
-
-			if v, err := strconv.Atoi(str); err == nil {
-				return v, nil
-			}
-			if v, err := strconv.ParseFloat(str, 64); err == nil {
-				return v, nil
-			}
-
-			return nil, ErrParseFailed
-		}
 		if (b1 && !b2) || (!b1 && b2) {
 			return nil, ErrParseFailed
 		}
 
-		return strings.TrimPrefix(strings.TrimSuffix(str, "'"), "'"), nil
+		if b1 && b2 {
+			return strings.TrimPrefix(strings.TrimSuffix(str, "'"), "'"), nil
+		}
+
+		if strings.HasPrefix(str, "$") {
+			v, err := resolvePath(str)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		}
+
+		switch str {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
+		case "null":
+			return "null", nil
+		}
+
+		if v, err := strconv.Atoi(str); err == nil {
+			return v, nil
+		}
+		if v, err := strconv.ParseFloat(str, 64); err == nil {
+			return v, nil
+		}
+
+		return nil, ErrParseFailed
 	}
 
 	parseArgs := func(str string) ([]interface{}, error) {
