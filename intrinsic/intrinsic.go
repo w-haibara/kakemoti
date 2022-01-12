@@ -21,6 +21,9 @@ func init() {
 
 func RegisterDefault() {
 	Register("States.Format", fn.DoStatesFormat)
+	Register("States.StringToJson", fn.DoStatesStringToJson)
+	Register("States.JsonToString", fn.DoStatesJsonToString)
+	Register("States.Array", fn.DoStatesArray)
 }
 
 func Register(name string, fn Fn) {
