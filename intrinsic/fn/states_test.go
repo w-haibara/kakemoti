@@ -103,3 +103,26 @@ func jsonDiff(t *testing.T, arg1, arg2 interface{}) string {
 	}
 	return cmp.Diff(v1, v2)
 }
+
+func TestDoStatesArray(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []interface{}
+		wantErr bool
+	}{
+		{"basic1", []interface{}{}, false},
+		{"basic2", []interface{}{"a", 1, 3.14, map[string]interface{}{"a": 1, "b": 3.14}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DoStatesArray(context.TODO(), tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DoStatesArray() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if d := cmp.Diff(got, tt.args); d != "" {
+				t.Errorf("DoStatesArray() failed: \n%s", d)
+			}
+		})
+	}
+}

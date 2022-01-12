@@ -88,3 +88,7 @@ func DoStatesJsonToString(ctx context.Context, args []interface{}) (interface{},
 
 	return string(b), nil
 }
+
+func DoStatesArray(ctx context.Context, args []interface{}) (interface{}, error) {
+	return args, nil
+}
