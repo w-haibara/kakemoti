@@ -3,11 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"os"
-	"os/exec"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -42,13 +38,12 @@ func TestStartExecution(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _ = runString(t, fmt.Sprintf("make workflow-gen asl=%s", tt.asl))
 			ctx := contextobj.New(context.Background())
 			ctx = contextobj.Set(ctx, "aaa", 111)
 			out, err := StartExecution(ctx, Options{
 				Logfile: "",
 				Input:   tt.inputFile,
-				ASL:     "workflow.json",
+				ASL:     "_workflow/asl/" + tt.asl + ".asl.json",
 				Timeout: 0,
 			})
 			if err != nil {
@@ -63,44 +58,6 @@ func TestStartExecution(t *testing.T) {
 			}
 		})
 	}
-}
-
-func runString(t *testing.T, str ...string) (out1, out2 string) {
-	s := make([]string, 0)
-	for _, v := range str {
-		s = append(s, strings.Split(v, " ")...)
-	}
-	return run(t, s[0], s[1:])
-}
-
-func run(t *testing.T, name string, args []string) (out1, out2 string) {
-	cmd := exec.Command(name, args...) // #nosec G204
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		t.Fatal("cmd.StdoutPipe() failed", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		t.Fatal("cmd.StderrPipe() failed", err)
-	}
-	if err := cmd.Start(); err != nil {
-		t.Fatal("cmd.Start() failed", err)
-	}
-	o1, err := io.ReadAll(stdout)
-	if err != nil {
-		t.Fatal("io.ReadAll(stdout) failed", err)
-	}
-	o2, err := io.ReadAll(stderr)
-	if err != nil {
-		t.Fatal("io.ReadAll(stderr) failed", err)
-	}
-	err = cmd.Wait()
-	t.Logf("cmd: [%s %v]\n====== stdout ======\n%s\n====== stderr ======\n%s\n",
-		name, args, o1, o2)
-	if err != nil {
-		t.Fatalf("run(t, %s, %v) failed: %v", name, args, err)
-	}
-	return string(o1), string(o2)
 }
 
 func jsonEqual(t *testing.T, b1, b2 []byte) string {
