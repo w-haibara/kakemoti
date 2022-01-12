@@ -73,3 +73,18 @@ func DoStatesStringToJson(ctx context.Context, args []interface{}) (interface{},
 
 	return v, nil
 }
+
+func DoStatesJsonToString(ctx context.Context, args []interface{}) (interface{}, error) {
+	var ErrStatesJsonToStringFailed = errors.New("DoStatesJsonToString() failed")
+
+	if len(args) < 1 {
+		return nil, ErrStatesJsonToStringFailed
+	}
+
+	b, err := json.Marshal(args[0])
+	if err != nil {
+		return nil, ErrStatesJsonToStringFailed
+	}
+
+	return string(b), nil
+}
