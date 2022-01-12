@@ -1,0 +1,14 @@
+{
+  "parameters": {
+    "aaa": 111,
+    "intrinsic": {
+      "format": "Hello, my name is Alice.",
+      "stringToJson": {
+        "xxx": "abc",
+        "yyy": "def"
+      },
+      "jsonToString": "{\"aaa\":111,\"bbb\":222}",
+      "array": ["start", 111, 222, "end"]
+    }
+  }
+}

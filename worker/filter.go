@@ -3,7 +3,9 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ohler55/ojg"
@@ -11,6 +13,7 @@ import (
 	"github.com/ohler55/ojg/sen"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/contextobj"
+	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
 func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
@@ -95,36 +98,27 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
-func resolveJsonPath(ctx context.Context, template map[string]interface{}, input interface{}, key, path string) (map[string]interface{}, error) {
-	got, err := UnjoinByJsonPath(ctx, input, path)
-	if err != nil {
-		return nil, err
-	}
-
-	v, err := SetObjectByKey(template, got, strings.TrimSuffix(key, ".$"))
-	if err != nil {
-		return nil, err
-	}
-
-	v1, ok := v.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
-	}
-
-	return v1, nil
-}
-
-func FilterByPayloadTemplate(ctx context.Context, input interface{}, template map[string]interface{}) (interface{}, error) {
+func resolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
-	for key, val := range template {
-		if temp, ok := val.(map[string]interface{}); ok {
-			v, err := FilterByPayloadTemplate(ctx, input, temp)
-			if err != nil {
-				return nil, err
-			}
-			val = v
+	for key, val := range payload {
+		temp, ok := val.(map[string]interface{})
+		if !ok {
+			out[key] = val
+			continue
 		}
 
+		v, err := ResolvePayload(ctx, input, temp)
+		if err != nil {
+			return nil, err
+		}
+		out[key] = v
+	}
+	return out, nil
+}
+
+func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range payload {
 		if !strings.HasSuffix(key, ".$") {
 			out[key] = val
 			continue
@@ -135,19 +129,210 @@ func FilterByPayloadTemplate(ctx context.Context, input interface{}, template ma
 			return nil, fmt.Errorf("value of payload template is not string: %v", path)
 		}
 
-		if strings.HasPrefix(path, "$") {
-			v, err := resolveJsonPath(ctx, out, input, key, path)
-			if err != nil {
-				return nil, err
-			}
-			out = v
+		if !strings.HasPrefix(path, "$") {
+			out[key] = path
 			continue
 		}
 
-		return nil, fmt.Errorf("invalid value of payload template: %v", path)
+		got, err := UnjoinByJsonPath(ctx, input, path)
+		if err != nil {
+			return nil, err
+		}
+
+		v, err := SetObjectByKey(payload, got, strings.TrimSuffix(key, ".$"))
+		if err != nil {
+			return nil, err
+		}
+
+		v1, ok := v.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("result of SetObjectByKey() is invarid: %s", sen.String(v, &ojg.Options{Sort: true}))
+		}
+
+		delete(v1, key)
+		out = v1
 	}
 
 	return out, nil
+}
+
+func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}) (string, []interface{}, error) {
+	var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
+
+	fnAndArgsStr := func() (string, string, error) {
+		n1 := strings.Index(fnstr, "(")
+		if n1 < 1 && n1+1 < len(fnstr) {
+			return "", "", ErrParseFailed
+		}
+
+		n2 := strings.LastIndex(fnstr, ")")
+		if n2 < 2 || n1 >= n2 {
+			return "", "", ErrParseFailed
+		}
+
+		return fnstr[:n1], fnstr[n1+1 : n2], nil
+	}
+
+	resolvePath := func(path string) (interface{}, error) {
+		v, err := UnjoinByJsonPath(ctx, input, path)
+		if err != nil {
+			return nil, err
+		}
+		return v, nil
+	}
+
+	parseArg := func(str string) (interface{}, error) {
+		b1 := strings.HasPrefix(str, "'")
+		b2 := strings.HasSuffix(str, "'")
+		if (b1 && !b2) || (!b1 && b2) {
+			return nil, ErrParseFailed
+		}
+
+		if b1 && b2 {
+			return strings.TrimPrefix(strings.TrimSuffix(str, "'"), "'"), nil
+		}
+
+		if strings.HasPrefix(str, "$") {
+			v, err := resolvePath(str)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		}
+
+		switch str {
+		case "true":
+			return true, nil
+		case "false":
+			return false, nil
+		case "null":
+			return "null", nil
+		}
+
+		if v, err := strconv.Atoi(str); err == nil {
+			return v, nil
+		}
+		if v, err := strconv.ParseFloat(str, 64); err == nil {
+			return v, nil
+		}
+
+		fn, args, err := parseIntrinsicFunction(ctx, str, input)
+		if err != nil {
+			return nil, err
+		}
+		result, err := intrinsic.Do(ctx, fn, args)
+		if err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+
+	parseArgs := func(str string) ([]interface{}, error) {
+		args := []string{""}
+		parenCount := 0
+		quoted := false
+		for _, s := range str {
+			if (parenCount > 0 && s != '(' && s != ')') || (quoted && s != '\'') {
+				args[len(args)-1] += string(s)
+				continue
+			}
+
+			if s == ',' {
+				args = append(args, "")
+				continue
+			}
+
+			args[len(args)-1] += string(s)
+
+			if s == '(' {
+				parenCount++
+				continue
+			}
+			if s == ')' {
+				parenCount--
+				continue
+			}
+
+			if s == '\'' {
+				quoted = !quoted
+				continue
+			}
+		}
+
+		result := make([]interface{}, len(args))
+		for i, arg := range args {
+			arg = strings.TrimSpace(arg)
+
+			s, err := parseArg(arg)
+			if err != nil {
+				return nil, err
+			}
+
+			result[i] = s
+		}
+		return result, nil
+	}
+
+	fn, argsstr, err := fnAndArgsStr()
+	if err != nil {
+		return "", nil, err
+	}
+
+	args, err := parseArgs(argsstr)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return fn, args, nil
+}
+
+func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for key, val := range payload {
+		if !strings.HasSuffix(key, ".$") {
+			out[key] = val
+			continue
+		}
+
+		fnstr, ok := val.(string)
+		if !ok {
+			return nil, fmt.Errorf("value of payload template is not string: %v", fnstr)
+		}
+
+		fn, args, err := parseIntrinsicFunction(ctx, fnstr, input)
+		if err != nil {
+			return nil, err
+		}
+
+		result, err := intrinsic.Do(ctx, fn, args)
+		if err != nil {
+			return nil, err
+		}
+
+		out[strings.TrimSuffix(key, ".$")] = result
+	}
+
+	return out, nil
+}
+
+func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
+	payload1, err := resolvePayload(ctx, input, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	payload2, err := resolvePayloadByJsonPath(ctx, input, payload1)
+	if err != nil {
+		return nil, err
+	}
+
+	payload3, err := resolveIntrinsicFunction(ctx, input, payload2)
+	if err != nil {
+		return nil, err
+	}
+
+	return payload3, err
 }
 
 func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
@@ -170,7 +355,7 @@ func FilterByParameters(ctx context.Context, state compiler.State, input interfa
 		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(ctx, input, parameter)
+	return ResolvePayload(ctx, input, parameter)
 }
 
 func FilterByResultSelector(ctx context.Context, state compiler.State, result interface{}) (interface{}, error) {
@@ -188,7 +373,7 @@ func FilterByResultSelector(ctx context.Context, state compiler.State, result in
 		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
 	}
 
-	return FilterByPayloadTemplate(ctx, result, selector)
+	return ResolvePayload(ctx, result, selector)
 }
 
 func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {

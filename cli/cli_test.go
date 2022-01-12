@@ -7,10 +7,10 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/w-haibara/kakemoti/contextobj"
 )
 
@@ -21,6 +21,8 @@ func TestStartExecution(t *testing.T) {
 		{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"pass(result)", "pass_result", "_workflow/inputs/input1.json", "_workflow/outputs/output5.json"},
 		{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
+		{"pass(parameters)", "pass_parameters", "_workflow/inputs/input1.json", "_workflow/outputs/output11.json"},
+		{"pass(intrinsic)", "pass_intrinsic", "_workflow/inputs/input4.json", "_workflow/outputs/output12.json"},
 		{"wait", "wait", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
@@ -56,8 +58,8 @@ func TestStartExecution(t *testing.T) {
 			if err != nil {
 				t.Fatal("os.ReadFile(tt.wantFile) failed:", err)
 			}
-			if !jsonEqual(t, []byte(out), want) {
-				t.Fatalf("FATAL\nWANT: [%s]\nGOT : [%s]\n", want, out)
+			if d := jsonEqual(t, []byte(out), want); d != "" {
+				t.Fatalf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
 			}
 		})
 	}
@@ -101,7 +103,7 @@ func run(t *testing.T, name string, args []string) (out1, out2 string) {
 	return string(o1), string(o2)
 }
 
-func jsonEqual(t *testing.T, b1, b2 []byte) bool {
+func jsonEqual(t *testing.T, b1, b2 []byte) string {
 	var v1, v2 interface{}
 	if err := json.Unmarshal(b1, &v1); err != nil {
 		t.Fatal("json.Unmarshal(b1, &v1) failed:", err)
@@ -109,5 +111,5 @@ func jsonEqual(t *testing.T, b1, b2 []byte) bool {
 	if err := json.Unmarshal(b2, &v2); err != nil {
 		t.Fatal("json.Unmarshal(b2, &v2) failed:", err)
 	}
-	return reflect.DeepEqual(v1, v2)
+	return cmp.Diff(v1, v2)
 }

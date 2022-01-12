@@ -1,0 +1,8 @@
+{
+  "name": "Alice",
+  "string": "{\"xxx\":\"abc\",\"yyy\":\"def\"}",
+  "json": {
+    "aaa": 111,
+    "bbb": 222
+  }
+}
