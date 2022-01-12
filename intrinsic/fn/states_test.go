@@ -4,6 +4,8 @@ import (
 	"context"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestDoStatesFormat(t *testing.T) {
@@ -28,6 +30,30 @@ func TestDoStatesFormat(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DoStatesFormat() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDoStatesStringToJson(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []interface{}
+		want    interface{}
+		wantErr bool
+	}{
+		{"basic1", []interface{}{`{"aaa":111}`}, map[string]interface{}{"aaa": 111.0}, false},
+		{"basic2", []interface{}{`{"aaa":111, "bbb":{"ccc": "xxx"}}`}, map[string]interface{}{"aaa": 111.0, "bbb": map[string]interface{}{"ccc": "xxx"}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DoStatesStringToJson(context.Background(), tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DoStatesStringToJson() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if d := cmp.Diff(got, tt.want); d != "" {
+				t.Errorf("DoStatesStringToJson() failed: \n%s", d)
 			}
 		})
 	}

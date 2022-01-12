@@ -2,6 +2,7 @@ package fn
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -51,4 +52,24 @@ func DoStatesFormat(ctx context.Context, args []interface{}) (interface{}, error
 	}
 
 	return result, nil
+}
+
+func DoStatesStringToJson(ctx context.Context, args []interface{}) (interface{}, error) {
+	var ErrStatesStringToJsonFailed = errors.New("DoStatesStringToJson() failed")
+
+	if len(args) < 1 {
+		return nil, ErrStatesStringToJsonFailed
+	}
+
+	str, ok := args[0].(string)
+	if !ok {
+		return nil, ErrStatesStringToJsonFailed
+	}
+
+	var v interface{}
+	if err := json.Unmarshal([]byte(str), &v); err != nil {
+		return nil, ErrStatesStringToJsonFailed
+	}
+
+	return v, nil
 }
