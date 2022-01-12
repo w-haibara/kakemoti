@@ -40,6 +40,9 @@ function pass_intrinsic(stack: Stack): sfn.IChainable {
         aaa: 111,
         intrinsic: {
           "format.$": "States.Format('Hello, my name is {}.', $.name)",
+          "stringToJson.$": "States.StringToJson($.string)",
+          "jsonToString.$": "States.JsonToString($.json)",
+          "array.$": "States.Array('start', $.json.aaa, $.json.bbb, 'end')",
         },
       },
     },
