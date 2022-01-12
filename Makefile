@@ -15,6 +15,7 @@ asl-gen: _workflow/index.js
 
 .PHONY: asl-gen-all
 asl-gen-all: _workflow/index.js
+	mkdir -p ./_workflow/asl
 	node ./_workflow/index.js list | while read -r a; do eval "make asl-gen asl=$$a"; done
 
 .PHONY: clean
@@ -29,5 +30,5 @@ run: kakemoti
 		--input ${input}
 
 .PHONY: test
-test: kakemoti _workflow/index.js
+test: kakemoti asl-gen-all
 	go test -count=1 ./...
