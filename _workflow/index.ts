@@ -1,5 +1,8 @@
 import { Stack, Duration, aws_stepfunctions as sfn } from "aws-cdk-lib";
+import { dir } from "console";
 import { ScriptTask } from "./script-task.js";
+const path = require("path");
+const fs = require("fs");
 
 function pass(stack: Stack): sfn.IChainable {
   return new sfn.Pass(stack, "Pass State");
@@ -144,27 +147,29 @@ function map(stack: Stack): sfn.IChainable {
 }
 */
 
-const workflows = {
-  pass: pass,
-  pass_chain: pass_chain,
-  pass_result: pass_result,
-  pass_parameters: pass_parameters,
-  pass_intrinsic: pass_intrinsic,
-  wait: wait,
-  succeed: succeed,
-  fail: fail,
-  choice: choice,
-  choice_fallback: choice_fallback,
-  task: task,
-  task_filter: task_filter,
-  task_retry: task_retry,
-  task_catch: task_catch,
-  task_ctx: task_ctx,
-  parallel: parallel,
-};
+const workflows: ((stack: Stack) => sfn.IChainable)[] = [
+  pass,
+  pass_chain,
+  pass_result,
+  pass_parameters,
+  pass_intrinsic,
+  wait,
+  succeed,
+  fail,
+  choice,
+  choice_fallback,
+  task,
+  task_filter,
+  task_retry,
+  task_catch,
+  task_ctx,
+  parallel,
+];
 
 function list() {
-  console.log(Object.keys(workflows).join("\n"));
+  workflows.forEach(function (elm) {
+    console.log(elm.name);
+  });
 }
 
 function render(sm: sfn.IChainable) {
@@ -173,8 +178,8 @@ function render(sm: sfn.IChainable) {
   );
 }
 
-function print(sm: sfn.IChainable) {
-  console.log(JSON.stringify(render(sm), null, "  "));
+function toString(sm: sfn.IChainable): string {
+  return JSON.stringify(render(sm), null, "  ");
 }
 
 const args = process.argv.slice(2);
@@ -188,12 +193,20 @@ if (args[0] == "list") {
   process.exit(0);
 }
 
-const stack = new Stack();
-for (const [key, wf] of Object.entries(workflows)) {
-  if (key == args[0]) {
-    print(wf(stack));
-    process.exit(0);
-  }
-}
+const filename = path.basename(args[0]);
+const asl = path.basename(args[0], ".asl.json");
+const abspath = path.join(__dirname, "asl", filename);
 
-console.error("unknown key:", args[0]);
+const stack = new Stack();
+const fn = workflows.find((elm) => elm.name == asl);
+if (fn === undefined) {
+  console.error("unknown key:", asl);
+} else {
+  fs.writeFile(abspath, toString(fn(stack)), function (err: any) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("write to", args[0]);
+    }
+  });
+}
