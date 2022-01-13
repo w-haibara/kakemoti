@@ -10,27 +10,43 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [x] TimeoutSeconds
 - [ ] States
   - [x] Pass State
-  - [ ] Task State
+  - [x] Task State
   - [ ] Choice State
     - [ ] Boolean expression
     - [ ] Data-test expression
-      - [ ] StringEquals, StringEqualsPath
-      - [ ] StringLessThan, StringLessThanPath
-      - [ ] StringGreaterThan, StringGreaterThanPath
-      - [ ] StringLessThanEquals, StringLessThanEqualsPath
-      - [ ] StringGreaterThanEquals, StringGreaterThanEqualsPath
+      - [ ] StringEquals
+      - [ ] StringEqualsPath
+      - [ ] StringLessThan
+      - [ ] StringLessThanPath
+      - [ ] StringGreaterThan
+      - [ ] StringGreaterThanPath
+      - [ ] StringLessThanEquals
+      - [ ] StringLessThanEqualsPath
+      - [ ] StringGreaterThanEquals
+      - [ ] StringGreaterThanEqualsPath
       - [ ] StringMatches
-      - [ ] NumericEquals, NumericEqualsPath
-      - [ ] NumericLessThan, NumericLessThanPath
-      - [ ] NumericGreaterThan, NumericGreaterThanPath
-      - [ ] NumericLessThanEquals, NumericLessThanEqualsPath
-      - [ ] NumericGreaterThanEquals, NumericGreaterThanEqualsPath
-      - [ ] BooleanEquals, BooleanEqualsPath
-      - [ ] TimestampEquals, TimestampEqualsPath
-      - [ ] TimestampLessThan, TimestampLessThanPath
-      - [ ] TimestampGreaterThan, TimestampGreaterThanPath
-      - [ ] TimestampLessThanEquals, TimestampLessThanEqualsPath
-      - [ ] TimestampGreaterThanEquals, TimestampGreaterThanEqualsPath
+      - [ ] NumericEquals
+      - [ ] NumericEqualsPath
+      - [ ] NumericLessThan
+      - [ ] NumericLessThanPath
+      - [ ] NumericGreaterThan
+      - [ ] NumericGreaterThanPath
+      - [ ] NumericLessThanEquals
+      - [ ] NumericLessThanEqualsPath
+      - [ ] NumericGreaterThanEquals
+      - [ ] NumericGreaterThanEqualsPath
+      - [x] BooleanEquals
+      - [ ] BooleanEqualsPath
+      - [ ] TimestampEquals
+      - [ ] TimestampEqualsPath
+      - [ ] TimestampLessThan
+      - [ ] TimestampLessThanPath
+      - [ ] TimestampGreaterThan
+      - [ ] TimestampGreaterThanPath
+      - [ ] TimestampLessThanEquals
+      - [ ] TimestampLessThanEqualsPath
+      - [ ] TimestampGreaterThanEquals
+      - [ ] TimestampGreaterThanEqualsPath
       - [ ] IsNull
       - [ ] IsPresent
       - [ ] IsNumeric
@@ -38,36 +54,36 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [ ] IsBoolean
       - [ ] IsTimestamp
   - [x] Wait State
-  - [ ] Succeed State
-  - [ ] Fail State
-  - [ ] Parallel State
+  - [x] Succeed State
+  - [x] Fail State
+  - [x] Parallel State
   - [ ] Map State
     - [ ] Map State input/output processing
     - [ ] Map State concurrency
     - [ ] Map State Iterator definition
-- [ ] Transitions
+- [x] Transitions
 - [ ] Timestamps
 - [ ] Data
-- [ ] The Context Object
-- [ ] Paths
+- [x] The Context Object
+- [x] Paths
 - [ ] Reference Paths
-- [ ] Payload Template
-- [ ] Intrinsic Functions
-  - [ ] States.Format
-  - [ ] States.StringToJson
-  - [ ] States.JsonToString
-  - [ ] States.Array
-- [ ] Input and Output Processing
-  - [ ] InputPath
-  - [ ] Parameters
-  - [ ] ResultSelector
-  - [ ] ResultPath
-  - [ ] OutputPath
+- [x] Payload Template
+- [x] Intrinsic Functions
+  - [x] States.Format
+  - [x] States.StringToJson
+  - [x] States.JsonToString
+  - [x] States.Array
+- [x] Input and Output Processing
+  - [x] InputPath
+  - [x] Parameters
+  - [x] ResultSelector
+  - [x] ResultPath
+  - [x] OutputPath
 - [ ] Errors
-  - [ ] States.ALL
+  - [x] States.ALL
   - [ ] States.HeartbeatTimeout
   - [ ] States.Timeout
-  - [ ] States.TaskFailed
+  - [x] States.TaskFailed
   - [ ] States.Permissions
   - [ ] States.ResultPathMatchFailure
   - [ ] States.ParameterPathFailure
