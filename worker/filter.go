@@ -16,9 +16,9 @@ import (
 	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
-func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
+func JoinByPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return JoinByJsonPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+		return JoinByPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)
@@ -33,9 +33,9 @@ func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (inter
 	return v1, nil
 }
 
-func UnjoinByJsonPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
+func UnjoinByPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
 	if strings.HasPrefix(path, "$$") {
-		return UnjoinByJsonPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+		return UnjoinByPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
 	}
 
 	p, err := jp.ParseString(path)
@@ -61,7 +61,7 @@ func FilterByInputPath(ctx context.Context, state compiler.State, input interfac
 		return input, nil
 	}
 
-	return UnjoinByJsonPath(ctx, input, v.InputPath)
+	return UnjoinByPath(ctx, input, v.InputPath)
 }
 
 func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
@@ -74,7 +74,7 @@ func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, res
 		return result, nil
 	}
 
-	return JoinByJsonPath(ctx, rawinput, result, v.ResultPath)
+	return JoinByPath(ctx, rawinput, result, v.ResultPath)
 }
 
 func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
@@ -87,7 +87,7 @@ func FilterByOutputPath(ctx context.Context, state compiler.State, output interf
 		return output, nil
 	}
 
-	return UnjoinByJsonPath(ctx, output, v.OutputPath)
+	return UnjoinByPath(ctx, output, v.OutputPath)
 }
 
 func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
@@ -116,7 +116,7 @@ func resolvePayload(ctx context.Context, input interface{}, payload map[string]i
 	return out, nil
 }
 
-func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
 		if !strings.HasSuffix(key, ".$") {
@@ -134,7 +134,7 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 			continue
 		}
 
-		got, err := UnjoinByJsonPath(ctx, input, path)
+		got, err := UnjoinByPath(ctx, input, path)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +174,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	}
 
 	resolvePath := func(path string) (interface{}, error) {
-		v, err := UnjoinByJsonPath(ctx, input, path)
+		v, err := UnjoinByPath(ctx, input, path)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +322,7 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 		return nil, err
 	}
 
-	payload2, err := resolvePayloadByJsonPath(ctx, input, payload1)
+	payload2, err := resolvePayloadByPath(ctx, input, payload1)
 	if err != nil {
 		return nil, err
 	}

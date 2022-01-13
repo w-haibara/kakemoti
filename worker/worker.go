@@ -276,7 +276,7 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 				return input, catch.Next, nil
 			}
 
-			v, err := JoinByJsonPath(ctx, input, result, catch.ResultPath)
+			v, err := JoinByPath(ctx, input, result, catch.ResultPath)
 			if err != nil {
 				return nil, "", err
 			}

@@ -30,13 +30,13 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			v, err := UnjoinByJsonPath(ctx, input, *state.SecondsPath)
+			v, err := UnjoinByPath(ctx, input, *state.SecondsPath)
 			if err != nil {
 				return 0, err
 			}
 
 			if v, ok := v.(int64); !ok {
-				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+				return 0, fmt.Errorf("invalid type of input.Path(path) result")
 			} else {
 				seconds = v
 			}
@@ -51,13 +51,13 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			v, err := UnjoinByJsonPath(ctx, input, *state.TimestampPath)
+			v, err := UnjoinByPath(ctx, input, *state.TimestampPath)
 			if err != nil {
 				return 0, err
 			}
 
 			if v, ok := v.(string); !ok {
-				return 0, fmt.Errorf("invalid type of input.JSONPath(path) result")
+				return 0, fmt.Errorf("invalid type of input.Path(path) result")
 			} else {
 				timestamp = v
 			}
