@@ -16,9 +16,9 @@ asl-gen-all: _workflow/index.js
 	mkdir -p ./_workflow/asl
 	node ./_workflow/index.js list | while read -r a; do eval "make _workflow/asl/$$a.asl.json"; done
 
-.PHONY: clean
-clean:
-	rm ./_workflow/asl/*
+.PHONY: test
+test: asl-gen-all
+	go test -count=1 ./...
 
 input = ""
 .PHONY: run
@@ -27,6 +27,6 @@ run: kakemoti
 		--asl _workflow/asl/${asl}.asl.json \
 		--input ${input}
 
-.PHONY: test
-test: asl-gen-all
-	go test -count=1 ./...
+.PHONY: clean
+clean:
+	rm ./_workflow/asl/*
