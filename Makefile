@@ -28,5 +28,5 @@ run: kakemoti
 		--input ${input}
 
 .PHONY: test
-test: kakemoti asl-gen-all
+test: asl-gen-all
 	go test -count=1 ./...
