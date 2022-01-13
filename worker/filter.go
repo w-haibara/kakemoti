@@ -16,34 +16,26 @@ import (
 	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
-func JoinByPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
-	if strings.HasPrefix(path, "$$") {
-		return JoinByPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+func JoinByPath(ctx context.Context, v1, v2 interface{}, path *compiler.Path) (interface{}, error) {
+	if path.IsContextPath {
+		path.IsContextPath = false
+		return JoinByPath(ctx, v1, contextobj.Get(ctx), path)
 	}
 
-	p, err := jp.ParseString(path)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-	}
-
-	if err := p.Set(v1, v2); err != nil {
+	if err := path.Expr.Set(v1, v2); err != nil {
 		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
 	}
 
 	return v1, nil
 }
 
-func UnjoinByPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
-	if strings.HasPrefix(path, "$$") {
-		return UnjoinByPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+func UnjoinByPath(ctx context.Context, v interface{}, path *compiler.Path) (interface{}, error) {
+	if path.IsContextPath {
+		path.IsContextPath = false
+		return UnjoinByPath(ctx, contextobj.Get(ctx), path)
 	}
 
-	p, err := jp.ParseString(path)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
-	}
-
-	nodes := p.Get(v)
+	nodes := path.Expr.Get(v)
 	if len(nodes) != 1 {
 		return nil, fmt.Errorf("invalid length of path.Get(input) result")
 	}
@@ -57,7 +49,7 @@ func FilterByInputPath(ctx context.Context, state compiler.State, input interfac
 	}
 
 	v := state.Body.Common().CommonState2
-	if v.InputPath == "" {
+	if v.InputPath == nil {
 		return input, nil
 	}
 
@@ -70,7 +62,7 @@ func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, res
 	}
 
 	v := state.Body.Common().CommonState4
-	if v.ResultPath == "" {
+	if v.ResultPath == nil {
 		return result, nil
 	}
 
@@ -83,7 +75,7 @@ func FilterByOutputPath(ctx context.Context, state compiler.State, output interf
 	}
 
 	v := state.Body.Common().CommonState2
-	if v.OutputPath == "" {
+	if v.OutputPath == nil {
 		return output, nil
 	}
 
@@ -134,7 +126,12 @@ func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[st
 			continue
 		}
 
-		got, err := UnjoinByPath(ctx, input, path)
+		p, err := compiler.NewPath(path)
+		if err != nil {
+			return nil, err
+		}
+
+		got, err := UnjoinByPath(ctx, input, &p)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +171,11 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	}
 
 	resolvePath := func(path string) (interface{}, error) {
-		v, err := UnjoinByPath(ctx, input, path)
+		p, err := compiler.NewPath(path)
+		if err != nil {
+			return nil, err
+		}
+		v, err := UnjoinByPath(ctx, input, &p)
 		if err != nil {
 			return nil, err
 		}

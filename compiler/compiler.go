@@ -88,6 +88,12 @@ func (asl *ASL) compile() (*Workflow, error) {
 		return nil, err
 	}
 
+	for k := range states {
+		if err := states[k].Body.DecodePath(); err != nil {
+			return nil, err
+		}
+	}
+
 	workflow, err := asl.makeWorkflow(states)
 	if err != nil {
 		log.Println(err)

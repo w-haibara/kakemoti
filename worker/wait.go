@@ -24,13 +24,13 @@ func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input
 
 func getDulation(ctx context.Context, state *compiler.WaitState, input interface{}) (time.Duration, error) {
 	switch {
-	case state.Seconds != nil || state.SecondsPath != nil:
+	case state.Seconds != nil || state.SecondsPath.Expr != nil:
 		var seconds int64
 		if state.Seconds != nil {
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			v, err := UnjoinByPath(ctx, input, *state.SecondsPath)
+			v, err := UnjoinByPath(ctx, input, state.SecondsPath)
 			if err != nil {
 				return 0, err
 			}
@@ -45,13 +45,13 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			return 0, nil
 		}
 		return time.Duration(seconds) * time.Second, nil
-	case state.Timestamp != nil || state.TimestampPath != nil:
+	case state.Timestamp != nil || state.TimestampPath.Expr != nil:
 		timestamp := ""
 		if state.Timestamp != nil {
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			v, err := UnjoinByPath(ctx, input, *state.TimestampPath)
+			v, err := UnjoinByPath(ctx, input, state.TimestampPath)
 			if err != nil {
 				return 0, err
 			}

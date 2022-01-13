@@ -272,7 +272,7 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 				continue
 			}
 
-			if catch.ResultPath == "" {
+			if catch.ResultPath == nil {
 				return input, catch.Next, nil
 			}
 
