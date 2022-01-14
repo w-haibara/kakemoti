@@ -10,8 +10,7 @@ import (
 var ErrNotReferencePath = errors.New("the path is not reference path")
 
 type ReferencePath struct {
-	Expr          jp.Expr
-	IsContextPath bool
+	Path
 }
 
 // ref: https://states-language.net/#ref-paths
