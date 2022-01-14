@@ -114,14 +114,19 @@ func BooleanEquals(ctx context.Context, choice compiler.Choice, input interface{
 		return "", nil, errors.New("type of choice.Rule.Variable1 is not string")
 	}
 
-	v, err := UnjoinByJsonPath(ctx, input, path)
+	p, err := compiler.NewPath(path)
+	if err != nil {
+		return "", nil, err
+	}
+
+	v, err := UnjoinByPath(ctx, input, &p)
 	if err != nil {
 		return "", nil, err
 	}
 
 	v1, ok := v.(bool)
 	if !ok {
-		return "", nil, fmt.Errorf("invalid type of input.JSONPath(path) result")
+		return "", nil, fmt.Errorf("invalid type of input.Path(path) result")
 	}
 
 	v2, ok := choice.Rule.Variable2.(bool)

@@ -37,10 +37,16 @@ func (state CommonState1) Common() CommonState5 {
 	}
 }
 
+func (state *CommonState1) DecodePath() error {
+	return nil
+}
+
 type CommonState2 struct {
 	CommonState1
-	InputPath  string `json:"InputPath"`
-	OutputPath string `json:"OutputPath"`
+	RawInputPath  *string `json:"InputPath"`
+	InputPath     *Path
+	RawOutputPath *string `json:"OutputPath"`
+	OutputPath    *Path
 }
 
 func (state CommonState2) FieldsType() int {
@@ -55,6 +61,30 @@ func (state CommonState2) Common() CommonState5 {
 			},
 		},
 	}
+}
+
+func (state *CommonState2) DecodePath() error {
+	if err := state.CommonState1.DecodePath(); err != nil {
+		return err
+	}
+
+	if state.RawInputPath != nil {
+		v1, err := NewPath(*state.RawInputPath)
+		if err != nil {
+			return err
+		}
+		state.InputPath = &v1
+	}
+
+	if state.RawOutputPath != nil {
+		v2, err := NewPath(*state.RawOutputPath)
+		if err != nil {
+			return err
+		}
+		state.OutputPath = &v2
+	}
+
+	return nil
 }
 
 type CommonState3 struct {
@@ -79,10 +109,15 @@ func (state CommonState3) Common() CommonState5 {
 	}
 }
 
+func (state *CommonState3) DecodePath() error {
+	return state.CommonState2.DecodePath()
+}
+
 type CommonState4 struct {
 	CommonState3
-	ResultPath string           `json:"ResultPath"`
-	Parameters *json.RawMessage `json:"Parameters"`
+	RawResultPath *string `json:"ResultPath"`
+	ResultPath    *ReferencePath
+	Parameters    *json.RawMessage `json:"Parameters"`
 }
 
 func (state CommonState4) FieldsType() int {
@@ -93,6 +128,22 @@ func (state CommonState4) Common() CommonState5 {
 	return CommonState5{
 		CommonState4: state,
 	}
+}
+
+func (state *CommonState4) DecodePath() error {
+	if err := state.CommonState3.DecodePath(); err != nil {
+		return err
+	}
+
+	if state.RawResultPath != nil {
+		v, err := NewReferencePath(*state.RawResultPath)
+		if err != nil {
+			return err
+		}
+		state.ResultPath = &v
+	}
+
+	return nil
 }
 
 type CommonState5 struct {
@@ -115,10 +166,14 @@ type Retry struct {
 
 type Catch struct {
 	ErrorEquals []string
-	ResultPath  string
+	ResultPath  *Path
 	Next        string
 }
 
 func (state CommonState5) Common() CommonState5 {
 	return state
+}
+
+func (state *CommonState5) DecodePath() error {
+	return state.CommonState4.DecodePath()
 }

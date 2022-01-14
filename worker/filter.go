@@ -16,34 +16,26 @@ import (
 	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
-func JoinByJsonPath(ctx context.Context, v1, v2 interface{}, path string) (interface{}, error) {
-	if strings.HasPrefix(path, "$$") {
-		return JoinByJsonPath(ctx, v1, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+func JoinByPath(ctx context.Context, v1, v2 interface{}, path *compiler.Path) (interface{}, error) {
+	if path.IsContextPath {
+		path.IsContextPath = false
+		return JoinByPath(ctx, v1, contextobj.Get(ctx), path)
 	}
 
-	p, err := jp.ParseString(path)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.ResultPath) failed: %v", err)
-	}
-
-	if err := p.Set(v1, v2); err != nil {
+	if err := path.Expr.Set(v1, v2); err != nil {
 		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
 	}
 
 	return v1, nil
 }
 
-func UnjoinByJsonPath(ctx context.Context, v interface{}, path string) (interface{}, error) {
-	if strings.HasPrefix(path, "$$") {
-		return UnjoinByJsonPath(ctx, contextobj.Get(ctx), strings.TrimPrefix(path, "$"))
+func UnjoinByPath(ctx context.Context, v interface{}, path *compiler.Path) (interface{}, error) {
+	if path.IsContextPath {
+		path.IsContextPath = false
+		return UnjoinByPath(ctx, contextobj.Get(ctx), path)
 	}
 
-	p, err := jp.ParseString(path)
-	if err != nil {
-		return nil, fmt.Errorf("jp.ParseString(v.InputPath) failed: %v", err)
-	}
-
-	nodes := p.Get(v)
+	nodes := path.Expr.Get(v)
 	if len(nodes) != 1 {
 		return nil, fmt.Errorf("invalid length of path.Get(input) result")
 	}
@@ -57,11 +49,11 @@ func FilterByInputPath(ctx context.Context, state compiler.State, input interfac
 	}
 
 	v := state.Body.Common().CommonState2
-	if v.InputPath == "" {
+	if v.InputPath == nil {
 		return input, nil
 	}
 
-	return UnjoinByJsonPath(ctx, input, v.InputPath)
+	return UnjoinByPath(ctx, input, v.InputPath)
 }
 
 func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
@@ -70,11 +62,11 @@ func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, res
 	}
 
 	v := state.Body.Common().CommonState4
-	if v.ResultPath == "" {
+	if v.ResultPath == nil {
 		return result, nil
 	}
 
-	return JoinByJsonPath(ctx, rawinput, result, v.ResultPath)
+	return JoinByPath(ctx, rawinput, result, &v.ResultPath.Path)
 }
 
 func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
@@ -83,11 +75,11 @@ func FilterByOutputPath(ctx context.Context, state compiler.State, output interf
 	}
 
 	v := state.Body.Common().CommonState2
-	if v.OutputPath == "" {
+	if v.OutputPath == nil {
 		return output, nil
 	}
 
-	return UnjoinByJsonPath(ctx, output, v.OutputPath)
+	return UnjoinByPath(ctx, output, v.OutputPath)
 }
 
 func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
@@ -116,7 +108,7 @@ func resolvePayload(ctx context.Context, input interface{}, payload map[string]i
 	return out, nil
 }
 
-func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
 		if !strings.HasSuffix(key, ".$") {
@@ -134,7 +126,12 @@ func resolvePayloadByJsonPath(ctx context.Context, input interface{}, payload ma
 			continue
 		}
 
-		got, err := UnjoinByJsonPath(ctx, input, path)
+		p, err := compiler.NewPath(path)
+		if err != nil {
+			return nil, err
+		}
+
+		got, err := UnjoinByPath(ctx, input, &p)
 		if err != nil {
 			return nil, err
 		}
@@ -174,7 +171,11 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	}
 
 	resolvePath := func(path string) (interface{}, error) {
-		v, err := UnjoinByJsonPath(ctx, input, path)
+		p, err := compiler.NewPath(path)
+		if err != nil {
+			return nil, err
+		}
+		v, err := UnjoinByPath(ctx, input, &p)
 		if err != nil {
 			return nil, err
 		}
@@ -322,7 +323,7 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 		return nil, err
 	}
 
-	payload2, err := resolvePayloadByJsonPath(ctx, input, payload1)
+	payload2, err := resolvePayloadByPath(ctx, input, payload1)
 	if err != nil {
 		return nil, err
 	}

@@ -8,19 +8,17 @@ kakemoti: *.go */*.go */*/*.go go.mod
 _workflow/index.js: _workflow/*.ts
 	cd _workflow && yarn install && tsc
 
-asl = ""
-.PHONY: asl-gen
-asl-gen: _workflow/index.js
-	node ./_workflow/index.js ${asl} > _workflow/asl/${asl}.asl.json
+_workflow/asl/%.asl.json: _workflow/index.js
+	node ./_workflow/index.js $@
 
 .PHONY: asl-gen-all
 asl-gen-all: _workflow/index.js
 	mkdir -p ./_workflow/asl
-	node ./_workflow/index.js list | while read -r a; do eval "make asl-gen asl=$$a"; done
+	node ./_workflow/index.js list | while read -r a; do eval "make _workflow/asl/$$a.asl.json"; done
 
-.PHONY: clean
-clean:
-	rm ./_workflow/asl/*
+.PHONY: test
+test: asl-gen-all
+	go test -count=1 ./...
 
 input = ""
 .PHONY: run
@@ -29,6 +27,6 @@ run: kakemoti
 		--asl _workflow/asl/${asl}.asl.json \
 		--input ${input}
 
-.PHONY: test
-test: kakemoti asl-gen-all
-	go test -count=1 ./...
+.PHONY: clean
+clean:
+	rm ./_workflow/asl/*
