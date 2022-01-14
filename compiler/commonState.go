@@ -116,7 +116,7 @@ func (state *CommonState3) DecodePath() error {
 type CommonState4 struct {
 	CommonState3
 	RawResultPath *string `json:"ResultPath"`
-	ResultPath    *Path
+	ResultPath    *ReferencePath
 	Parameters    *json.RawMessage `json:"Parameters"`
 }
 
@@ -136,7 +136,7 @@ func (state *CommonState4) DecodePath() error {
 	}
 
 	if state.RawResultPath != nil {
-		v, err := NewPath(*state.RawResultPath)
+		v, err := NewReferencePath(*state.RawResultPath)
 		if err != nil {
 			return err
 		}

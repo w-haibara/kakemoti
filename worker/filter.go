@@ -66,7 +66,7 @@ func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, res
 		return result, nil
 	}
 
-	return JoinByPath(ctx, rawinput, result, v.ResultPath)
+	return JoinByPath(ctx, rawinput, result, &v.ResultPath.Path)
 }
 
 func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
