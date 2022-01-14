@@ -9,14 +9,14 @@ import (
 
 var ErrNotReferencePath = errors.New("the path is not reference path")
 
-type referencePath struct {
+type ReferencePath struct {
 	Expr          jp.Expr
 	IsContextPath bool
 }
 
 // ref: https://states-language.net/#ref-paths
-func NewReferencePath(path string) (referencePath, error) {
-	result := referencePath{}
+func NewReferencePath(path string) (ReferencePath, error) {
+	result := ReferencePath{}
 
 	if strings.HasPrefix(path, "$$") {
 		path = strings.TrimPrefix(path, "$")
@@ -25,7 +25,7 @@ func NewReferencePath(path string) (referencePath, error) {
 
 	p, err := jp.ParseString(path)
 	if err != nil {
-		return referencePath{}, err
+		return ReferencePath{}, err
 	}
 
 	// reference path must not have the operators "@", ",", ":", and "?".
@@ -36,7 +36,7 @@ func NewReferencePath(path string) (referencePath, error) {
 			jp.Union,   // ","
 			jp.Slice,   // ":"
 			*jp.Filter: // "?"
-			return referencePath{}, ErrNotReferencePath
+			return ReferencePath{}, ErrNotReferencePath
 		}
 	}
 
@@ -45,6 +45,6 @@ func NewReferencePath(path string) (referencePath, error) {
 	return result, nil
 }
 
-func (p referencePath) String() string {
+func (p ReferencePath) String() string {
 	return p.Expr.String()
 }
