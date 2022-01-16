@@ -69,9 +69,21 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	 * String
 	 */
 	case isExistKey(m, "StringEquals"):
-		panic("Not Implemented")
+		v2, ok := m["StringEquals"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringEqualsRule{v1, v2}, nil
 	case isExistKey(m, "StringEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["StringEqualsPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThan"):
 		panic("Not Implemented")
 	case isExistKey(m, "StringGreaterThanPath"):
@@ -432,4 +444,37 @@ func (r IsPresentRule) Eval(ctx context.Context, input interface{}) (bool, error
 	}
 
 	return true, nil
+}
+
+type StringEqualsRule struct {
+	V1 Path
+	V2 string
+}
+
+func (r StringEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == r.V2, nil
+}
+
+type StringEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r StringEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetString(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == v2, nil
 }

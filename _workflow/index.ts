@@ -140,6 +140,7 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   const cond2 = sfn.Condition.not(
     sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
   );
+
   // isBoolean
   const cond3 = sfn.Condition.isBoolean("$.bool");
   const cond4 = sfn.Condition.not(sfn.Condition.isBoolean("$.string"));
@@ -161,6 +162,15 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   const cond15 = sfn.Condition.not(
     sfn.Condition.isPresent("$.non.existing.path")
   );
+
+  // stringEquals
+  const cond16 = sfn.Condition.stringEquals("$.string", "hello");
+  // stringEqualsPath
+  const cond17 = sfn.Condition.stringEqualsJsonPath("$.string", "$.string");
+  const cond18 = sfn.Condition.not(
+    sfn.Condition.stringEqualsJsonPath("$.string", "$.timestamp")
+  );
+
   return new sfn.Choice(stack, "Choice State")
     .when(
       sfn.Condition.and(
@@ -178,7 +188,10 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         cond12,
         cond13,
         cond14,
-        cond15
+        cond15,
+        cond16,
+        cond17,
+        cond18
       ),
       ok
     )
