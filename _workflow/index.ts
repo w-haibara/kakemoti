@@ -109,9 +109,37 @@ function choice_bool(stack: Stack): sfn.IChainable {
   const cond2 = sfn.Condition.or(t, f); // true
   const cond3 = sfn.Condition.not(cond1); // true
   const cond4 = sfn.Condition.and(cond2, cond3); // true
-  const cond5 = sfn.Condition.and(cond2, cond3, cond4) // true
+  const cond5 = sfn.Condition.and(cond2, cond3, cond4); // true
+  return new sfn.Choice(stack, "Choice State").when(cond5, ok).otherwise(ng);
+}
+function choice_data_test(stack: Stack): sfn.IChainable {
+  const ok = new sfn.Pass(stack, "OK", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "OK",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+  const ng = new sfn.Pass(stack, "NG", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "NG",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+
+  const cond1 = sfn.Condition.booleanEquals("$.bool", true);
+  const cond2 = sfn.Condition.not(
+    sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
+  );
   return new sfn.Choice(stack, "Choice State")
-    .when(cond5, ok)
+    .when(sfn.Condition.and(cond1, cond2), ok)
     .otherwise(ng);
 }
 function task(stack: Stack): sfn.IChainable {
@@ -192,6 +220,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   choice,
   choice_fallback,
   choice_bool,
+  choice_data_test,
   task,
   task_filter,
   task_retry,

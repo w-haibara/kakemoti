@@ -72,7 +72,15 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return BooleanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "BooleanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["BooleanEqualsPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return BooleanEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "IsBoolean"):
 		panic("Not Implemented")
 	case isExistKey(m, "IsNull"):
@@ -292,4 +300,23 @@ func (r BooleanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, e
 	}
 
 	return v1 == r.V2, nil
+}
+
+type BooleanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r BooleanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetBool(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetBool(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == v2, nil
 }
