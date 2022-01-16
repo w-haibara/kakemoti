@@ -182,16 +182,47 @@ type AndRule struct {
 }
 
 func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	r1, err := r.V1.Eval(ctx, input)
+	b1, err := r.V1.Eval(ctx, input)
 	if err != nil {
 		return false, err
 	}
-	r2, err := r.V2.Eval(ctx, input)
+	b2, err := r.V2.Eval(ctx, input)
 	if err != nil {
 		return false, err
 	}
 
-	return r1 && r2, nil
+	return b1 && b2, nil
+}
+
+type OrRule struct {
+	V1 Condition
+	V2 Condition
+}
+
+func (r OrRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	b1, err := r.V1.Eval(ctx, input)
+	if err != nil {
+		return false, err
+	}
+	b2, err := r.V2.Eval(ctx, input)
+	if err != nil {
+		return false, err
+	}
+
+	return b1 || b2, nil
+}
+
+type NotRule struct {
+	V1 Condition
+}
+
+func (r NotRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	b, err := r.V1.Eval(ctx, input)
+	if err != nil {
+		return false, err
+	}
+
+	return !b, nil
 }
 
 type BooleanEqualsRule struct {
