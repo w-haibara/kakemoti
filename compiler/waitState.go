@@ -16,19 +16,19 @@ func (state *WaitState) DecodePath() error {
 	}
 
 	if state.RawSecondsPath != nil {
-		v1, err := NewPath(*state.RawSecondsPath)
+		v, err := NewPath(*state.RawSecondsPath)
 		if err != nil {
 			return err
 		}
-		*state.SecondsPath = Path(v1)
+		*state.SecondsPath = v
 	}
 
 	if state.RawTimestampPath != nil {
-		v2, err := NewPath(*state.RawTimestampPath)
+		v, err := NewPath(*state.RawTimestampPath)
 		if err != nil {
 			return err
 		}
-		*state.TimestampPath = Path(v2)
+		*state.TimestampPath = v
 	}
 
 	return nil
