@@ -119,6 +119,13 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 		}
 	}
 
+	decodeBoolExpr := func(m map[string]interface{}) (Condition, error) {
+		switch {
+		default:
+			return decodeDataTestExpr(m)
+		}
+	}
+
 	choices := make([]Choice, len(raw.Choices))
 	for i, raw := range raw.Choices {
 		n, ok := raw["Next"]
@@ -130,7 +137,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 			return nil, ErrInvalidType
 		}
 
-		cond, err := decodeDataTestExpr(raw)
+		cond, err := decodeBoolExpr(raw)
 		if err != nil {
 			return nil, err
 		}
@@ -177,47 +184,45 @@ type Condition interface {
 }
 
 type AndRule struct {
-	V1 Condition
-	V2 Condition
+	V []Condition
 }
 
 func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	b1, err := r.V1.Eval(ctx, input)
-	if err != nil {
-		return false, err
-	}
-	b2, err := r.V2.Eval(ctx, input)
-	if err != nil {
-		return false, err
+	res := false
+	for _, v := range r.V {
+		b, err := v.Eval(ctx, input)
+		if err != nil {
+			return false, err
+		}
+		res = res && b
 	}
 
-	return b1 && b2, nil
+	return res, nil
 }
 
 type OrRule struct {
-	V1 Condition
-	V2 Condition
+	V []Condition
 }
 
 func (r OrRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	b1, err := r.V1.Eval(ctx, input)
-	if err != nil {
-		return false, err
-	}
-	b2, err := r.V2.Eval(ctx, input)
-	if err != nil {
-		return false, err
+	res := false
+	for _, v := range r.V {
+		b, err := v.Eval(ctx, input)
+		if err != nil {
+			return false, err
+		}
+		res = res || b
 	}
 
-	return b1 || b2, nil
+	return res, nil
 }
 
 type NotRule struct {
-	V1 Condition
+	V Condition
 }
 
 func (r NotRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	b, err := r.V1.Eval(ctx, input)
+	b, err := r.V.Eval(ctx, input)
 	if err != nil {
 		return false, err
 	}
