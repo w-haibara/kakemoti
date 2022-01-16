@@ -36,7 +36,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [ ] NumericGreaterThanEquals
       - [ ] NumericGreaterThanEqualsPath
       - [x] BooleanEquals
-      - [ ] BooleanEqualsPath
+      - [x] BooleanEqualsPath
       - [ ] TimestampEquals
       - [ ] TimestampEqualsPath
       - [ ] TimestampLessThan
@@ -47,12 +47,12 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [ ] TimestampLessThanEqualsPath
       - [ ] TimestampGreaterThanEquals
       - [ ] TimestampGreaterThanEqualsPath
-      - [ ] IsNull
-      - [ ] IsPresent
-      - [ ] IsNumeric
-      - [ ] IsString
-      - [ ] IsBoolean
-      - [ ] IsTimestamp
+      - [x] IsNull
+      - [x] IsPresent
+      - [x] IsNumeric
+      - [x] IsString
+      - [x] IsBoolean
+      - [x] IsTimestamp
   - [x] Wait State
   - [x] Succeed State
   - [x] Fail State
