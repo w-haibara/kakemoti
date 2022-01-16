@@ -165,7 +165,7 @@ func decodeConds(m map[string]interface{}, key string) ([]Condition, error) {
 			return nil, ErrInvalidType
 		}
 
-		c, err := decodeDataTestExpr(v)
+		c, err := decodeBoolExpr(v)
 		if err != nil {
 			return nil, err
 		}
