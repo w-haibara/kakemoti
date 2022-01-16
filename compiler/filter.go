@@ -42,6 +42,20 @@ func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, 
 	return nodes[0], nil
 }
 
+func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &path)
+	if err != nil {
+		return false, err
+	}
+
+	v1, ok := v.(bool)
+	if !ok {
+		return false, fmt.Errorf("invalid field value (must be boolean) : [%s]=[%v]", path.String(), v)
+	}
+
+	return v1, nil
+}
+
 func FilterByInputPath(ctx context.Context, state State, input interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < FieldsType2 {
 		return input, nil

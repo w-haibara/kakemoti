@@ -3,7 +3,6 @@ package compiler
 import (
 	"context"
 	"errors"
-	"fmt"
 )
 
 type RawChoiceState struct {
@@ -287,14 +286,9 @@ type BooleanEqualsRule struct {
 }
 
 func (r BooleanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+	v1, err := GetBool(ctx, input, r.V1)
 	if err != nil {
 		return false, err
-	}
-
-	v1, ok := v.(bool)
-	if !ok {
-		return false, fmt.Errorf("invalid field value (must be boolean) : [%s]=[%v]", r.V1, v)
 	}
 
 	return v1 == r.V2, nil
