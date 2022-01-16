@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/k0kubun/pp"
 )
 
 type RawChoiceState struct {
@@ -198,9 +196,7 @@ func decodeBoolExpr(m map[string]interface{}) (Condition, error) {
 			return nil, ErrInvalidType
 		}
 
-		_, _ = pp.Println(v1)
-
-		c, err := decodeDataTestExpr(v1)
+		c, err := decodeBoolExpr(v1)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +239,7 @@ type AndRule struct {
 }
 
 func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	res := false
+	res := true
 	for _, v := range r.V {
 		b, err := v.Eval(ctx, input)
 		if err != nil {
