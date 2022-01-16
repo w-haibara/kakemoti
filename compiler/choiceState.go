@@ -65,34 +65,30 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	}
 
 	switch {
-	case isExistKey(m, "BooleanEquals"):
-		v2, ok := m["BooleanEquals"].(bool)
-		if !ok {
-			return nil, ErrInvalidType
-		}
-		return BooleanEqualsRule{v1, v2}, nil
-	case isExistKey(m, "BooleanEqualsPath"):
-		v, ok := m["BooleanEqualsPath"].(string)
-		if !ok {
-			return nil, ErrInvalidType
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return BooleanEqualsPathRule{v1, v2}, nil
-	case isExistKey(m, "IsBoolean"):
-		return IsBooleanRule{v1}, nil
-	case isExistKey(m, "IsNull"):
-		return IsNullRule{v1}, nil
-	case isExistKey(m, "IsNumeric"):
+	/*
+	 * String
+	 */
+	case isExistKey(m, "StringEquals"):
 		panic("Not Implemented")
-	case isExistKey(m, "IsPresent"):
+	case isExistKey(m, "StringEqualsPath"):
 		panic("Not Implemented")
-	case isExistKey(m, "IsString"):
+	case isExistKey(m, "StringGreaterThan"):
 		panic("Not Implemented")
-	case isExistKey(m, "IsTimestamp"):
+	case isExistKey(m, "StringGreaterThanPath"):
 		panic("Not Implemented")
+	case isExistKey(m, "StringGreaterThanEquals"):
+		panic("Not Implemented")
+	case isExistKey(m, "StringGreaterThanEqualsPath"):
+		panic("Not Implemented")
+	case isExistKey(m, "StringLessThanStringLessThanPath"):
+		panic("Not Implemented")
+	case isExistKey(m, "StringLessThanEqualsStringLessThanEqualsPath"):
+		panic("Not Implemented")
+	case isExistKey(m, "StringMatches"):
+		panic("Not Implemented")
+	/*
+	 * Numeric
+	 */
 	case isExistKey(m, "NumericEquals"):
 		panic("Not Implemented")
 	case isExistKey(m, "NumericEqualsPath"):
@@ -113,24 +109,28 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		panic("Not Implemented")
 	case isExistKey(m, "NumericLessThanEqualsPath"):
 		panic("Not Implemented")
-	case isExistKey(m, "StringEquals"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringEqualsPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringGreaterThan"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringGreaterThanPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringGreaterThanEquals"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringGreaterThanEqualsPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringLessThanStringLessThanPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringLessThanEqualsStringLessThanEqualsPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringMatches"):
-		panic("Not Implemented")
+	/*
+	 * Boolean
+	 */
+	case isExistKey(m, "BooleanEquals"):
+		v2, ok := m["BooleanEquals"].(bool)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return BooleanEqualsRule{v1, v2}, nil
+	case isExistKey(m, "BooleanEqualsPath"):
+		v, ok := m["BooleanEqualsPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return BooleanEqualsPathRule{v1, v2}, nil
+	/*
+	 * Timestamp
+	 */
 	case isExistKey(m, "TimestampEquals"):
 		panic("Not Implemented")
 	case isExistKey(m, "TimestampEqualsPath"):
@@ -151,6 +151,24 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		panic("Not Implemented")
 	case isExistKey(m, "TimestampLessThanEqualsPath"):
 		panic("Not Implemented")
+	/*
+	 * Check type of value
+	 */
+	case isExistKey(m, "IsBoolean"):
+		return IsBooleanRule{v1}, nil
+	case isExistKey(m, "IsNull"):
+		return IsNullRule{v1}, nil
+	case isExistKey(m, "IsNumeric"):
+		panic("Not Implemented")
+	case isExistKey(m, "IsPresent"):
+		panic("Not Implemented")
+	case isExistKey(m, "IsString"):
+		panic("Not Implemented")
+	case isExistKey(m, "IsTimestamp"):
+		panic("Not Implemented")
+	/*
+	 * Unknown Operator
+	 */
 	default:
 		panic("Unknown Operator")
 	}
