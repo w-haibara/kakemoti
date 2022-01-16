@@ -84,7 +84,7 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "IsBoolean"):
 		return IsBooleanRule{v1}, nil
 	case isExistKey(m, "IsNull"):
-		panic("Not Implemented")
+		return IsNullRule{v1}, nil
 	case isExistKey(m, "IsNumeric"):
 		panic("Not Implemented")
 	case isExistKey(m, "IsPresent"):
@@ -333,4 +333,17 @@ func (r IsBooleanRule) Eval(ctx context.Context, input interface{}) (bool, error
 
 	_, ok := v.(bool)
 	return ok, nil
+}
+
+type IsNullRule struct {
+	V1 Path
+}
+
+func (r IsNullRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v == nil, nil
 }
