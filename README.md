@@ -12,7 +12,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [x] Pass State
   - [x] Task State
   - [ ] Choice State
-    - [ ] Boolean expression
+    - [x] Boolean expression
     - [ ] Data-test expression
       - [ ] StringEquals
       - [ ] StringEqualsPath
