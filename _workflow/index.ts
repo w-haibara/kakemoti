@@ -138,8 +138,10 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   const cond2 = sfn.Condition.not(
     sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
   );
+  const cond3 = sfn.Condition.isBoolean("$.bool");
+  const cond4 = sfn.Condition.not(sfn.Condition.isBoolean("$.string"));
   return new sfn.Choice(stack, "Choice State")
-    .when(sfn.Condition.and(cond1, cond2), ok)
+    .when(sfn.Condition.and(cond1, cond2, cond3, cond4), ok)
     .otherwise(ng);
 }
 function task(stack: Stack): sfn.IChainable {
