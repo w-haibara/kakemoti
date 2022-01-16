@@ -28,6 +28,14 @@ func NewPath(path string) (Path, error) {
 	return result, nil
 }
 
+func MustNewPath(path string) Path {
+	p, err := NewPath(path)
+	if err != nil {
+		panic(err.Error())
+	}
+	return p
+}
+
 func (p Path) String() string {
 	return p.Expr.String()
 }

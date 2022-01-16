@@ -66,7 +66,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
 - [ ] Data
 - [x] The Context Object
 - [x] Paths
-- [ ] Reference Paths
+- [x] Reference Paths
 - [x] Payload Template
 - [x] Intrinsic Functions
   - [x] States.Format

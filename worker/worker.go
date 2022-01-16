@@ -152,7 +152,7 @@ func (w Workflow) evalBranch(ctx context.Context, branch []compiler.State, input
 func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State, rawinput interface{}) (interface{}, string, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name)
 
-	effectiveInput, err := GenerateEffectiveInput(ctx, state, rawinput)
+	effectiveInput, err := compiler.GenerateEffectiveInput(ctx, state, rawinput)
 	if err != nil {
 		return nil, "", err
 	}
@@ -165,12 +165,12 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, state compiler.State,
 		return nil, "", err
 	}
 
-	effectiveResult, err := GenerateEffectiveResult(ctx, state, rawinput, result)
+	effectiveResult, err := compiler.GenerateEffectiveResult(ctx, state, rawinput, result)
 	if err != nil {
 		return nil, "", err
 	}
 
-	effectiveOutput, err := FilterByOutputPath(ctx, state, effectiveResult)
+	effectiveOutput, err := compiler.FilterByOutputPath(ctx, state, effectiveResult)
 	if err != nil {
 		return nil, "", err
 	}
@@ -276,7 +276,7 @@ func (w Workflow) catch(ctx context.Context, state compiler.State, input, result
 				return input, catch.Next, nil
 			}
 
-			v, err := JoinByPath(ctx, input, result, catch.ResultPath)
+			v, err := compiler.JoinByPath(ctx, input, result, catch.ResultPath)
 			if err != nil {
 				return nil, "", err
 			}
