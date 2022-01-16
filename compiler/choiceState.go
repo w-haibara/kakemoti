@@ -176,6 +176,24 @@ type Condition interface {
 	Eval(ctx context.Context, input interface{}) (bool, error)
 }
 
+type AndRule struct {
+	V1 Condition
+	V2 Condition
+}
+
+func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	r1, err := r.V1.Eval(ctx, input)
+	if err != nil {
+		return false, err
+	}
+	r2, err := r.V2.Eval(ctx, input)
+	if err != nil {
+		return false, err
+	}
+
+	return r1 && r2, nil
+}
+
 type BooleanEqualsRule struct {
 	V1 Path
 	V2 bool
