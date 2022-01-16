@@ -81,7 +81,7 @@ function choice_fallback(stack: Stack): sfn.IChainable {
   return s2.next(choice);
 }
 function choice_bool(stack: Stack): sfn.IChainable {
-  const end = new sfn.Pass(stack, "Pass State", {
+  const ok = new sfn.Pass(stack, "OK", {
     result: sfn.Result.fromObject([
       {
         args: {
@@ -91,11 +91,28 @@ function choice_bool(stack: Stack): sfn.IChainable {
     ]),
     resultPath: sfn.JsonPath.DISCARD,
   });
-  const b1 = sfn.Condition.booleanEquals("$.bool1", true);
-  const b2 = sfn.Condition.booleanEquals("$.bool2", true);
+  const ng = new sfn.Pass(stack, "NG", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "NG",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+
+  const t = sfn.Condition.booleanEquals("$.true", true); // true
+  const f = sfn.Condition.booleanEquals("$.false", true); // false
+
+  const cond1 = sfn.Condition.and(t, f); // false
+  const cond2 = sfn.Condition.or(t, f); // true
+  const cond3 = sfn.Condition.not(cond1); // true
+  const cond4 = sfn.Condition.and(cond2, cond3); // true
+  const cond5 = sfn.Condition.and(cond2, cond3, cond4) // true
   return new sfn.Choice(stack, "Choice State")
-    .when(sfn.Condition.and(b1, sfn.Condition.or(sfn.Condition.not(b1), b2)), end)
-    .otherwise(end);
+    .when(cond5, ok)
+    .otherwise(ng);
 }
 function task(stack: Stack): sfn.IChainable {
   return new ScriptTask(stack, "Task State", {
