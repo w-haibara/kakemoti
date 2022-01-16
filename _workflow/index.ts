@@ -144,8 +144,24 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   const cond6 = sfn.Condition.not(sfn.Condition.isNull("$.string"));
   const cond7 = sfn.Condition.isNumeric("$.int");
   const cond8 = sfn.Condition.not(sfn.Condition.isNumeric("$.string"));
+  const cond9 = sfn.Condition.isString("$.string");
+  const cond10 = sfn.Condition.not(sfn.Condition.isString("$.bool"));
   return new sfn.Choice(stack, "Choice State")
-    .when(sfn.Condition.and(cond1, cond2, cond3, cond4, cond5, cond6, cond7, cond8), ok)
+    .when(
+      sfn.Condition.and(
+        cond1,
+        cond2,
+        cond3,
+        cond4,
+        cond5,
+        cond6,
+        cond7,
+        cond8,
+        cond9,
+        cond10
+      ),
+      ok
+    )
     .otherwise(ng);
 }
 function task(stack: Stack): sfn.IChainable {
