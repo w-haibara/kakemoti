@@ -2,7 +2,9 @@ package compiler
 
 import "time"
 
-type Timestamp time.Time
+type Timestamp struct {
+	time.Time
+}
 
 var TimestampFormat = "2006-01-02T15:04:05Z"
 
@@ -12,5 +14,5 @@ func NewTimestamp(str string) (Timestamp, error) {
 		return Timestamp{}, err
 	}
 
-	return Timestamp(t), nil
+	return Timestamp{t}, nil
 }

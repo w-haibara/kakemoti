@@ -45,27 +45,24 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			return 0, nil
 		}
 		return time.Duration(seconds) * time.Second, nil
-	case state.Timestamp != nil || state.TimestampPath.Expr != nil:
-		timestamp := ""
-		if state.Timestamp != nil {
-			timestamp = *state.Timestamp
+	case state.Timestamp != nil:
+		return time.Until(state.Timestamp.Time), nil
+	case state.TimestampPath.Expr != nil:
+		v, err := compiler.UnjoinByPath(ctx, input, state.TimestampPath)
+		if err != nil {
+			return 0, err
 		}
-		if state.TimestampPath != nil {
-			v, err := compiler.UnjoinByPath(ctx, input, state.TimestampPath)
-			if err != nil {
-				return 0, err
-			}
 
-			if v, ok := v.(string); !ok {
-				return 0, fmt.Errorf("invalid type of input.Path(path) result")
-			} else {
-				timestamp = v
-			}
+		timestamp, ok := v.(string)
+		if !ok {
+			return 0, fmt.Errorf("invalid type of input.Path(path) result")
 		}
+
 		t, err := time.ParseInLocation(timeformat, timestamp, time.Now().Location())
 		if err != nil {
 			return 0, err
 		}
+
 		return time.Until(t), nil
 	}
 	return 0, nil
