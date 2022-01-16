@@ -30,7 +30,7 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			seconds = *state.Seconds
 		}
 		if state.SecondsPath != nil {
-			v, err := UnjoinByPath(ctx, input, state.SecondsPath)
+			v, err := compiler.UnjoinByPath(ctx, input, state.SecondsPath)
 			if err != nil {
 				return 0, err
 			}
@@ -51,7 +51,7 @@ func getDulation(ctx context.Context, state *compiler.WaitState, input interface
 			timestamp = *state.Timestamp
 		}
 		if state.TimestampPath != nil {
-			v, err := UnjoinByPath(ctx, input, state.TimestampPath)
+			v, err := compiler.UnjoinByPath(ctx, input, state.TimestampPath)
 			if err != nil {
 				return 0, err
 			}

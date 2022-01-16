@@ -119,7 +119,7 @@ func BooleanEquals(ctx context.Context, choice compiler.Choice, input interface{
 		return "", nil, err
 	}
 
-	v, err := UnjoinByPath(ctx, input, &p)
+	v, err := compiler.UnjoinByPath(ctx, input, &p)
 	if err != nil {
 		return "", nil, err
 	}

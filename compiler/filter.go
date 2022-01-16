@@ -1,4 +1,4 @@
-package worker
+package compiler
 
 import (
 	"context"
@@ -11,12 +11,11 @@ import (
 	"github.com/ohler55/ojg"
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/sen"
-	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
-func JoinByPath(ctx context.Context, v1, v2 interface{}, path *compiler.Path) (interface{}, error) {
+func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
 		return JoinByPath(ctx, v1, contextobj.Get(ctx), path)
@@ -29,7 +28,7 @@ func JoinByPath(ctx context.Context, v1, v2 interface{}, path *compiler.Path) (i
 	return v1, nil
 }
 
-func UnjoinByPath(ctx context.Context, v interface{}, path *compiler.Path) (interface{}, error) {
+func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
 		return UnjoinByPath(ctx, contextobj.Get(ctx), path)
@@ -43,8 +42,8 @@ func UnjoinByPath(ctx context.Context, v interface{}, path *compiler.Path) (inte
 	return nodes[0], nil
 }
 
-func FilterByInputPath(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType2 {
+func FilterByInputPath(ctx context.Context, state State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < FieldsType2 {
 		return input, nil
 	}
 
@@ -56,8 +55,8 @@ func FilterByInputPath(ctx context.Context, state compiler.State, input interfac
 	return UnjoinByPath(ctx, input, v.InputPath)
 }
 
-func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType4 {
+func FilterByResultPath(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < FieldsType4 {
 		return result, nil
 	}
 
@@ -69,8 +68,8 @@ func FilterByResultPath(ctx context.Context, state compiler.State, rawinput, res
 	return JoinByPath(ctx, rawinput, result, &v.ResultPath.Path)
 }
 
-func FilterByOutputPath(ctx context.Context, state compiler.State, output interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType2 {
+func FilterByOutputPath(ctx context.Context, state State, output interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < FieldsType2 {
 		return output, nil
 	}
 
@@ -126,7 +125,7 @@ func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[st
 			continue
 		}
 
-		p, err := compiler.NewPath(path)
+		p, err := NewPath(path)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +170,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	}
 
 	resolvePath := func(path string) (interface{}, error) {
-		p, err := compiler.NewPath(path)
+		p, err := NewPath(path)
 		if err != nil {
 			return nil, err
 		}
@@ -336,8 +335,8 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 	return payload3, err
 }
 
-func FilterByParameters(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType4 {
+func FilterByParameters(ctx context.Context, state State, input interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < FieldsType4 {
 		return input, nil
 	}
 
@@ -359,8 +358,8 @@ func FilterByParameters(ctx context.Context, state compiler.State, input interfa
 	return ResolvePayload(ctx, input, parameter)
 }
 
-func FilterByResultSelector(ctx context.Context, state compiler.State, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < compiler.FieldsType5 {
+func FilterByResultSelector(ctx context.Context, state State, result interface{}) (interface{}, error) {
+	if state.Body.FieldsType() < FieldsType5 {
 		return result, nil
 	}
 
@@ -377,7 +376,7 @@ func FilterByResultSelector(ctx context.Context, state compiler.State, result in
 	return ResolvePayload(ctx, result, selector)
 }
 
-func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput, result interface{}) (interface{}, error) {
+func GenerateEffectiveResult(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
 	v1, err := FilterByResultSelector(ctx, state, result)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
@@ -391,7 +390,7 @@ func GenerateEffectiveResult(ctx context.Context, state compiler.State, rawinput
 	return v2, nil
 }
 
-func GenerateEffectiveInput(ctx context.Context, state compiler.State, input interface{}) (interface{}, error) {
+func GenerateEffectiveInput(ctx context.Context, state State, input interface{}) (interface{}, error) {
 	v1, err := FilterByInputPath(ctx, state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
