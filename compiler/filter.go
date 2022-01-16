@@ -50,7 +50,7 @@ func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
 
 	v1, ok := v.(bool)
 	if !ok {
-		return false, fmt.Errorf("invalid field value (must be boolean) : [%s]=[%v]", path.String(), v)
+		return false, fmt.Errorf("invalid field value (must be boolean) : [%s]=[%v]", path.String(), v1)
 	}
 
 	return v1, nil
