@@ -1,10 +1,12 @@
 {
 	"bool": true,
 	"int": 10,
+	"null": null,
 	"string": "hello",
 	"object": {
 		"bool": false,
 		"int": 10000,
-		"string": "world"
+		"string": "world",
+		"null": null
 	}
 }
