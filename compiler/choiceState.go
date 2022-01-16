@@ -161,7 +161,7 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "IsNumeric"):
 		return IsNumericRule{v1}, nil
 	case isExistKey(m, "IsPresent"):
-		panic("Not Implemented")
+		return IsPresentRule{v1}, nil
 	case isExistKey(m, "IsString"):
 		return IsStringRule{v1}, nil
 	case isExistKey(m, "IsTimestamp"):
@@ -414,6 +414,19 @@ func (r IsTimestampRule) Eval(ctx context.Context, input interface{}) (bool, err
 	}
 
 	_, err = NewTimestamp(str)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+type IsPresentRule struct {
+	V1 Path
+}
+
+func (r IsPresentRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	_, err := UnjoinByPath(ctx, input, &r.V1)
 	if err != nil {
 		return false, nil
 	}
