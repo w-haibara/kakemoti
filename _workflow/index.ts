@@ -134,21 +134,29 @@ function choice_data_test(stack: Stack): sfn.IChainable {
     resultPath: sfn.JsonPath.DISCARD,
   });
 
+  // booleanEquals
   const cond1 = sfn.Condition.booleanEquals("$.bool", true);
+  // booleanEqualsPath
   const cond2 = sfn.Condition.not(
     sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
   );
+  // isBoolean
   const cond3 = sfn.Condition.isBoolean("$.bool");
   const cond4 = sfn.Condition.not(sfn.Condition.isBoolean("$.string"));
+  // isNull
   const cond5 = sfn.Condition.isNull("$.null");
   const cond6 = sfn.Condition.not(sfn.Condition.isNull("$.string"));
+  // isNumeric
   const cond7 = sfn.Condition.isNumeric("$.int");
   const cond8 = sfn.Condition.not(sfn.Condition.isNumeric("$.string"));
+  // isString
   const cond9 = sfn.Condition.isString("$.string");
   const cond10 = sfn.Condition.not(sfn.Condition.isString("$.bool"));
+  // isTimestamp
   const cond11 = sfn.Condition.isTimestamp("$.timestamp");
   const cond12 = sfn.Condition.not(sfn.Condition.isTimestamp("$.bool"));
   const cond13 = sfn.Condition.not(sfn.Condition.isTimestamp("$.string"));
+  // isPresent
   const cond14 = sfn.Condition.isPresent("$.bool");
   const cond15 = sfn.Condition.not(
     sfn.Condition.isPresent("$.non.existing.path")
