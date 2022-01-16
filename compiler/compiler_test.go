@@ -92,13 +92,11 @@ func TestCompile(t *testing.T) {
 					State{"Choice", "Choice State", "",
 						&ChoiceState{
 							Choices: []Choice{{
-								Rule: &Rule{
-									Variable1: "$.bool",
-									Variable2: false,
-									Operator:  "BooleanEquals",
+								Condition: BooleanEqualsRule{
+									V1: MustNewPath("$.bool"),
+									V2: false,
 								},
-								BoolExpr: nil,
-								Next:     "State1",
+								Next: "State1",
 							}},
 							Default: "State3",
 							CommonState2: CommonState2{
@@ -165,13 +163,11 @@ func TestCompile(t *testing.T) {
 					State{"Choice", "Choice State", "",
 						&ChoiceState{
 							Choices: []Choice{{
-								Rule: &Rule{
-									Variable1: "$.bool",
-									Variable2: false,
-									Operator:  "BooleanEquals",
+								Condition: BooleanEqualsRule{
+									V1: MustNewPath("$.bool"),
+									V2: false,
 								},
-								BoolExpr: nil,
-								Next:     "State3",
+								Next: "State3",
 							}},
 							Default: "State1",
 							CommonState2: CommonState2{
