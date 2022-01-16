@@ -73,7 +73,6 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		if !ok {
 			return nil, ErrInvalidType
 		}
-
 		return BooleanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "BooleanEqualsPath"):
 		panic("Not Implemented")
