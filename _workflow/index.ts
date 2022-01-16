@@ -146,6 +146,9 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   const cond8 = sfn.Condition.not(sfn.Condition.isNumeric("$.string"));
   const cond9 = sfn.Condition.isString("$.string");
   const cond10 = sfn.Condition.not(sfn.Condition.isString("$.bool"));
+  const cond11 = sfn.Condition.isTimestamp("$.timestamp");
+  const cond12 = sfn.Condition.not(sfn.Condition.isTimestamp("$.bool"));
+  const cond13 = sfn.Condition.not(sfn.Condition.isTimestamp("$.string"));
   return new sfn.Choice(stack, "Choice State")
     .when(
       sfn.Condition.and(
@@ -158,7 +161,10 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         cond7,
         cond8,
         cond9,
-        cond10
+        cond10,
+        cond11,
+        cond12,
+        cond13,
       ),
       ok
     )

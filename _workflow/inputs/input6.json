@@ -1,0 +1,16 @@
+{
+  "bool": true,
+  "int": 10,
+  "float": 3.14,
+  "string": "hello",
+  "timestamp": "2016-03-14T01:59:00Z",
+  "null": null,
+  "object": {
+    "bool": false,
+    "int": 10000,
+    "float": 6.28,
+    "string": "world",
+    "timestamp": "2016-08-18T17:33:00Z",
+    "null": null
+  }
+}
