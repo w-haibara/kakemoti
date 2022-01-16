@@ -114,9 +114,9 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 			panic("Not Implemented")
 		case exist(m, "TimestampLessThanEqualsPath"):
 			panic("Not Implemented")
+		default:
+			panic("Unknown Operator")
 		}
-
-		return nil, nil
 	}
 
 	choices := make([]Choice, len(raw.Choices))
