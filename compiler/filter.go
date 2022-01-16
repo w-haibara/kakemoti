@@ -22,7 +22,7 @@ func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{
 	}
 
 	if err := path.Expr.Set(v1, v2); err != nil {
-		return nil, fmt.Errorf("path.Set(rawinput, result) failed: %v", err)
+		return nil, fmt.Errorf("path.Set(rawinput, result) failed (path=[%s]) : %v", path, err)
 	}
 
 	return v1, nil
@@ -36,12 +36,25 @@ func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, 
 
 	nodes := path.Expr.Get(v)
 	if len(nodes) != 1 {
-		return nil, fmt.Errorf("invalid length of path.Get(input) result")
+		return nil, fmt.Errorf("invalid length of path.Get(input) result (path=[%s])", path)
 	}
 
 	return nodes[0], nil
 }
 
+func GetString(ctx context.Context, input interface{}, path Path) (string, error) {
+	v, err := UnjoinByPath(ctx, input, &path)
+	if err != nil {
+		return "", err
+	}
+
+	v1, ok := v.(string)
+	if !ok {
+		return "", fmt.Errorf("invalid field value (must be string) : [%s]=[%v]", path.String(), v1)
+	}
+
+	return v1, nil
+}
 func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
 	v, err := UnjoinByPath(ctx, input, &path)
 	if err != nil {
