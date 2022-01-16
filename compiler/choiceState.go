@@ -21,7 +21,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 		return ok
 	}
 
-	decodeCond := func(m map[string]interface{}) (Condition, error) {
+	decodeDataTestExpr := func(m map[string]interface{}) (Condition, error) {
 		if !exist(m, "Variable") {
 			return nil, ErrNotFound
 		}
@@ -130,7 +130,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 			return nil, ErrInvalidType
 		}
 
-		cond, err := decodeCond(raw)
+		cond, err := decodeDataTestExpr(raw)
 		if err != nil {
 			return nil, err
 		}
