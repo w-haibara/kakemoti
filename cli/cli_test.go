@@ -24,6 +24,7 @@ func TestStartExecution(t *testing.T) {
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"choice", "choice", "_workflow/inputs/input2.json", "_workflow/outputs/output2.json"},
 		{"choice(fallback)", "choice_fallback", "_workflow/inputs/input2.json", "_workflow/outputs/output7.json"},
+		{"choice(boolean expr)", "choice_bool", "_workflow/inputs/input5.json", "_workflow/outputs/output8.json"},
 		{"parallel", "parallel", "_workflow/inputs/input2.json", "_workflow/outputs/output3.json"},
 		{"task", "task", "_workflow/inputs/input1.json", "_workflow/outputs/output4.json"},
 		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},

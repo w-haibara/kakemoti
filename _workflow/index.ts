@@ -1,5 +1,4 @@
 import { Stack, Duration, aws_stepfunctions as sfn } from "aws-cdk-lib";
-import { dir } from "console";
 import { ScriptTask } from "./script-task.js";
 const path = require("path");
 const fs = require("fs");
@@ -81,6 +80,23 @@ function choice_fallback(stack: Stack): sfn.IChainable {
     .otherwise(pass);
   return s2.next(choice);
 }
+function choice_bool(stack: Stack): sfn.IChainable {
+  const end = new sfn.Pass(stack, "Pass State", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "OK",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+  const b1 = sfn.Condition.booleanEquals("$.bool1", true);
+  const b2 = sfn.Condition.booleanEquals("$.bool2", true);
+  return new sfn.Choice(stack, "Choice State")
+    .when(sfn.Condition.and(b1, sfn.Condition.or(sfn.Condition.not(b1), b2)), end)
+    .otherwise(end);
+}
 function task(stack: Stack): sfn.IChainable {
   return new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
@@ -158,6 +174,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   fail,
   choice,
   choice_fallback,
+  choice_bool,
   task,
   task_filter,
   task_retry,
