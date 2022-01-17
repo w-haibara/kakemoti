@@ -165,6 +165,7 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         sfn.Condition.not(
           sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
         ),
+
         /*
          * Numeric
          */
@@ -180,6 +181,7 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         sfn.Condition.not(
           sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
         ),
+        
         /*
          * Timestamp
          */
