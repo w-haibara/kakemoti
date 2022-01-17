@@ -147,20 +147,20 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         sfn.Condition.not(
           sfn.Condition.stringEqualsJsonPath("$.string", "$.largestring")
         ),
-        // StringLessThan
+        // stringLessThan
         sfn.Condition.stringLessThan("$.string", "zzzzzzzzz"),
         sfn.Condition.not(sfn.Condition.stringLessThan("$.string", "a")),
-        // StringLessThanPath
+        // stringLessThanPath
         sfn.Condition.stringLessThanJsonPath("$.string", "$.largestring"),
         sfn.Condition.not(
           sfn.Condition.stringLessThanJsonPath("$.string", "$.smallstring")
         ),
-        // StringGreaterThan
+        // stringGreaterThan
         sfn.Condition.stringGreaterThan("$.string", "a"),
         sfn.Condition.not(
           sfn.Condition.stringGreaterThan("$.string", "zzzzzzzzzzzzz")
         ),
-        // StringGreaterThanPath
+        // stringGreaterThanPath
         sfn.Condition.stringGreaterThanJsonPath("$.string", "$.smallstring"),
         sfn.Condition.not(
           sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
