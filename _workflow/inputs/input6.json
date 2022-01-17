@@ -3,6 +3,8 @@
   "int": 10,
   "float": 3.14,
   "string": "hello",
+  "smallstring": "a",
+  "largestring": "zzzzzzzzz",
   "timestamp": "2016-03-14T01:59:00Z",
   "null": null,
   "object": {

@@ -168,7 +168,33 @@ function choice_data_test(stack: Stack): sfn.IChainable {
   // stringEqualsPath
   const cond17 = sfn.Condition.stringEqualsJsonPath("$.string", "$.string");
   const cond18 = sfn.Condition.not(
-    sfn.Condition.stringEqualsJsonPath("$.string", "$.timestamp")
+    sfn.Condition.stringEqualsJsonPath("$.string", "$.largestring")
+  );
+  // StringLessThan
+  const cond19 = sfn.Condition.stringLessThan("$.string", "zzzzzzzzz");
+  const cond20 = sfn.Condition.not(
+    sfn.Condition.stringLessThan("$.string", "a")
+  );
+  // StringLessThanPath
+  const cond21 = sfn.Condition.stringLessThanJsonPath(
+    "$.string",
+    "$.largestring"
+  );
+  const cond22 = sfn.Condition.not(
+    sfn.Condition.stringLessThanJsonPath("$.string", "$.smallstring")
+  );
+  // StringGreaterThan
+  const cond23 = sfn.Condition.stringGreaterThan("$.string", "a");
+  const cond24 = sfn.Condition.not(
+    sfn.Condition.stringGreaterThan("$.string", "zzzzzzzzzzzzz")
+  );
+  // StringGreaterThanPath
+  const cond25 = sfn.Condition.stringGreaterThanJsonPath(
+    "$.string",
+    "$.smallstring"
+  );
+  const cond26 = sfn.Condition.not(
+    sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
   );
 
   return new sfn.Choice(stack, "Choice State")
@@ -191,7 +217,15 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         cond15,
         cond16,
         cond17,
-        cond18
+        cond18,
+        cond19,
+        cond20,
+        cond21,
+        cond22,
+        cond23,
+        cond24,
+        cond25,
+        cond26
       ),
       ok
     )

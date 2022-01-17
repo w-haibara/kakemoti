@@ -85,17 +85,69 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return StringEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThan"):
-		panic("Not Implemented")
+		v2, ok := m["StringGreaterThan"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringGreaterThanRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanPath"):
-		panic("Not Implemented")
+		v, ok := m["StringGreaterThanPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringGreaterThanPathRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanEquals"):
-		panic("Not Implemented")
+		v2, ok := m["StringGreaterEquals"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringGreaterThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanEqualsPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringLessThanStringLessThanPath"):
-		panic("Not Implemented")
-	case isExistKey(m, "StringLessThanEqualsStringLessThanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["StringGreaterThanEqualsPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringGreaterThanEqualsPathRule{v1, v2}, nil
+	case isExistKey(m, "StringLessThan"):
+		v2, ok := m["StringLessThan"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringLessThanRule{v1, v2}, nil
+	case isExistKey(m, "StringLessThanPath"):
+		v, ok := m["StringLessThanPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringLessThanPathRule{v1, v2}, nil
+	case isExistKey(m, "StringLessThanEquals"):
+		v2, ok := m["StringLessThanEquals"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringLessThanEqualsRule{v1, v2}, nil
+	case isExistKey(m, "StringLessThanEqualsPath"):
+		v, ok := m["StringLessThanEqualsPath"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringLessThanEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "StringMatches"):
 		panic("Not Implemented")
 	/*
@@ -477,4 +529,136 @@ func (r StringEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool
 	}
 
 	return v1 == v2, nil
+}
+
+type StringLessThanRule struct {
+	V1 Path
+	V2 string
+}
+
+func (r StringLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 < r.V2, nil
+}
+
+type StringLessThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r StringLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetString(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 < v2, nil
+}
+
+type StringLessThanEqualsRule struct {
+	V1 Path
+	V2 string
+}
+
+func (r StringLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 <= r.V2, nil
+}
+
+type StringLessThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r StringLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetString(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 <= v2, nil
+}
+
+type StringGreaterThanRule struct {
+	V1 Path
+	V2 string
+}
+
+func (r StringGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 > r.V2, nil
+}
+
+type StringGreaterThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r StringGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetString(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 > v2, nil
+}
+
+type StringGreaterThanEqualsRule struct {
+	V1 Path
+	V2 string
+}
+
+func (r StringGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 >= r.V2, nil
+}
+
+type StringGreaterThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r StringGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetString(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 >= v2, nil
 }
