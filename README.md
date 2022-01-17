@@ -14,16 +14,16 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [ ] Choice State
     - [x] Boolean expression
     - [ ] Data-test expression
-      - [ ] StringEquals
-      - [ ] StringEqualsPath
-      - [ ] StringLessThan
-      - [ ] StringLessThanPath
-      - [ ] StringGreaterThan
-      - [ ] StringGreaterThanPath
-      - [ ] StringLessThanEquals
-      - [ ] StringLessThanEqualsPath
-      - [ ] StringGreaterThanEquals
-      - [ ] StringGreaterThanEqualsPath
+      - [x] StringEquals
+      - [x] StringEqualsPath
+      - [x] StringLessThan
+      - [x] StringLessThanPath
+      - [x] StringGreaterThan
+      - [x] StringGreaterThanPath
+      - [x] StringLessThanEquals
+      - [x] StringLessThanEqualsPath
+      - [x] StringGreaterThanEquals
+      - [x] StringGreaterThanEqualsPath
       - [ ] StringMatches
       - [ ] NumericEquals
       - [ ] NumericEqualsPath
