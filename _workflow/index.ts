@@ -134,98 +134,80 @@ function choice_data_test(stack: Stack): sfn.IChainable {
     resultPath: sfn.JsonPath.DISCARD,
   });
 
-  // booleanEquals
-  const cond1 = sfn.Condition.booleanEquals("$.bool", true);
-  // booleanEqualsPath
-  const cond2 = sfn.Condition.not(
-    sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
-  );
-
-  // isBoolean
-  const cond3 = sfn.Condition.isBoolean("$.bool");
-  const cond4 = sfn.Condition.not(sfn.Condition.isBoolean("$.string"));
-  // isNull
-  const cond5 = sfn.Condition.isNull("$.null");
-  const cond6 = sfn.Condition.not(sfn.Condition.isNull("$.string"));
-  // isNumeric
-  const cond7 = sfn.Condition.isNumeric("$.int");
-  const cond8 = sfn.Condition.not(sfn.Condition.isNumeric("$.string"));
-  // isString
-  const cond9 = sfn.Condition.isString("$.string");
-  const cond10 = sfn.Condition.not(sfn.Condition.isString("$.bool"));
-  // isTimestamp
-  const cond11 = sfn.Condition.isTimestamp("$.timestamp");
-  const cond12 = sfn.Condition.not(sfn.Condition.isTimestamp("$.bool"));
-  const cond13 = sfn.Condition.not(sfn.Condition.isTimestamp("$.string"));
-  // isPresent
-  const cond14 = sfn.Condition.isPresent("$.bool");
-  const cond15 = sfn.Condition.not(
-    sfn.Condition.isPresent("$.non.existing.path")
-  );
-
-  // stringEquals
-  const cond16 = sfn.Condition.stringEquals("$.string", "hello");
-  // stringEqualsPath
-  const cond17 = sfn.Condition.stringEqualsJsonPath("$.string", "$.string");
-  const cond18 = sfn.Condition.not(
-    sfn.Condition.stringEqualsJsonPath("$.string", "$.largestring")
-  );
-  // StringLessThan
-  const cond19 = sfn.Condition.stringLessThan("$.string", "zzzzzzzzz");
-  const cond20 = sfn.Condition.not(
-    sfn.Condition.stringLessThan("$.string", "a")
-  );
-  // StringLessThanPath
-  const cond21 = sfn.Condition.stringLessThanJsonPath(
-    "$.string",
-    "$.largestring"
-  );
-  const cond22 = sfn.Condition.not(
-    sfn.Condition.stringLessThanJsonPath("$.string", "$.smallstring")
-  );
-  // StringGreaterThan
-  const cond23 = sfn.Condition.stringGreaterThan("$.string", "a");
-  const cond24 = sfn.Condition.not(
-    sfn.Condition.stringGreaterThan("$.string", "zzzzzzzzzzzzz")
-  );
-  // StringGreaterThanPath
-  const cond25 = sfn.Condition.stringGreaterThanJsonPath(
-    "$.string",
-    "$.smallstring"
-  );
-  const cond26 = sfn.Condition.not(
-    sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
-  );
-
   return new sfn.Choice(stack, "Choice State")
     .when(
       sfn.Condition.and(
-        cond1,
-        cond2,
-        cond3,
-        cond4,
-        cond5,
-        cond6,
-        cond7,
-        cond8,
-        cond9,
-        cond10,
-        cond11,
-        cond12,
-        cond13,
-        cond14,
-        cond15,
-        cond16,
-        cond17,
-        cond18,
-        cond19,
-        cond20,
-        cond21,
-        cond22,
-        cond23,
-        cond24,
-        cond25,
-        cond26
+        /*
+         * String
+         */
+        // stringEquals
+        sfn.Condition.stringEquals("$.string", "hello"),
+        // stringEqualsPath
+        sfn.Condition.stringEqualsJsonPath("$.string", "$.string"),
+        sfn.Condition.not(
+          sfn.Condition.stringEqualsJsonPath("$.string", "$.largestring")
+        ),
+        // StringLessThan
+        sfn.Condition.stringLessThan("$.string", "zzzzzzzzz"),
+        sfn.Condition.not(sfn.Condition.stringLessThan("$.string", "a")),
+        // StringLessThanPath
+        sfn.Condition.stringLessThanJsonPath("$.string", "$.largestring"),
+        sfn.Condition.not(
+          sfn.Condition.stringLessThanJsonPath("$.string", "$.smallstring")
+        ),
+        // StringGreaterThan
+        sfn.Condition.stringGreaterThan("$.string", "a"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThan("$.string", "zzzzzzzzzzzzz")
+        ),
+        // StringGreaterThanPath
+        sfn.Condition.stringGreaterThanJsonPath("$.string", "$.smallstring"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
+        ),
+        /*
+         * Numeric
+         */
+
+        // TODO
+
+        /*
+         * Boolean
+         */
+        // booleanEquals
+        sfn.Condition.booleanEquals("$.bool", true),
+        // booleanEqualsPath
+        sfn.Condition.not(
+          sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
+        ),
+        /*
+         * Timestamp
+         */
+
+        // TODO
+
+        /*
+         * Check type of value
+         */
+        // isBoolean
+        sfn.Condition.isBoolean("$.bool"),
+        sfn.Condition.not(sfn.Condition.isBoolean("$.string")),
+        // isNull
+        sfn.Condition.isNull("$.null"),
+        sfn.Condition.not(sfn.Condition.isNull("$.string")),
+        // isNumeric
+        sfn.Condition.isNumeric("$.int"),
+        sfn.Condition.not(sfn.Condition.isNumeric("$.string")),
+        // isString
+        sfn.Condition.isString("$.string"),
+        sfn.Condition.not(sfn.Condition.isString("$.bool")),
+        // isTimestamp
+        sfn.Condition.isTimestamp("$.timestamp"),
+        sfn.Condition.not(sfn.Condition.isTimestamp("$.bool")),
+        sfn.Condition.not(sfn.Condition.isTimestamp("$.string")),
+        // isPresent
+        sfn.Condition.isPresent("$.bool"),
+        sfn.Condition.not(sfn.Condition.isPresent("$.non.existing.path"))
       ),
       ok
     )
