@@ -165,6 +165,16 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         sfn.Condition.not(
           sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
         ),
+        // StringMatches
+        sfn.Condition.stringMatches("$.string", "hello"),
+        sfn.Condition.stringMatches("$.string", "*"),
+        sfn.Condition.stringMatches("$.string", "*llo"),
+        sfn.Condition.stringMatches("$.string", "hel*"),
+        sfn.Condition.stringMatches("$.string", "*h*e*l*l*o*"),
+        sfn.Condition.stringMatches("$.wildslash", "a\\*b\\\\c"),
+        sfn.Condition.not(
+          sfn.Condition.stringMatches("$.string", "*xxx*")
+        ),
 
         /*
          * Numeric

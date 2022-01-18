@@ -5,6 +5,7 @@
   "string": "hello",
   "smallstring": "a",
   "largestring": "zzzzzzzzz",
+  "wildslash": "a*b\\c",
   "timestamp": "2016-03-14T01:59:00Z",
   "null": null,
   "object": {

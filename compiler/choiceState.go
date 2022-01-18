@@ -149,7 +149,11 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return StringLessThanEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "StringMatches"):
-		panic("Not Implemented")
+		v2, ok := m["StringMatches"].(string)
+		if !ok {
+			return nil, ErrInvalidType
+		}
+		return StringMatchesRule{v1, v2}, nil
 	/*
 	 * Numeric
 	 */
@@ -662,4 +666,67 @@ func (r StringGreaterThanEqualsPathRule) Eval(ctx context.Context, input interfa
 	}
 
 	return v1 >= v2, nil
+}
+
+type StringMatchesRule struct {
+	V1 Path
+	V2 string
+}
+
+var ErrOpenBackslashFound = errors.New("open backslash found")
+
+func (r StringMatchesRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetString(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	pos := 0
+	for i := 0; i < len(r.V2); i++ {
+		switch r.V2[i] {
+		case '\\':
+			if i == len(r.V2)-1 {
+				return false, ErrOpenBackslashFound
+			}
+			switch r.V2[i+1] {
+			case '*':
+				i++
+				if '*' != v1[pos] {
+					return false, nil
+				}
+			case '\\':
+				i++
+				if '\\' != v1[pos] {
+					return false, nil
+				}
+			default:
+				return false, ErrOpenBackslashFound
+			}
+		case '*':
+			if i == len(r.V2)-1 {
+				return true, nil
+			}
+			if r.V2[i+1] == v1[pos] {
+				pos--
+				break
+			}
+			for {
+				pos++
+				if pos >= len(v1) {
+					return false, nil
+				}
+				if r.V2[i+1] == v1[pos] {
+					i++
+					break
+				}
+			}
+		default:
+			if r.V2[i] != v1[pos] {
+				return false, nil
+			}
+		}
+		pos++
+	}
+
+	return true, nil
 }
