@@ -24,7 +24,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [x] StringLessThanEqualsPath
       - [x] StringGreaterThanEquals
       - [x] StringGreaterThanEqualsPath
-      - [ ] StringMatches
+      - [x] StringMatches
       - [ ] NumericEquals
       - [ ] NumericEqualsPath
       - [ ] NumericLessThan
