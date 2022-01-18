@@ -328,16 +328,17 @@ type AndRule struct {
 }
 
 func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	res := true
 	for _, v := range r.V {
 		b, err := v.Eval(ctx, input)
 		if err != nil {
 			return false, err
 		}
-		res = res && b
+		if !b {
+			return false, nil
+		}
 	}
 
-	return res, nil
+	return true, nil
 }
 
 type OrRule struct {
