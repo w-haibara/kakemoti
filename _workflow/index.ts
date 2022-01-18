@@ -179,9 +179,32 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         /*
          * Numeric
          */
-
-        // TODO
-
+        // numericEquals
+        sfn.Condition.numberEquals("$.number", 3.14),
+        // numericEqualsPath
+        sfn.Condition.numberEqualsJsonPath("$.number", "$.number"),
+        sfn.Condition.not(
+          sfn.Condition.numberEqualsJsonPath("$.number", "$.largenumber")
+        ),
+        // numericLessThan
+        sfn.Condition.numberLessThan("$.number", 10000),
+        sfn.Condition.not(sfn.Condition.numberLessThan("$.number", 0)),
+        // numericLessThanPath
+        sfn.Condition.numberLessThanJsonPath("$.number", "$.largenumber"),
+        sfn.Condition.not(
+          sfn.Condition.numberLessThanJsonPath("$.number", "$.smallnumber")
+        ),
+        // numericGreaterThan
+        sfn.Condition.numberGreaterThan("$.number", 0),
+        sfn.Condition.not(
+          sfn.Condition.numberGreaterThan("$.number", 10000)
+        ),
+        // numericGreaterThanPath
+        sfn.Condition.numberGreaterThanJsonPath("$.number", "$.smallnumber"),
+        sfn.Condition.not(
+          sfn.Condition.numberGreaterThanJsonPath("$.number", "$.largenumber")
+        ),
+        
         /*
          * Boolean
          */

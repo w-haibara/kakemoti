@@ -3,6 +3,8 @@ package compiler
 import (
 	"context"
 	"errors"
+	"fmt"
+	"runtime"
 )
 
 type RawChoiceState struct {
@@ -12,9 +14,13 @@ type RawChoiceState struct {
 }
 
 var (
-	ErrNotFound    = errors.New("key not found")
-	ErrInvalidType = errors.New("invalid type")
+	ErrNotFound = errors.New("key not found")
 )
+
+func invalidTypeError() error {
+	_, _, line, _ := runtime.Caller(1)
+	return fmt.Errorf("invalid type, line: %v", line)
+}
 
 func (raw RawChoiceState) decode() (*ChoiceState, error) {
 	choices := make([]Choice, len(raw.Choices))
@@ -25,7 +31,7 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 		}
 		next, ok := n.(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 
 		cond, err := decodeBoolExpr(raw)
@@ -57,7 +63,7 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	}
 	v, ok := m["Variable"].(string)
 	if !ok {
-		return nil, ErrInvalidType
+		return nil, invalidTypeError()
 	}
 	v1, err := NewPath(v)
 	if err != nil {
@@ -71,13 +77,13 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringEquals"):
 		v2, ok := m["StringEquals"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringEqualsRule{v1, v2}, nil
 	case isExistKey(m, "StringEqualsPath"):
 		v, ok := m["StringEqualsPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -87,13 +93,13 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringGreaterThan"):
 		v2, ok := m["StringGreaterThan"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringGreaterThanRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanPath"):
 		v, ok := m["StringGreaterThanPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -103,13 +109,13 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringGreaterThanEquals"):
 		v2, ok := m["StringGreaterEquals"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringGreaterThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanEqualsPath"):
 		v, ok := m["StringGreaterThanEqualsPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -119,13 +125,13 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringLessThan"):
 		v2, ok := m["StringLessThan"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringLessThanRule{v1, v2}, nil
 	case isExistKey(m, "StringLessThanPath"):
 		v, ok := m["StringLessThanPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -135,13 +141,13 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringLessThanEquals"):
 		v2, ok := m["StringLessThanEquals"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringLessThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "StringLessThanEqualsPath"):
 		v, ok := m["StringLessThanEqualsPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -151,45 +157,105 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	case isExistKey(m, "StringMatches"):
 		v2, ok := m["StringMatches"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return StringMatchesRule{v1, v2}, nil
 	/*
 	 * Numeric
 	 */
 	case isExistKey(m, "NumericEquals"):
-		panic("Not Implemented")
+		v2, ok := m["NumericEquals"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericEqualsRule{v1, v2}, nil
 	case isExistKey(m, "NumericEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["NumericEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "NumericGreaterThan"):
-		panic("Not Implemented")
+		v2, ok := m["NumericGreaterThan"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericGreaterThanRule{v1, v2}, nil
 	case isExistKey(m, "NumericGreaterThanPath"):
-		panic("Not Implemented")
+		v, ok := m["NumericGreaterThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericGreaterThanPathRule{v1, v2}, nil
 	case isExistKey(m, "NumericGreaterThanEquals"):
-		panic("Not Implemented")
+		v2, ok := m["NumericGreaterThanEquals"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericGreaterThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "NumericGreaterThanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["NumericGreaterThanEqualsPathRule"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericGreaterThanEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "NumericLessThan"):
-		panic("Not Implemented")
+		v2, ok := m["NumericLessThan"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericLessThanRule{v1, v2}, nil
 	case isExistKey(m, "NumericLessThanPath"):
-		panic("Not Implemented")
+		v, ok := m["NumericLessThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericLessThanPathRule{v1, v2}, nil
 	case isExistKey(m, "NumericLessThanEquals"):
-		panic("Not Implemented")
+		v2, ok := m["NumericLessThanEquals"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericLessThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "NumericLessThanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["NumericLessThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericLessThanEqualsPathRule{v1, v2}, nil
 	/*
 	 * Boolean
 	 */
 	case isExistKey(m, "BooleanEquals"):
 		v2, ok := m["BooleanEquals"].(bool)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		return BooleanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "BooleanEqualsPath"):
 		v, ok := m["BooleanEqualsPath"].(string)
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 		v2, err := NewPath(v)
 		if err != nil {
@@ -245,14 +311,14 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 func decodeConds(m map[string]interface{}, key string) ([]Condition, error) {
 	maps, ok := m[key].([]interface{})
 	if !ok {
-		return nil, ErrInvalidType
+		return nil, invalidTypeError()
 	}
 
 	conds := make([]Condition, len(maps))
 	for i, m := range maps {
 		v, ok := m.(map[string]interface{})
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 
 		c, err := decodeBoolExpr(v)
@@ -286,7 +352,7 @@ func decodeBoolExpr(m map[string]interface{}) (Condition, error) {
 		}
 		v1, ok := v.(map[string]interface{})
 		if !ok {
-			return nil, ErrInvalidType
+			return nil, invalidTypeError()
 		}
 
 		c, err := decodeBoolExpr(v1)
@@ -729,4 +795,169 @@ func (r StringMatchesRule) Eval(ctx context.Context, input interface{}) (bool, e
 	}
 
 	return true, nil
+}
+
+type NumericEqualsRule struct {
+	V1 Path
+	V2 float64
+}
+
+func (r NumericEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == r.V2, nil
+}
+
+type NumericEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r NumericEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetNumeric(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == v2, nil
+}
+
+type NumericLessThanRule struct {
+	V1 Path
+	V2 float64
+}
+
+func (r NumericLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 < r.V2, nil
+}
+
+type NumericLessThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r NumericLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetNumeric(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 < v2, nil
+}
+
+type NumericLessThanEqualsRule struct {
+	V1 Path
+	V2 float64
+}
+
+func (r NumericLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 <= r.V2, nil
+}
+
+type NumericLessThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r NumericLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetNumeric(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 <= v2, nil
+}
+
+type NumericGreaterThanRule struct {
+	V1 Path
+	V2 float64
+}
+
+func (r NumericGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 > r.V2, nil
+}
+
+type NumericGreaterThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r NumericGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetNumeric(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 > v2, nil
+}
+
+type NumericGreaterThanEqualsRule struct {
+	V1 Path
+	V2 float64
+}
+
+func (r NumericGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 >= r.V2, nil
+}
+
+type NumericGreaterThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r NumericGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetNumeric(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetNumeric(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 >= v2, nil
 }

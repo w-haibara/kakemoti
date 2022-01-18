@@ -55,6 +55,21 @@ func GetString(ctx context.Context, input interface{}, path Path) (string, error
 
 	return v1, nil
 }
+
+func GetNumeric(ctx context.Context, input interface{}, path Path) (float64, error) {
+	v, err := UnjoinByPath(ctx, input, &path)
+	if err != nil {
+		return 0, err
+	}
+
+	v1, ok := v.(float64)
+	if !ok {
+		return 0, fmt.Errorf("invalid field value (must be float64) : [%s]=[%v]", path.String(), v1)
+	}
+
+	return v1, nil
+}
+
 func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
 	v, err := UnjoinByPath(ctx, input, &path)
 	if err != nil {
