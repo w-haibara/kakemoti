@@ -107,7 +107,7 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return StringGreaterThanPathRule{v1, v2}, nil
 	case isExistKey(m, "StringGreaterThanEquals"):
-		v2, ok := m["StringGreaterEquals"].(string)
+		v2, ok := m["StringGreaterThanEquals"].(string)
 		if !ok {
 			return nil, invalidTypeError()
 		}
@@ -202,7 +202,7 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return NumericGreaterThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "NumericGreaterThanEqualsPath"):
-		v, ok := m["NumericGreaterThanEqualsPathRule"].(string)
+		v, ok := m["NumericGreaterThanEqualsPath"].(string)
 		if !ok {
 			return nil, invalidTypeError()
 		}
