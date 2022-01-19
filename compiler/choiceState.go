@@ -262,29 +262,111 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return BooleanEqualsPathRule{v1, v2}, nil
+
 	/*
 	 * Timestamp
 	 */
 	case isExistKey(m, "TimestampEquals"):
-		panic("Not Implemented")
+		v, ok := m["TimestampEquals"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampEqualsRule{v1, v2}, nil
 	case isExistKey(m, "TimestampEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["TimestampEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "TimestampGreaterThan"):
-		panic("Not Implemented")
+		v, ok := m["TimestampGreaterThan"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanRule{v1, v2}, nil
 	case isExistKey(m, "TimestampGreaterThanPath"):
-		panic("Not Implemented")
+		v, ok := m["TimestampGreaterThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanPathRule{v1, v2}, nil
 	case isExistKey(m, "TimestampGreaterThanEquals"):
-		panic("Not Implemented")
+		v, ok := m["TimestampGreaterThanEquals"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "TimestampGreaterThanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["TimestampGreaterThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanEqualsPathRule{v1, v2}, nil
 	case isExistKey(m, "TimestampLessThan"):
-		panic("Not Implemented")
+		v, ok := m["TimestampLessThan"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampLessThanRule{v1, v2}, nil
 	case isExistKey(m, "TimestampLessThanPath"):
-		panic("Not Implemented")
+		v, ok := m["TimestampLessThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampLessThanPathRule{v1, v2}, nil
 	case isExistKey(m, "TimestampLessThanEquals"):
-		panic("Not Implemented")
+		v, ok := m["TimestampLessThanEquals"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampLessThanEqualsRule{v1, v2}, nil
 	case isExistKey(m, "TimestampLessThanEqualsPath"):
-		panic("Not Implemented")
+		v, ok := m["TimestampLessThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampLessThanEqualsPathRule{v1, v2}, nil
+
 	/*
 	 * Check type of value
 	 */
@@ -960,4 +1042,169 @@ func (r NumericGreaterThanEqualsPathRule) Eval(ctx context.Context, input interf
 	}
 
 	return v1 >= v2, nil
+}
+
+type TimestampEqualsRule struct {
+	V1 Path
+	V2 Timestamp
+}
+
+func (r TimestampEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.Equals(r.V2), nil
+}
+
+type TimestampEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r TimestampEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetTimestamp(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.Equals(v2), nil
+}
+
+type TimestampLessThanRule struct {
+	V1 Path
+	V2 Timestamp
+}
+
+func (r TimestampLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.LessThan(r.V2), nil
+}
+
+type TimestampLessThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r TimestampLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetTimestamp(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.LessThan(v2), nil
+}
+
+type TimestampLessThanEqualsRule struct {
+	V1 Path
+	V2 Timestamp
+}
+
+func (r TimestampLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.LessThanEquals(r.V2), nil
+}
+
+type TimestampLessThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r TimestampLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetTimestamp(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.LessThanEquals(v2), nil
+}
+
+type TimestampGreaterThanRule struct {
+	V1 Path
+	V2 Timestamp
+}
+
+func (r TimestampGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.GreaterThan(r.V2), nil
+}
+
+type TimestampGreaterThanPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r TimestampGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetTimestamp(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.GreaterThan(v2), nil
+}
+
+type TimestampGreaterThanEqualsRule struct {
+	V1 Path
+	V2 Timestamp
+}
+
+func (r TimestampGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.GreaterThanEquals(r.V2), nil
+}
+
+type TimestampGreaterThanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r TimestampGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetTimestamp(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1.GreaterThanEquals(v2), nil
 }

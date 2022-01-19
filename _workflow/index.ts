@@ -172,9 +172,7 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         sfn.Condition.stringMatches("$.string", "hel*"),
         sfn.Condition.stringMatches("$.string", "*h*e*l*l*o*"),
         sfn.Condition.stringMatches("$.wildslash", "a\\*b\\\\c"),
-        sfn.Condition.not(
-          sfn.Condition.stringMatches("$.string", "*xxx*")
-        ),
+        sfn.Condition.not(sfn.Condition.stringMatches("$.string", "*xxx*")),
 
         /*
          * Numeric
@@ -196,15 +194,13 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         ),
         // numericGreaterThan
         sfn.Condition.numberGreaterThan("$.number", 0),
-        sfn.Condition.not(
-          sfn.Condition.numberGreaterThan("$.number", 10000)
-        ),
+        sfn.Condition.not(sfn.Condition.numberGreaterThan("$.number", 10000)),
         // numericGreaterThanPath
         sfn.Condition.numberGreaterThanJsonPath("$.number", "$.smallnumber"),
         sfn.Condition.not(
           sfn.Condition.numberGreaterThanJsonPath("$.number", "$.largenumber")
         ),
-        
+
         /*
          * Boolean
          */
@@ -218,8 +214,54 @@ function choice_data_test(stack: Stack): sfn.IChainable {
         /*
          * Timestamp
          */
-
-        // TODO
+        // timestampEquals
+        sfn.Condition.timestampEquals("$.timestamp", "2016-03-14T01:59:00Z"),
+        // timestampEqualsPath
+        sfn.Condition.timestampEqualsJsonPath("$.timestamp", "$.timestamp"),
+        sfn.Condition.not(
+          sfn.Condition.timestampEqualsJsonPath(
+            "$.timestamp",
+            "$.largetimestamp"
+          )
+        ),
+        // timestampLessThan
+        sfn.Condition.timestampLessThan("$.timestamp", "2030-01-23T01:23:00Z"),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThan("$.timestamp", "1999-11-11T11:11:11Z")
+        ),
+        // timestampLessThanPath
+        sfn.Condition.timestampLessThanJsonPath(
+          "$.timestamp",
+          "$.largetimestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThanJsonPath(
+            "$.timestamp",
+            "$.smalltimestamp"
+          )
+        ),
+        // timestampGreaterThan
+        sfn.Condition.timestampGreaterThan(
+          "$.timestamp",
+          "1999-11-11T11:11:11Z"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThan(
+            "$.timestamp",
+            "2030-01-23T01:23:00Z"
+          )
+        ),
+        // timestampGreaterThanPath
+        sfn.Condition.timestampGreaterThanJsonPath(
+          "$.timestamp",
+          "$.smalltimestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThanJsonPath(
+            "$.timestamp",
+            "$.largetimestamp"
+          )
+        ),
 
         /*
          * Check type of value

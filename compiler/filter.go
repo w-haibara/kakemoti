@@ -84,6 +84,20 @@ func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
 	return v1, nil
 }
 
+func GetTimestamp(ctx context.Context, input interface{}, path Path) (Timestamp, error) {
+	v, err := GetString(ctx, input, path)
+	if err != nil {
+		return Timestamp{}, err
+	}
+
+	v1, err := NewTimestamp(v)
+	if err != nil {
+		return Timestamp{}, err
+	}
+
+	return v1, nil
+}
+
 func FilterByInputPath(ctx context.Context, state State, input interface{}) (interface{}, error) {
 	if state.Body.FieldsType() < FieldsType2 {
 		return input, nil
