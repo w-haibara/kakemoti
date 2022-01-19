@@ -62,8 +62,8 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
     - [ ] Map State concurrency
     - [ ] Map State Iterator definition
 - [x] Transitions
-- [ ] Timestamps
-- [ ] Data
+- [x] Timestamps
+- [x] Data
 - [x] The Context Object
 - [x] Paths
 - [x] Reference Paths
