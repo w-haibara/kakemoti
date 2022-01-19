@@ -24,48 +24,46 @@ func (w Workflow) evalWait(ctx context.Context, state *compiler.WaitState, input
 
 func getDulation(ctx context.Context, state *compiler.WaitState, input interface{}) (time.Duration, error) {
 	switch {
-	case state.Seconds != nil || state.SecondsPath.Expr != nil:
-		var seconds int64
-		if state.Seconds != nil {
-			seconds = *state.Seconds
+	case state.Seconds != nil:
+		if *state.Seconds == 0 {
+			return 0, nil
 		}
-		if state.SecondsPath != nil {
-			v, err := compiler.UnjoinByPath(ctx, input, state.SecondsPath)
-			if err != nil {
-				return 0, err
-			}
 
-			if v, ok := v.(int64); !ok {
-				return 0, fmt.Errorf("invalid type of input.Path(path) result")
-			} else {
-				seconds = v
-			}
+		return time.Duration(*state.Seconds) * time.Second, nil
+	case state.SecondsPath.Expr != nil:
+		v, err := compiler.UnjoinByPath(ctx, input, state.SecondsPath)
+		if err != nil {
+			return 0, err
 		}
+
+		seconds, ok := v.(int64)
+		if !ok {
+			return 0, fmt.Errorf("invalid type of input.Path(path) result")
+		}
+
 		if seconds == 0 {
 			return 0, nil
 		}
-		return time.Duration(seconds) * time.Second, nil
-	case state.Timestamp != nil || state.TimestampPath.Expr != nil:
-		timestamp := ""
-		if state.Timestamp != nil {
-			timestamp = *state.Timestamp
-		}
-		if state.TimestampPath != nil {
-			v, err := compiler.UnjoinByPath(ctx, input, state.TimestampPath)
-			if err != nil {
-				return 0, err
-			}
 
-			if v, ok := v.(string); !ok {
-				return 0, fmt.Errorf("invalid type of input.Path(path) result")
-			} else {
-				timestamp = v
-			}
+		return time.Duration(seconds) * time.Second, nil
+	case state.Timestamp != nil:
+		return time.Until(state.Timestamp.Time), nil
+	case state.TimestampPath.Expr != nil:
+		v, err := compiler.UnjoinByPath(ctx, input, state.TimestampPath)
+		if err != nil {
+			return 0, err
 		}
+
+		timestamp, ok := v.(string)
+		if !ok {
+			return 0, fmt.Errorf("invalid type of input.Path(path) result")
+		}
+
 		t, err := time.ParseInLocation(timeformat, timestamp, time.Now().Location())
 		if err != nil {
 			return 0, err
 		}
+
 		return time.Until(t), nil
 	}
 	return 0, nil

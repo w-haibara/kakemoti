@@ -109,9 +109,372 @@ function choice_bool(stack: Stack): sfn.IChainable {
   const cond2 = sfn.Condition.or(t, f); // true
   const cond3 = sfn.Condition.not(cond1); // true
   const cond4 = sfn.Condition.and(cond2, cond3); // true
-  const cond5 = sfn.Condition.and(cond2, cond3, cond4) // true
+  const cond5 = sfn.Condition.and(cond2, cond3, cond4); // true
+  return new sfn.Choice(stack, "Choice State").when(cond5, ok).otherwise(ng);
+}
+function choice_data_test(stack: Stack): sfn.IChainable {
+  const ok = new sfn.Pass(stack, "OK", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "OK",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+  const ng = new sfn.Pass(stack, "NG", {
+    result: sfn.Result.fromObject([
+      {
+        args: {
+          Payload: "NG",
+        },
+      },
+    ]),
+    resultPath: sfn.JsonPath.DISCARD,
+  });
+
   return new sfn.Choice(stack, "Choice State")
-    .when(cond5, ok)
+    .when(
+      sfn.Condition.and(
+        /**
+         * 1. StringEquals, StringEqualsPath
+         */
+        // stringEquals
+        sfn.Condition.stringEquals("$.string", "hello"),
+        // stringEqualsPath
+        sfn.Condition.stringEqualsJsonPath("$.string", "$.string"),
+        sfn.Condition.not(
+          sfn.Condition.stringEqualsJsonPath("$.string", "$.largestring")
+        ),
+
+        /**
+         * 2. StringLessThan, StringLessThanPath
+         */
+        // stringLessThan
+        sfn.Condition.stringLessThan("$.string", "zzzzzzzzz"),
+        sfn.Condition.not(sfn.Condition.stringLessThan("$.string", "a")),
+        // stringLessThanPath
+        sfn.Condition.stringLessThanJsonPath("$.string", "$.largestring"),
+        sfn.Condition.not(
+          sfn.Condition.stringLessThanJsonPath("$.string", "$.smallstring")
+        ),
+
+        /**
+         * 3. StringGreaterThan, StringGreaterThanPath
+         */
+        // stringGreaterThan
+        sfn.Condition.stringGreaterThan("$.string", "a"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThan("$.string", "zzzzzzzzzzzzz")
+        ),
+        // stringGreaterThanPath
+        sfn.Condition.stringGreaterThanJsonPath("$.string", "$.smallstring"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThanJsonPath("$.string", "$.largestring")
+        ),
+
+        /**
+         * 4. StringLessThanEquals, StringLessThanEqualsPath
+         */
+        // stringLessThanEquals
+        sfn.Condition.stringLessThanEquals("$.string", "zzzzzzzzz"),
+        sfn.Condition.not(sfn.Condition.stringLessThanEquals("$.string", "a")),
+        sfn.Condition.stringLessThanEquals("$.string", "hello"),
+        // stringLessThanEqualsPath
+        sfn.Condition.stringLessThanEqualsJsonPath("$.string", "$.largestring"),
+        sfn.Condition.stringLessThanEqualsJsonPath("$.string", "$.string"),
+        sfn.Condition.not(
+          sfn.Condition.stringLessThanEqualsJsonPath(
+            "$.string",
+            "$.smallstring"
+          )
+        ),
+
+        /**
+         * 5. StringGreaterThanEquals, StringGreaterThanEqualsPath
+         */
+        // stringGreaterThanEquals
+        sfn.Condition.stringGreaterThanEquals("$.string", "a"),
+        sfn.Condition.stringGreaterThanEquals("$.string", "hello"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThanEquals("$.string", "zzzzzzzzzzzzz")
+        ),
+        // stringGreaterThanPathEquals
+        sfn.Condition.stringGreaterThanEqualsJsonPath(
+          "$.string",
+          "$.smallstring"
+        ),
+        sfn.Condition.stringGreaterThanEqualsJsonPath("$.string", "$.string"),
+        sfn.Condition.not(
+          sfn.Condition.stringGreaterThanEqualsJsonPath(
+            "$.string",
+            "$.largestring"
+          )
+        ),
+
+        /**
+         * 6. StringMatches
+         */
+        sfn.Condition.stringMatches("$.string", "hello"),
+        sfn.Condition.stringMatches("$.string", "*"),
+        sfn.Condition.stringMatches("$.string", "*llo"),
+        sfn.Condition.stringMatches("$.string", "hel*"),
+        sfn.Condition.stringMatches("$.string", "*h*e*l*l*o*"),
+        sfn.Condition.stringMatches("$.wildslash", "a\\*b\\\\c"),
+        sfn.Condition.not(sfn.Condition.stringMatches("$.string", "*xxx*")),
+
+        /**
+         * 7. NumericEquals, NumericEqualsPath
+         */
+        // numericEquals
+        sfn.Condition.numberEquals("$.number", 3.14),
+        // numericEqualsPath
+        sfn.Condition.numberEqualsJsonPath("$.number", "$.number"),
+        sfn.Condition.not(
+          sfn.Condition.numberEqualsJsonPath("$.number", "$.largenumber")
+        ),
+
+        /**
+         * 8. NumericLessThan, NumericLessThanPath
+         */
+        // numericLessThan
+        sfn.Condition.numberLessThan("$.number", 10000),
+        sfn.Condition.not(sfn.Condition.numberLessThan("$.number", 0)),
+        // numericLessThanPath
+        sfn.Condition.numberLessThanJsonPath("$.number", "$.largenumber"),
+        sfn.Condition.not(
+          sfn.Condition.numberLessThanJsonPath("$.number", "$.smallnumber")
+        ),
+
+        /**
+         * 9. NumericGreaterThan, NumericGreaterThanPath
+         */
+        // numericGreaterThan
+        sfn.Condition.numberGreaterThan("$.number", 0),
+        sfn.Condition.not(sfn.Condition.numberGreaterThan("$.number", 10000)),
+        // numericGreaterThanPath
+        sfn.Condition.numberGreaterThanJsonPath("$.number", "$.smallnumber"),
+        sfn.Condition.not(
+          sfn.Condition.numberGreaterThanJsonPath("$.number", "$.largenumber")
+        ),
+
+        /**
+         * 10. NumericLessThanEquals, NumericLessThanEqualsPath
+         */
+        // numericLessThanEquals
+        sfn.Condition.numberLessThanEquals("$.number", 10000),
+        sfn.Condition.numberLessThanEquals("$.number", 3.14),
+        sfn.Condition.not(sfn.Condition.numberLessThanEquals("$.number", 0)),
+        // numericLessThanEqualsPath
+        sfn.Condition.numberLessThanEqualsJsonPath("$.number", "$.largenumber"),
+        sfn.Condition.numberLessThanEqualsJsonPath("$.number", "$.number"),
+        sfn.Condition.not(
+          sfn.Condition.numberLessThanEqualsJsonPath(
+            "$.number",
+            "$.smallnumber"
+          )
+        ),
+
+        /**
+         * 11. NumericGreaterThanEquals, NumericGreaterThanEqualsPath
+         */
+        // numericGreaterThanEquals
+        sfn.Condition.numberGreaterThanEquals("$.number", 0),
+        sfn.Condition.numberGreaterThanEquals("$.number", 3.14),
+        sfn.Condition.not(
+          sfn.Condition.numberGreaterThanEquals("$.number", 10000)
+        ),
+        // numericGreaterThanEqualsPath
+        sfn.Condition.numberGreaterThanEqualsJsonPath(
+          "$.number",
+          "$.smallnumber"
+        ),
+        sfn.Condition.numberGreaterThanEqualsJsonPath("$.number", "$.number"),
+        sfn.Condition.not(
+          sfn.Condition.numberGreaterThanEqualsJsonPath(
+            "$.number",
+            "$.largenumber"
+          )
+        ),
+
+        /**
+         * 12. BooleanEquals, BooleanEqualsPath
+         */
+        // booleanEquals
+        sfn.Condition.booleanEquals("$.bool", true),
+        // booleanEqualsPath
+        sfn.Condition.not(
+          sfn.Condition.booleanEqualsJsonPath("$.bool", "$.object.bool")
+        ),
+
+        /**
+         * 13. TimestampEquals, TimestampEqualsPath
+         */
+        // timestampEquals
+        sfn.Condition.timestampEquals("$.timestamp", "2016-03-14T01:59:00Z"),
+        // timestampEqualsPath
+        sfn.Condition.timestampEqualsJsonPath("$.timestamp", "$.timestamp"),
+        sfn.Condition.not(
+          sfn.Condition.timestampEqualsJsonPath(
+            "$.timestamp",
+            "$.largetimestamp"
+          )
+        ),
+
+        /**
+         * 14. TimestampLessThan, TimestampLessThanPath
+         */
+        // timestampLessThan
+        sfn.Condition.timestampLessThan("$.timestamp", "2030-01-23T01:23:00Z"),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThan("$.timestamp", "1999-11-11T11:11:11Z")
+        ),
+        // timestampLessThanPath
+        sfn.Condition.timestampLessThanJsonPath(
+          "$.timestamp",
+          "$.largetimestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThanJsonPath(
+            "$.timestamp",
+            "$.smalltimestamp"
+          )
+        ),
+
+        /**
+         * 15. TimestampGreaterThan, TimestampGreaterThanPath
+         */
+        // timestampGreaterThan
+        sfn.Condition.timestampGreaterThan(
+          "$.timestamp",
+          "1999-11-11T11:11:11Z"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThan(
+            "$.timestamp",
+            "2030-01-23T01:23:00Z"
+          )
+        ),
+        // timestampGreaterThanPath
+        sfn.Condition.timestampGreaterThanJsonPath(
+          "$.timestamp",
+          "$.smalltimestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThanJsonPath(
+            "$.timestamp",
+            "$.largetimestamp"
+          )
+        ),
+
+        /**
+         * 16. TimestampLessThanEquals, TimestampLessThanEqualsPath
+         */
+        // timestampLessThanEquals
+        sfn.Condition.timestampLessThanEquals(
+          "$.timestamp",
+          "2030-01-23T01:23:00Z"
+        ),
+        sfn.Condition.timestampLessThanEquals(
+          "$.timestamp",
+          "2016-03-14T01:59:00Z"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThanEquals(
+            "$.timestamp",
+            "1999-11-11T11:11:11Z"
+          )
+        ),
+        // timestampLessThanEqualsPath
+        sfn.Condition.timestampLessThanEqualsJsonPath(
+          "$.timestamp",
+          "$.largetimestamp"
+        ),
+        sfn.Condition.timestampLessThanEqualsJsonPath(
+          "$.timestamp",
+          "$.timestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampLessThanEqualsJsonPath(
+            "$.timestamp",
+            "$.smalltimestamp"
+          )
+        ),
+
+        /**
+         * 17. TimestampGreaterThanEquals, TimestampGreaterThanEqualsPath
+         */
+        // timestampGreaterThanEquals
+        sfn.Condition.timestampGreaterThanEquals(
+          "$.timestamp",
+          "1999-11-11T11:11:11Z"
+        ),
+        sfn.Condition.timestampGreaterThanEquals(
+          "$.timestamp",
+          "2016-03-14T01:59:00Z"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThanEquals(
+            "$.timestamp",
+            "2030-01-23T01:23:00Z"
+          )
+        ),
+        // timestampGreaterThanPath
+        sfn.Condition.timestampGreaterThanEqualsJsonPath(
+          "$.timestamp",
+          "$.smalltimestamp"
+        ),
+        sfn.Condition.timestampGreaterThanEqualsJsonPath(
+          "$.timestamp",
+          "$.timestamp"
+        ),
+        sfn.Condition.not(
+          sfn.Condition.timestampGreaterThanEqualsJsonPath(
+            "$.timestamp",
+            "$.largetimestamp"
+          )
+        ),
+
+        /**
+         * 18. IsNull
+         */
+        sfn.Condition.isNull("$.null"),
+        sfn.Condition.not(sfn.Condition.isNull("$.string")),
+
+        /**
+         * 19. IsPresent
+         */
+        sfn.Condition.isPresent("$.bool"),
+        sfn.Condition.not(sfn.Condition.isPresent("$.non.existing.path")),
+
+        /**
+         * 20. IsNumeric
+         */
+        sfn.Condition.isNumeric("$.int"),
+        sfn.Condition.not(sfn.Condition.isNumeric("$.string")),
+
+        /**
+         * 21. IsString
+         */
+        sfn.Condition.isString("$.string"),
+        sfn.Condition.not(sfn.Condition.isString("$.bool")),
+
+        /**
+         * 22. IsBoolean
+         */
+        sfn.Condition.isBoolean("$.bool"),
+        sfn.Condition.not(sfn.Condition.isBoolean("$.string")),
+
+        /**
+         * 23. IsTimestamp
+         */
+        sfn.Condition.isTimestamp("$.timestamp"),
+        sfn.Condition.not(sfn.Condition.isTimestamp("$.bool")),
+        sfn.Condition.not(sfn.Condition.isTimestamp("$.string"))
+      ),
+      ok
+    )
     .otherwise(ng);
 }
 function task(stack: Stack): sfn.IChainable {
@@ -192,6 +555,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   choice,
   choice_fallback,
   choice_bool,
+  choice_data_test,
   task,
   task_filter,
   task_retry,

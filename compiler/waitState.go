@@ -3,7 +3,8 @@ package compiler
 type WaitState struct {
 	CommonState3
 	Seconds          *int64  `json:"Seconds"`
-	Timestamp        *string `json:"Timestamp"`
+	RawTimestamp     *string `json:"Timestamp"`
+	Timestamp        *Timestamp
 	RawSecondsPath   *string `json:"SecondsPath"`
 	SecondsPath      *Path
 	RawTimestampPath *string `json:"TimestampPath"`
@@ -15,20 +16,28 @@ func (state *WaitState) DecodePath() error {
 		return err
 	}
 
-	if state.RawSecondsPath != nil {
-		v1, err := NewPath(*state.RawSecondsPath)
+	if state.RawTimestamp != nil {
+		v, err := NewTimestamp(*state.RawTimestamp)
 		if err != nil {
 			return err
 		}
-		*state.SecondsPath = Path(v1)
+		*state.Timestamp = v
+	}
+
+	if state.RawSecondsPath != nil {
+		v, err := NewPath(*state.RawSecondsPath)
+		if err != nil {
+			return err
+		}
+		*state.SecondsPath = v
 	}
 
 	if state.RawTimestampPath != nil {
-		v2, err := NewPath(*state.RawTimestampPath)
+		v, err := NewPath(*state.RawTimestampPath)
 		if err != nil {
 			return err
 		}
-		*state.TimestampPath = Path(v2)
+		*state.TimestampPath = v
 	}
 
 	return nil

@@ -14,17 +14,17 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [ ] Choice State
     - [x] Boolean expression
     - [ ] Data-test expression
-      - [ ] StringEquals
-      - [ ] StringEqualsPath
-      - [ ] StringLessThan
-      - [ ] StringLessThanPath
-      - [ ] StringGreaterThan
-      - [ ] StringGreaterThanPath
-      - [ ] StringLessThanEquals
-      - [ ] StringLessThanEqualsPath
-      - [ ] StringGreaterThanEquals
-      - [ ] StringGreaterThanEqualsPath
-      - [ ] StringMatches
+      - [x] StringEquals
+      - [x] StringEqualsPath
+      - [x] StringLessThan
+      - [x] StringLessThanPath
+      - [x] StringGreaterThan
+      - [x] StringGreaterThanPath
+      - [x] StringLessThanEquals
+      - [x] StringLessThanEqualsPath
+      - [x] StringGreaterThanEquals
+      - [x] StringGreaterThanEqualsPath
+      - [x] StringMatches
       - [ ] NumericEquals
       - [ ] NumericEqualsPath
       - [ ] NumericLessThan
@@ -36,7 +36,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [ ] NumericGreaterThanEquals
       - [ ] NumericGreaterThanEqualsPath
       - [x] BooleanEquals
-      - [ ] BooleanEqualsPath
+      - [x] BooleanEqualsPath
       - [ ] TimestampEquals
       - [ ] TimestampEqualsPath
       - [ ] TimestampLessThan
@@ -47,12 +47,12 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [ ] TimestampLessThanEqualsPath
       - [ ] TimestampGreaterThanEquals
       - [ ] TimestampGreaterThanEqualsPath
-      - [ ] IsNull
-      - [ ] IsPresent
-      - [ ] IsNumeric
-      - [ ] IsString
-      - [ ] IsBoolean
-      - [ ] IsTimestamp
+      - [x] IsNull
+      - [x] IsPresent
+      - [x] IsNumeric
+      - [x] IsString
+      - [x] IsBoolean
+      - [x] IsTimestamp
   - [x] Wait State
   - [x] Succeed State
   - [x] Fail State
