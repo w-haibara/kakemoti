@@ -154,6 +154,26 @@ func (asl *ASL) makeStates() (map[string]State, error) {
 				Body: body,
 			}
 			continue
+		case "Map":
+			var raw RawMapState
+			if err := json.Unmarshal(state, &raw); err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			body, err := raw.decode()
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
+
+			states[name] = State{
+				Type: v.Type,
+				Name: name,
+				Next: body.Next,
+				Body: body,
+			}
+			continue
 		case "Task":
 			var raw RawTaskState
 			if err := json.Unmarshal(state, &raw); err != nil {
