@@ -57,134 +57,6 @@ func (r NotRule) Eval(ctx context.Context, input interface{}) (bool, error) {
 	return !b, nil
 }
 
-type BooleanEqualsRule struct {
-	V1 Path
-	V2 bool
-}
-
-func (r BooleanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetBool(ctx, input, r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	return v1 == r.V2, nil
-}
-
-type BooleanEqualsPathRule struct {
-	V1 Path
-	V2 Path
-}
-
-func (r BooleanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetBool(ctx, input, r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	v2, err := GetBool(ctx, input, r.V2)
-	if err != nil {
-		return false, err
-	}
-
-	return v1 == v2, nil
-}
-
-type IsBooleanRule struct {
-	V1 Path
-}
-
-func (r IsBooleanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	_, ok := v.(bool)
-	return ok, nil
-}
-
-type IsNullRule struct {
-	V1 Path
-}
-
-func (r IsNullRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	return v == nil, nil
-}
-
-type IsNumericRule struct {
-	V1 Path
-}
-
-func (r IsNumericRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	switch v.(type) {
-	case int, float64:
-		return true, nil
-	default:
-		return false, nil
-	}
-}
-
-type IsStringRule struct {
-	V1 Path
-}
-
-func (r IsStringRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	_, ok := v.(string)
-	return ok, nil
-}
-
-type IsTimestampRule struct {
-	V1 Path
-}
-
-func (r IsTimestampRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, err
-	}
-
-	str, ok := v.(string)
-	if !ok {
-		return false, nil
-	}
-
-	_, err = NewTimestamp(str)
-	if err != nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
-type IsPresentRule struct {
-	V1 Path
-}
-
-func (r IsPresentRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	_, err := UnjoinByPath(ctx, input, &r.V1)
-	if err != nil {
-		return false, nil
-	}
-
-	return true, nil
-}
-
 type StringEqualsRule struct {
 	V1 Path
 	V2 string
@@ -578,6 +450,39 @@ func (r NumericGreaterThanEqualsPathRule) Eval(ctx context.Context, input interf
 	return v1 >= v2, nil
 }
 
+type BooleanEqualsRule struct {
+	V1 Path
+	V2 bool
+}
+
+func (r BooleanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetBool(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == r.V2, nil
+}
+
+type BooleanEqualsPathRule struct {
+	V1 Path
+	V2 Path
+}
+
+func (r BooleanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v1, err := GetBool(ctx, input, r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	v2, err := GetBool(ctx, input, r.V2)
+	if err != nil {
+		return false, err
+	}
+
+	return v1 == v2, nil
+}
+
 type TimestampEqualsRule struct {
 	V1 Path
 	V2 Timestamp
@@ -741,4 +646,99 @@ func (r TimestampGreaterThanEqualsPathRule) Eval(ctx context.Context, input inte
 	}
 
 	return v1.GreaterThanEquals(v2), nil
+}
+
+type IsNullRule struct {
+	V1 Path
+}
+
+func (r IsNullRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	return v == nil, nil
+}
+
+type IsPresentRule struct {
+	V1 Path
+}
+
+func (r IsPresentRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	_, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+type IsNumericRule struct {
+	V1 Path
+}
+
+func (r IsNumericRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	switch v.(type) {
+	case int, float64:
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
+type IsStringRule struct {
+	V1 Path
+}
+
+func (r IsStringRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	_, ok := v.(string)
+	return ok, nil
+}
+
+type IsBooleanRule struct {
+	V1 Path
+}
+
+func (r IsBooleanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	_, ok := v.(bool)
+	return ok, nil
+}
+
+type IsTimestampRule struct {
+	V1 Path
+}
+
+func (r IsTimestampRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(ctx, input, &r.V1)
+	if err != nil {
+		return false, err
+	}
+
+	str, ok := v.(string)
+	if !ok {
+		return false, nil
+	}
+
+	_, err = NewTimestamp(str)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }
