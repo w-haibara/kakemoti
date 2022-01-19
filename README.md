@@ -11,9 +11,9 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
 - [ ] States
   - [x] Pass State
   - [x] Task State
-  - [ ] Choice State
+  - [x] Choice State
     - [x] Boolean expression
-    - [ ] Data-test expression
+    - [x] Data-test expression
       - [x] StringEquals
       - [x] StringEqualsPath
       - [x] StringLessThan
@@ -25,28 +25,28 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
       - [x] StringGreaterThanEquals
       - [x] StringGreaterThanEqualsPath
       - [x] StringMatches
-      - [ ] NumericEquals
-      - [ ] NumericEqualsPath
-      - [ ] NumericLessThan
-      - [ ] NumericLessThanPath
-      - [ ] NumericGreaterThan
-      - [ ] NumericGreaterThanPath
-      - [ ] NumericLessThanEquals
-      - [ ] NumericLessThanEqualsPath
-      - [ ] NumericGreaterThanEquals
-      - [ ] NumericGreaterThanEqualsPath
+      - [x] NumericEquals
+      - [x] NumericEqualsPath
+      - [x] NumericLessThan
+      - [x] NumericLessThanPath
+      - [x] NumericGreaterThan
+      - [x] NumericGreaterThanPath
+      - [x] NumericLessThanEquals
+      - [x] NumericLessThanEqualsPath
+      - [x] NumericGreaterThanEquals
+      - [x] NumericGreaterThanEqualsPath
       - [x] BooleanEquals
       - [x] BooleanEqualsPath
-      - [ ] TimestampEquals
-      - [ ] TimestampEqualsPath
-      - [ ] TimestampLessThan
-      - [ ] TimestampLessThanPath
-      - [ ] TimestampGreaterThan
-      - [ ] TimestampGreaterThanPath
-      - [ ] TimestampLessThanEquals
-      - [ ] TimestampLessThanEqualsPath
-      - [ ] TimestampGreaterThanEquals
-      - [ ] TimestampGreaterThanEqualsPath
+      - [x] TimestampEquals
+      - [x] TimestampEqualsPath
+      - [x] TimestampLessThan
+      - [x] TimestampLessThanPath
+      - [x] TimestampGreaterThan
+      - [x] TimestampGreaterThanPath
+      - [x] TimestampLessThanEquals
+      - [x] TimestampLessThanEqualsPath
+      - [x] TimestampGreaterThanEquals
+      - [x] TimestampGreaterThanEqualsPath
       - [x] IsNull
       - [x] IsPresent
       - [x] IsNumeric
