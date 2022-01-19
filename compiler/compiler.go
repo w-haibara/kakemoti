@@ -231,11 +231,25 @@ type Workflow struct {
 
 func NewWorkflow(asl ASL) *Workflow {
 	m := make(map[string][2]int)
+	var (
+		startAt              = ""
+		timeoutSeconds int64 = 0
+		version              = ""
+	)
+	if asl.StartAt != nil {
+		startAt = *asl.StartAt
+	}
+	if asl.TimeoutSeconds != nil {
+		timeoutSeconds = *asl.TimeoutSeconds
+	}
+	if asl.Version != nil {
+		version = *asl.Version
+	}
 	return &Workflow{
 		Comment:        asl.Comment,
-		StartAt:        *asl.StartAt,
-		TimeoutSeconds: *asl.TimeoutSeconds,
-		Version:        *asl.Version,
+		StartAt:        startAt,
+		TimeoutSeconds: timeoutSeconds,
+		Version:        version,
 		StatesIndexMap: m,
 	}
 }

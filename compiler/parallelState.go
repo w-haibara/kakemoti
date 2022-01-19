@@ -1,34 +1,19 @@
 package compiler
 
 import (
-	"bytes"
-	"encoding/json"
 	"log"
 )
 
 type RawParallelState struct {
 	CommonState5
-	Branches []json.RawMessage `json:"Branches"`
+	Branches []ASL `json:"Branches"`
 }
 
 func (raw RawParallelState) decode() (*ParallelState, error) {
 	branches := make([]Workflow, len(raw.Branches))
 
 	for i, branch := range raw.Branches {
-		b, err := json.Marshal(branch)
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		buf := bytes.NewBuffer(b)
-		asl, err := NewASL(buf)
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-
-		workflow, err := asl.compile()
+		workflow, err := branch.compile()
 		if err != nil {
 			log.Println(err)
 			return nil, err
