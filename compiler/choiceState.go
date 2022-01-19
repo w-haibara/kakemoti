@@ -70,8 +70,8 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 	}
 
 	switch {
-	/*
-	 * String
+	/**
+	 * 1. StringEquals, StringEqualsPath
 	 */
 	case isExistKey(m, "StringEquals"):
 		v2, ok := m["StringEquals"].(string)
@@ -89,38 +89,10 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return StringEqualsPathRule{v1, v2}, nil
-	case isExistKey(m, "StringGreaterThan"):
-		v2, ok := m["StringGreaterThan"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		return StringGreaterThanRule{v1, v2}, nil
-	case isExistKey(m, "StringGreaterThanPath"):
-		v, ok := m["StringGreaterThanPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return StringGreaterThanPathRule{v1, v2}, nil
-	case isExistKey(m, "StringGreaterThanEquals"):
-		v2, ok := m["StringGreaterThanEquals"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		return StringGreaterThanEqualsRule{v1, v2}, nil
-	case isExistKey(m, "StringGreaterThanEqualsPath"):
-		v, ok := m["StringGreaterThanEqualsPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return StringGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 2. StringLessThan, StringLessThanPath
+	 */
 	case isExistKey(m, "StringLessThan"):
 		v2, ok := m["StringLessThan"].(string)
 		if !ok {
@@ -137,6 +109,30 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return StringLessThanPathRule{v1, v2}, nil
+
+	/**
+	 * 3. StringGreaterThan, StringGreaterThanPath
+	 */
+	case isExistKey(m, "StringGreaterThan"):
+		v2, ok := m["StringGreaterThan"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return StringGreaterThanRule{v1, v2}, nil
+	case isExistKey(m, "StringGreaterThanPath"):
+		v, ok := m["StringGreaterThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringGreaterThanPathRule{v1, v2}, nil
+
+	/**
+	 * 4. StringLessThanEquals, StringLessThanEqualsPath
+	 */
 	case isExistKey(m, "StringLessThanEquals"):
 		v2, ok := m["StringLessThanEquals"].(string)
 		if !ok {
@@ -153,14 +149,39 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return StringLessThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 5. StringGreaterThanEquals, StringGreaterThanEqualsPath
+	 */
+	case isExistKey(m, "StringGreaterThanEquals"):
+		v2, ok := m["StringGreaterThanEquals"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return StringGreaterThanEqualsRule{v1, v2}, nil
+	case isExistKey(m, "StringGreaterThanEqualsPath"):
+		v, ok := m["StringGreaterThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return StringGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 6. StringMatches
+	 */
 	case isExistKey(m, "StringMatches"):
 		v2, ok := m["StringMatches"].(string)
 		if !ok {
 			return nil, invalidTypeError()
 		}
 		return StringMatchesRule{v1, v2}, nil
-	/*
-	 * Numeric
+
+	/**
+	 * 7. NumericEquals, NumericEqualsPath
 	 */
 	case isExistKey(m, "NumericEquals"):
 		v2, ok := m["NumericEquals"].(float64)
@@ -178,38 +199,10 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return NumericEqualsPathRule{v1, v2}, nil
-	case isExistKey(m, "NumericGreaterThan"):
-		v2, ok := m["NumericGreaterThan"].(float64)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		return NumericGreaterThanRule{v1, v2}, nil
-	case isExistKey(m, "NumericGreaterThanPath"):
-		v, ok := m["NumericGreaterThanPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return NumericGreaterThanPathRule{v1, v2}, nil
-	case isExistKey(m, "NumericGreaterThanEquals"):
-		v2, ok := m["NumericGreaterThanEquals"].(float64)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		return NumericGreaterThanEqualsRule{v1, v2}, nil
-	case isExistKey(m, "NumericGreaterThanEqualsPath"):
-		v, ok := m["NumericGreaterThanEqualsPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return NumericGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 8. NumericLessThan, NumericLessThanPath
+	 */
 	case isExistKey(m, "NumericLessThan"):
 		v2, ok := m["NumericLessThan"].(float64)
 		if !ok {
@@ -226,6 +219,30 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return NumericLessThanPathRule{v1, v2}, nil
+
+	/**
+	 * 9. NumericGreaterThan, NumericGreaterThanPath
+	 */
+	case isExistKey(m, "NumericGreaterThan"):
+		v2, ok := m["NumericGreaterThan"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericGreaterThanRule{v1, v2}, nil
+	case isExistKey(m, "NumericGreaterThanPath"):
+		v, ok := m["NumericGreaterThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericGreaterThanPathRule{v1, v2}, nil
+
+	/**
+	 * 10. NumericLessThanEquals, NumericLessThanEqualsPath
+	 */
 	case isExistKey(m, "NumericLessThanEquals"):
 		v2, ok := m["NumericLessThanEquals"].(float64)
 		if !ok {
@@ -242,8 +259,29 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return NumericLessThanEqualsPathRule{v1, v2}, nil
-	/*
-	 * Boolean
+
+	/**
+	 * 11. NumericGreaterThanEquals, NumericGreaterThanEqualsPath
+	 */
+	case isExistKey(m, "NumericGreaterThanEquals"):
+		v2, ok := m["NumericGreaterThanEquals"].(float64)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		return NumericGreaterThanEqualsRule{v1, v2}, nil
+	case isExistKey(m, "NumericGreaterThanEqualsPath"):
+		v, ok := m["NumericGreaterThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return NumericGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 12. BooleanEquals, BooleanEqualsPath
 	 */
 	case isExistKey(m, "BooleanEquals"):
 		v2, ok := m["BooleanEquals"].(bool)
@@ -262,8 +300,8 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return BooleanEqualsPathRule{v1, v2}, nil
 
-	/*
-	 * Timestamp
+	/**
+	 * 13. TimestampEquals, TimestampEqualsPath
 	 */
 	case isExistKey(m, "TimestampEquals"):
 		v, ok := m["TimestampEquals"].(string)
@@ -285,46 +323,10 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return TimestampEqualsPathRule{v1, v2}, nil
-	case isExistKey(m, "TimestampGreaterThan"):
-		v, ok := m["TimestampGreaterThan"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewTimestamp(v)
-		if err != nil {
-			return nil, err
-		}
-		return TimestampGreaterThanRule{v1, v2}, nil
-	case isExistKey(m, "TimestampGreaterThanPath"):
-		v, ok := m["TimestampGreaterThanPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return TimestampGreaterThanPathRule{v1, v2}, nil
-	case isExistKey(m, "TimestampGreaterThanEquals"):
-		v, ok := m["TimestampGreaterThanEquals"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewTimestamp(v)
-		if err != nil {
-			return nil, err
-		}
-		return TimestampGreaterThanEqualsRule{v1, v2}, nil
-	case isExistKey(m, "TimestampGreaterThanEqualsPath"):
-		v, ok := m["TimestampGreaterThanEqualsPath"].(string)
-		if !ok {
-			return nil, invalidTypeError()
-		}
-		v2, err := NewPath(v)
-		if err != nil {
-			return nil, err
-		}
-		return TimestampGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 14. TimestampLessThan, TimestampLessThanPath
+	 */
 	case isExistKey(m, "TimestampLessThan"):
 		v, ok := m["TimestampLessThan"].(string)
 		if !ok {
@@ -345,6 +347,34 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 			return nil, err
 		}
 		return TimestampLessThanPathRule{v1, v2}, nil
+
+	/**
+	 * 15. TimestampGreaterThan, TimestampGreaterThanPath
+	 */
+	case isExistKey(m, "TimestampGreaterThan"):
+		v, ok := m["TimestampGreaterThan"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanRule{v1, v2}, nil
+	case isExistKey(m, "TimestampGreaterThanPath"):
+		v, ok := m["TimestampGreaterThanPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanPathRule{v1, v2}, nil
+
+	/**
+	 * 16. TimestampLessThanEquals, TimestampLessThanEqualsPath
+	 */
 	case isExistKey(m, "TimestampLessThanEquals"):
 		v, ok := m["TimestampLessThanEquals"].(string)
 		if !ok {
@@ -366,21 +396,66 @@ func decodeDataTestExpr(m map[string]interface{}) (Condition, error) {
 		}
 		return TimestampLessThanEqualsPathRule{v1, v2}, nil
 
-	/*
-	 * Check type of value
+	/**
+	 * 17. TimestampGreaterThanEquals, TimestampGreaterThanEqualsPath
+	 */
+	case isExistKey(m, "TimestampGreaterThanEquals"):
+		v, ok := m["TimestampGreaterThanEquals"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewTimestamp(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanEqualsRule{v1, v2}, nil
+	case isExistKey(m, "TimestampGreaterThanEqualsPath"):
+		v, ok := m["TimestampGreaterThanEqualsPath"].(string)
+		if !ok {
+			return nil, invalidTypeError()
+		}
+		v2, err := NewPath(v)
+		if err != nil {
+			return nil, err
+		}
+		return TimestampGreaterThanEqualsPathRule{v1, v2}, nil
+
+	/**
+	 * 18. IsNull
+	 */
+	case isExistKey(m, "IsNull"):
+		return IsNullRule{v1}, nil
+
+	/**
+	 * 19. IsPresent
+	 */
+	case isExistKey(m, "IsPresent"):
+		return IsPresentRule{v1}, nil
+
+	/**
+	 * 20. IsNumeric
+	 */
+	case isExistKey(m, "IsNumeric"):
+		return IsNumericRule{v1}, nil
+
+	/**
+	 * 21. IsString
+	 */
+	case isExistKey(m, "IsString"):
+		return IsStringRule{v1}, nil
+
+	/**
+	 * 22. IsBoolean
 	 */
 	case isExistKey(m, "IsBoolean"):
 		return IsBooleanRule{v1}, nil
-	case isExistKey(m, "IsNull"):
-		return IsNullRule{v1}, nil
-	case isExistKey(m, "IsNumeric"):
-		return IsNumericRule{v1}, nil
-	case isExistKey(m, "IsPresent"):
-		return IsPresentRule{v1}, nil
-	case isExistKey(m, "IsString"):
-		return IsStringRule{v1}, nil
+
+	/**
+	 * 23. IsTimestamp
+	 */
 	case isExistKey(m, "IsTimestamp"):
 		return IsTimestampRule{v1}, nil
+
 	/*
 	 * Unknown Operator
 	 */
