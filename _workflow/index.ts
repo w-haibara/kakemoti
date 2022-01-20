@@ -507,7 +507,7 @@ function task_retry(stack: Stack): sfn.IChainable {
   const chain = new sfn.Parallel(stack, "Chain").branch(task);
   chain.addRetry({
     maxAttempts: 10,
-    backoffRate: 0,
+    backoffRate: 1,
     interval: Duration.seconds(0),
   });
   return chain;
