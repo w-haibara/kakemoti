@@ -13,11 +13,21 @@ const (
 )
 
 type CommonState1 struct {
-	Type    string `json:"Type"`
-	Comment string `json:"Comment"`
+	StateName string
+	Type      string `json:"Type"`
+	Comment   string `json:"Comment"`
 }
 
-func (state CommonState1) GetNext() string {
+func (state CommonState1) decode(name string) (State, error) {
+	state.StateName = name
+	return state, nil
+}
+
+func (state CommonState1) Name() string {
+	return state.StateName
+}
+
+func (state CommonState1) Next() string {
 	return ""
 }
 
@@ -37,16 +47,39 @@ func (state CommonState1) Common() CommonState5 {
 	}
 }
 
-func (state *CommonState1) DecodePath() error {
-	return nil
-}
-
 type CommonState2 struct {
 	CommonState1
 	RawInputPath  *string `json:"InputPath"`
 	InputPath     *Path
 	RawOutputPath *string `json:"OutputPath"`
 	OutputPath    *Path
+}
+
+func (state CommonState2) decode(name string) (State, error) {
+	s, err := state.CommonState1.decode(name)
+	if err != nil {
+		return nil, err
+	}
+
+	res := CommonState2{CommonState1: s.Common().CommonState1}
+
+	if state.RawInputPath != nil {
+		v1, err := NewPath(*state.RawInputPath)
+		if err != nil {
+			return nil, err
+		}
+		res.InputPath = &v1
+	}
+
+	if state.RawOutputPath != nil {
+		v2, err := NewPath(*state.RawOutputPath)
+		if err != nil {
+			return nil, err
+		}
+		res.OutputPath = &v2
+	}
+
+	return res, nil
 }
 
 func (state CommonState2) FieldsType() int {
@@ -63,38 +96,14 @@ func (state CommonState2) Common() CommonState5 {
 	}
 }
 
-func (state *CommonState2) DecodePath() error {
-	if err := state.CommonState1.DecodePath(); err != nil {
-		return err
-	}
-
-	if state.RawInputPath != nil {
-		v1, err := NewPath(*state.RawInputPath)
-		if err != nil {
-			return err
-		}
-		state.InputPath = &v1
-	}
-
-	if state.RawOutputPath != nil {
-		v2, err := NewPath(*state.RawOutputPath)
-		if err != nil {
-			return err
-		}
-		state.OutputPath = &v2
-	}
-
-	return nil
-}
-
 type CommonState3 struct {
 	CommonState2
-	Next string `json:"Next"`
-	End  bool   `json:"End"`
+	NextName string `json:"Next"`
+	End      bool   `json:"End"`
 }
 
-func (state CommonState3) GetNext() string {
-	return state.Next
+func (state CommonState3) Next() string {
+	return state.NextName
 }
 
 func (state CommonState3) FieldsType() int {
@@ -109,8 +118,13 @@ func (state CommonState3) Common() CommonState5 {
 	}
 }
 
-func (state *CommonState3) DecodePath() error {
-	return state.CommonState2.DecodePath()
+func (state CommonState3) decode(name string) (State, error) {
+	s, err := state.CommonState2.decode(name)
+	if err != nil {
+		return nil, err
+	}
+	state.CommonState2 = s.Common().CommonState2
+	return state, nil
 }
 
 type CommonState4 struct {
@@ -130,20 +144,22 @@ func (state CommonState4) Common() CommonState5 {
 	}
 }
 
-func (state *CommonState4) DecodePath() error {
-	if err := state.CommonState3.DecodePath(); err != nil {
-		return err
+func (state CommonState4) decode(name string) (State, error) {
+	s, err := state.CommonState3.decode(name)
+	if err != nil {
+		return nil, err
 	}
+	state.CommonState3 = s.Common().CommonState3
 
 	if state.RawResultPath != nil {
 		v, err := NewReferencePath(*state.RawResultPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		state.ResultPath = &v
 	}
 
-	return nil
+	return state, nil
 }
 
 type CommonState5 struct {
@@ -174,6 +190,11 @@ func (state CommonState5) Common() CommonState5 {
 	return state
 }
 
-func (state *CommonState5) DecodePath() error {
-	return state.CommonState4.DecodePath()
+func (state CommonState5) decode(name string) (State, error) {
+	s, err := state.CommonState4.decode(name)
+	if err != nil {
+		return nil, err
+	}
+	state.CommonState4 = s.Common().CommonState4
+	return state, nil
 }

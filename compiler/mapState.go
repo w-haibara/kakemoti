@@ -9,7 +9,12 @@ type RawMapState struct {
 	MaxConcurrency int64  `json:"MaxConcurrency"`
 }
 
-func (raw RawMapState) decode() (*MapState, error) {
+func (raw RawMapState) decode(name string) (State, error) {
+	s, err := raw.CommonState5.decode(name)
+	if err != nil {
+		return nil, err
+	}
+
 	workflow, err := raw.Iterator.compile()
 	if err != nil {
 		log.Println(err)
@@ -22,8 +27,8 @@ func (raw RawMapState) decode() (*MapState, error) {
 		return nil, err
 	}
 
-	return &MapState{
-		CommonState5:   raw.CommonState5,
+	return MapState{
+		CommonState5:   s.Common(),
 		Iterator:       *workflow,
 		ItemsPath:      path,
 		MaxConcurrency: raw.MaxConcurrency,

@@ -28,15 +28,16 @@ func TestCompile(t *testing.T) {
 	  }
 	}
 }`,
-			[]States{{State{"Pass", "Pass State", "",
-				&PassState{
+			[]States{{
+				PassState{
 					CommonState4: CommonState4{
 						CommonState3: CommonState3{
 							End: true,
 							CommonState2: CommonState2{
 								CommonState1: CommonState1{
-									Type: "Pass",
-								}}}}}}}},
+									StateName: "Pass State",
+									Type:      "Pass",
+								}}}}}}},
 			false,
 		},
 		{
@@ -71,50 +72,51 @@ func TestCompile(t *testing.T) {
 			  }`,
 			[]States{
 				{
-					State{"Pass", "State1", "State2",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									Next: "State2",
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
-					State{"Pass", "State2", "Choice State",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									Next: "Choice State",
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
-					State{"Choice", "Choice State", "",
-						&ChoiceState{
-							Choices: []Choice{{
-								Condition: BooleanEqualsRule{
-									V1: MustNewPath("$.bool"),
-									V2: false,
-								},
-								Next: "State1",
-							}},
-							Default: "State3",
-							CommonState2: CommonState2{
-								CommonState1: CommonState1{
-									Type: "Choice",
-								},
-							}}},
+
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								NextName: "State2",
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State1",
+										Type:      "Pass",
+									}}}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								NextName: "Choice State",
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State2",
+										Type:      "Pass",
+									}}}}},
+					ChoiceState{
+						Choices: []Choice{{
+							Condition: BooleanEqualsRule{
+								V1: MustNewPath("$.bool"),
+								V2: false,
+							},
+							Next: "State1",
+						}},
+						Default: "State3",
+						CommonState2: CommonState2{
+							CommonState1: CommonState1{
+								StateName: "Choice State",
+								Type:      "Choice",
+							},
+						}},
 				},
 				{
-					State{"Pass", "State3", "",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									End: true,
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								End: true,
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State3",
+										Type:      "Pass",
+									}}}}},
 				},
 			},
 			false,
@@ -151,52 +153,52 @@ func TestCompile(t *testing.T) {
 			  }`,
 			[]States{
 				{
-					State{"Pass", "State2", "Choice State",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									Next: "Choice State",
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
-					State{"Choice", "Choice State", "",
-						&ChoiceState{
-							Choices: []Choice{{
-								Condition: BooleanEqualsRule{
-									V1: MustNewPath("$.bool"),
-									V2: false,
-								},
-								Next: "State3",
-							}},
-							Default: "State1",
-							CommonState2: CommonState2{
-								CommonState1: CommonState1{
-									Type: "Choice",
-								},
-							}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								NextName: "Choice State",
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State2",
+										Type:      "Pass",
+									}}}}},
+					ChoiceState{
+						Choices: []Choice{{
+							Condition: BooleanEqualsRule{
+								V1: MustNewPath("$.bool"),
+								V2: false,
+							},
+							Next: "State3",
+						}},
+						Default: "State1",
+						CommonState2: CommonState2{
+							CommonState1: CommonState1{
+								StateName: "Choice State",
+								Type:      "Choice",
+							},
+						}},
 				},
 				{
-					State{"Pass", "State3", "",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									End: true,
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								End: true,
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State3",
+										Type:      "Pass",
+									}}}}},
 				},
 				{
-					State{"Pass", "State1", "State2",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									Next: "State2",
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								NextName: "State2",
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "State1",
+										Type:      "Pass",
+									}}}}},
 				},
 			},
 			false,
@@ -227,46 +229,45 @@ func TestCompile(t *testing.T) {
 			}`,
 			[]States{
 				{
-					State{"Task", "Task State", "",
-						&TaskState{
-							&RawTaskState{
-								RawResource: "script:...",
-								CommonState5: CommonState5{
-									Catch: []Catch{
-										{
-											ErrorEquals: []string{"States.ALL"},
-											Next:        "Pass State1",
-										},
+					TaskState{
+						&RawTaskState{
+							RawResource: "script:...",
+							CommonState5: CommonState5{
+								Catch: []Catch{
+									{
+										ErrorEquals: []string{"States.ALL"},
+										Next:        "Pass State1",
 									},
-									CommonState4: CommonState4{
-										CommonState3: CommonState3{
-											End: true,
-											CommonState2: CommonState2{
-												CommonState1: CommonState1{
-													Type: "Task",
-												},
+								},
+								CommonState4: CommonState4{
+									CommonState3: CommonState3{
+										End: true,
+										CommonState2: CommonState2{
+											CommonState1: CommonState1{
+												StateName: "Task State",
+												Type:      "Task",
 											},
 										},
 									},
 								},
 							},
-							TaskResouce{
-								"script",
-								"...",
-							},
+						},
+						TaskResouce{
+							"script",
+							"...",
 						},
 					},
 				},
 				{
-					State{"Pass", "Pass State1", "",
-						&PassState{
-							CommonState4: CommonState4{
-								CommonState3: CommonState3{
-									End: true,
-									CommonState2: CommonState2{
-										CommonState1: CommonState1{
-											Type: "Pass",
-										}}}}}},
+					PassState{
+						CommonState4: CommonState4{
+							CommonState3: CommonState3{
+								End: true,
+								CommonState2: CommonState2{
+									CommonState1: CommonState1{
+										StateName: "Pass State1",
+										Type:      "Pass",
+									}}}}},
 				},
 			},
 			false,

@@ -99,11 +99,11 @@ func GetTimestamp(ctx context.Context, input interface{}, path Path) (Timestamp,
 }
 
 func FilterByInputPath(ctx context.Context, state State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType2 {
+	if state.FieldsType() < FieldsType2 {
 		return input, nil
 	}
 
-	v := state.Body.Common().CommonState2
+	v := state.Common().CommonState2
 	if v.InputPath == nil {
 		return input, nil
 	}
@@ -112,11 +112,11 @@ func FilterByInputPath(ctx context.Context, state State, input interface{}) (int
 }
 
 func FilterByResultPath(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType4 {
+	if state.FieldsType() < FieldsType4 {
 		return result, nil
 	}
 
-	v := state.Body.Common().CommonState4
+	v := state.Common().CommonState4
 	if v.ResultPath == nil {
 		return result, nil
 	}
@@ -125,11 +125,11 @@ func FilterByResultPath(ctx context.Context, state State, rawinput, result inter
 }
 
 func FilterByOutputPath(ctx context.Context, state State, output interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType2 {
+	if state.FieldsType() < FieldsType2 {
 		return output, nil
 	}
 
-	v := state.Body.Common().CommonState2
+	v := state.Common().CommonState2
 	if v.OutputPath == nil {
 		return output, nil
 	}
@@ -392,11 +392,11 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 }
 
 func FilterByParameters(ctx context.Context, state State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType4 {
+	if state.FieldsType() < FieldsType4 {
 		return input, nil
 	}
 
-	v := state.Body.Common().CommonState4
+	v := state.Common().CommonState4
 	if v.Parameters == nil {
 		return input, nil
 	}
@@ -415,11 +415,11 @@ func FilterByParameters(ctx context.Context, state State, input interface{}) (in
 }
 
 func FilterByResultSelector(ctx context.Context, state State, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType5 {
+	if state.FieldsType() < FieldsType5 {
 		return result, nil
 	}
 
-	v := state.Body.Common()
+	v := state.Common()
 	if v.ResultSelector == nil {
 		return result, nil
 	}

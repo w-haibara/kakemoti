@@ -1,44 +1,54 @@
 package compiler
 
-type WaitState struct {
+type RawWaitState struct {
 	CommonState3
-	Seconds          *int64  `json:"Seconds"`
-	RawTimestamp     *string `json:"Timestamp"`
-	Timestamp        *Timestamp
-	RawSecondsPath   *string `json:"SecondsPath"`
-	SecondsPath      *Path
-	RawTimestampPath *string `json:"TimestampPath"`
-	TimestampPath    *Path
+	Seconds       *int64  `json:"Seconds"`
+	Timestamp     *string `json:"Timestamp"`
+	SecondsPath   *string `json:"SecondsPath"`
+	TimestampPath *string `json:"TimestampPath"`
 }
 
-func (state *WaitState) DecodePath() error {
-	if err := state.CommonState3.DecodePath(); err != nil {
-		return err
+func (state RawWaitState) decode(name string) (State, error) {
+	s, err := state.CommonState3.decode(name)
+	if err != nil {
+		return nil, err
 	}
 
-	if state.RawTimestamp != nil {
-		v, err := NewTimestamp(*state.RawTimestamp)
+	res := WaitState{
+		CommonState3: s.Common().CommonState3,
+	}
+
+	if state.Timestamp != nil {
+		v, err := NewTimestamp(*state.Timestamp)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		*state.Timestamp = v
+		res.Timestamp = &v
 	}
 
-	if state.RawSecondsPath != nil {
-		v, err := NewPath(*state.RawSecondsPath)
+	if state.SecondsPath != nil {
+		v, err := NewPath(*state.SecondsPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		*state.SecondsPath = v
+		res.SecondsPath = &v
 	}
 
-	if state.RawTimestampPath != nil {
-		v, err := NewPath(*state.RawTimestampPath)
+	if state.TimestampPath != nil {
+		v, err := NewPath(*state.TimestampPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		*state.TimestampPath = v
+		res.TimestampPath = &v
 	}
 
-	return nil
+	return res, nil
+}
+
+type WaitState struct {
+	CommonState3
+	Seconds       *int64
+	Timestamp     *Timestamp
+	SecondsPath   *Path
+	TimestampPath *Path
 }

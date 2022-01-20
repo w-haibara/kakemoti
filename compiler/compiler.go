@@ -13,13 +13,6 @@ var ErrStateMachineTerminated = errors.New("state machine terminated")
 
 type States []State
 
-type State struct {
-	Type string
-	Name string
-	Next string
-	Body StateBody
-}
-
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
@@ -88,12 +81,6 @@ func (asl *ASL) compile() (*Workflow, error) {
 		return nil, err
 	}
 
-	for k := range states {
-		if err := states[k].Body.DecodePath(); err != nil {
-			return nil, err
-		}
-	}
-
 	workflow, err := asl.makeWorkflow(states)
 	if err != nil {
 		log.Println(err)
@@ -114,118 +101,42 @@ func (asl *ASL) makeStates() (map[string]State, error) {
 			return nil, err
 		}
 
+		var raw RawState
 		switch v.Type {
-		case "Choice":
-			var raw RawChoiceState
-			if err := json.Unmarshal(state, &raw); err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			body, err := raw.decode()
-			if err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			states[name] = State{
-				Type: v.Type,
-				Name: name,
-				Body: body,
-			}
-			continue
 		case "Parallel":
-			var raw RawParallelState
-			if err := json.Unmarshal(state, &raw); err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			body, err := raw.decode()
-			if err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			states[name] = State{
-				Type: v.Type,
-				Name: name,
-				Next: body.Next,
-				Body: body,
-			}
-			continue
-		case "Map":
-			var raw RawMapState
-			if err := json.Unmarshal(state, &raw); err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			body, err := raw.decode()
-			if err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			states[name] = State{
-				Type: v.Type,
-				Name: name,
-				Next: body.Next,
-				Body: body,
-			}
-			continue
-		case "Task":
-			var raw RawTaskState
-			if err := json.Unmarshal(state, &raw); err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			body, err := raw.decode()
-			if err != nil {
-				log.Println(err)
-				return nil, err
-			}
-
-			states[name] = State{
-				Type: v.Type,
-				Name: name,
-				Next: body.Next,
-				Body: body,
-			}
-			continue
-		}
-
-		var body StateBody
-		switch v.Type {
+			raw = new(RawParallelState)
+		case "Choice":
+			raw = new(RawChoiceState)
 		case "Pass":
-			body = new(PassState)
+			raw = new(RawPassState)
 		case "Task":
-			body = new(TaskState)
+			raw = new(RawTaskState)
 		case "Wait":
-			body = new(WaitState)
+			raw = new(RawWaitState)
 		case "Succeed":
-			body = new(SucceedState)
+			raw = new(RawSucceedState)
 		case "Fail":
-			body = new(FailState)
+			raw = new(RawFailState)
 		case "Map":
-			body = new(MapState)
+			raw = new(RawMapState)
 		default:
 			err := fmt.Errorf("Unknown state name: %s", v.Type)
 			log.Println(err)
 			return nil, err
 		}
-		if err := json.Unmarshal(state, body); err != nil {
+
+		if err := json.Unmarshal(state, &raw); err != nil {
 			log.Println(err)
 			return nil, err
 		}
 
-		states[name] = State{
-			Type: v.Type,
-			Name: name,
-			Next: body.GetNext(),
-			Body: body,
+		s, err := raw.decode(name)
+		if err != nil {
+			log.Println(err)
+			return nil, err
 		}
+
+		states[name] = s
 	}
 
 	return states, nil
@@ -328,15 +239,15 @@ func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]strin
 	cur := start
 	for {
 		states = append(states, cur)
-		if cur.Next == "" {
-			if wf.stateIsExistInBranch(cur.Name) {
+		if cur.Next() == "" {
+			if wf.stateIsExistInBranch(cur.Name()) {
 				return nil, nil
 			}
 			wf.States = append(wf.States, states)
 			for i, state := range states {
-				wf.StatesIndexMap[state.Name] = [2]int{len(wf.States) - 1, i}
+				wf.StatesIndexMap[state.Name()] = [2]int{len(wf.States) - 1, i}
 			}
-			if bn := GetNexts(cur.Body); bn != nil {
+			if bn := GetNexts(cur); bn != nil {
 				nexts := make([]string, 0, len(bn))
 				for _, next := range bn {
 					if _, ok := wf.StatesIndexMap[next]; !ok {
@@ -346,25 +257,25 @@ func (wf *Workflow) makeBranch(start State, statesMap map[string]State) ([]strin
 				return nexts, nil
 			}
 			return nil, nil
-		} else if wf.stateIsExistInBranch(cur.Next) {
+		} else if wf.stateIsExistInBranch(cur.Next()) {
 			wf.States = append(wf.States, states)
 			for i, state := range states {
-				wf.StatesIndexMap[state.Name] = [2]int{len(wf.States) - 1, i}
+				wf.StatesIndexMap[state.Name()] = [2]int{len(wf.States) - 1, i}
 			}
 			return nil, nil
 		}
 		var ok bool
-		cur, ok = statesMap[cur.Next]
+		cur, ok = statesMap[cur.Next()]
 		if !ok {
-			return nil, fmt.Errorf("key not found: %v", cur.Next)
+			return nil, fmt.Errorf("key not found: %v", cur.Next())
 		}
 	}
 }
 
 func (wf *Workflow) makeCatchBranch(state State, statesMap map[string]State) ([]string, error) {
 	nexts := []string{}
-	if state.Body.FieldsType() >= FieldsType5 {
-		for _, catch := range state.Body.Common().Catch {
+	if state.FieldsType() >= FieldsType5 {
+		for _, catch := range state.Common().Catch {
 			if _, ok := wf.StatesIndexMap[catch.Next]; !ok {
 				nexts = append(nexts, catch.Next)
 			}
@@ -376,15 +287,15 @@ func (wf *Workflow) makeCatchBranch(state State, statesMap map[string]State) ([]
 func (wf *Workflow) stateIsExistInBranch(name string) bool {
 	i := wf.StatesIndexMap[name]
 	if len(wf.States) > i[0] && len(wf.States[i[0]]) > i[1] {
-		if wf.States[i[0]][i[1]].Name == name {
+		if wf.States[i[0]][i[1]].Name() == name {
 			return true
 		}
 	}
 	return false
 }
 
-func GetNexts(body StateBody) []string {
-	if choice, ok := body.(*ChoiceState); ok {
+func GetNexts(state State) []string {
+	if choice, ok := state.(ChoiceState); ok {
 		return choice.GetNexts()
 	}
 

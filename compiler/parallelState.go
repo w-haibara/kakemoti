@@ -9,7 +9,12 @@ type RawParallelState struct {
 	Branches []ASL `json:"Branches"`
 }
 
-func (raw RawParallelState) decode() (*ParallelState, error) {
+func (raw RawParallelState) decode(name string) (State, error) {
+	s, err := raw.CommonState5.decode(name)
+	if err != nil {
+		return nil, err
+	}
+
 	branches := make([]Workflow, len(raw.Branches))
 
 	for i, branch := range raw.Branches {
@@ -22,13 +27,13 @@ func (raw RawParallelState) decode() (*ParallelState, error) {
 		branches[i] = *workflow
 	}
 
-	return &ParallelState{
-		CommonState5: raw.CommonState5,
+	return ParallelState{
+		CommonState5: s.Common(),
 		Branches:     branches,
 	}, nil
 }
 
 type ParallelState struct {
 	CommonState5
-	Branches []Workflow `json:"Branches"`
+	Branches []Workflow
 }
