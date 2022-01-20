@@ -302,21 +302,21 @@ func (w Workflow) evalState(ctx context.Context, state compiler.State, input int
 
 	switch v := state.(type) {
 	case compiler.PassState:
-		output, err = w.evalPass(ctx, &v, input)
+		output, err = w.evalPass(ctx, v, input)
 	case compiler.TaskState:
-		output, err = w.evalTask(ctx, &v, input)
+		output, err = w.evalTask(ctx, v, input)
 	case compiler.ChoiceState:
-		next, output, err = w.evalChoice(ctx, &v, input)
+		next, output, err = w.evalChoice(ctx, v, input)
 	case compiler.WaitState:
-		output, err = w.evalWait(ctx, &v, input)
+		output, err = w.evalWait(ctx, v, input)
 	case compiler.SucceedState:
-		output, err = w.evalSucceed(ctx, &v, input)
+		output, err = w.evalSucceed(ctx, v, input)
 	case compiler.FailState:
-		output, err = w.evalFail(ctx, &v, input)
+		output, err = w.evalFail(ctx, v, input)
 	case compiler.ParallelState:
-		output, err = w.evalParallel(ctx, &v, input)
+		output, err = w.evalParallel(ctx, v, input)
 	case compiler.MapState:
-		output, err = w.evalMap(ctx, &v, input)
+		output, err = w.evalMap(ctx, v, input)
 	default:
 		panic(fmt.Sprintf("unknow state type: %#v", v))
 	}

@@ -6,7 +6,7 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-func (w Workflow) evalChoice(ctx context.Context, state *compiler.ChoiceState, input interface{}) (string, interface{}, statesError) {
+func (w Workflow) evalChoice(ctx context.Context, state compiler.ChoiceState, input interface{}) (string, interface{}, statesError) {
 	for _, choice := range state.Choices {
 		ok, err := choice.Condition.Eval(ctx, input)
 		if err != nil {
