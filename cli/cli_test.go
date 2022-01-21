@@ -38,7 +38,8 @@ func TestStartExecution(t *testing.T) {
 	}
 
 	if err := os.Chdir("../"); err != nil {
-		t.Fatal(`os.Chdir("../"):`, err)
+		t.Error(`os.Chdir("../"):`, err)
+		return
 	}
 
 	for _, tt := range tests {
@@ -52,26 +53,29 @@ func TestStartExecution(t *testing.T) {
 				Timeout: 0,
 			})
 			if err != nil {
-				t.Fatal("StartExecution() failed:", err)
+				t.Error("StartExecution() failed:", err)
+				return
 			}
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
-				t.Fatal("os.ReadFile(tt.wantFile) failed:", err)
+				t.Error("os.ReadFile(tt.wantFile) failed:", err)
+				return
 			}
-			if d := jsonEqual(t, []byte(out), want); d != "" {
-				t.Fatalf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
+
+			var v1, v2 interface{}
+			if err := json.Unmarshal(out, &v1); err != nil {
+				t.Error("json.Unmarshal(b1, &v1) failed:", err)
+				return
+			}
+			if err := json.Unmarshal(want, &v2); err != nil {
+				t.Error("json.Unmarshal(b2, &v2) failed:", err)
+				return
+			}
+
+			if d := cmp.Diff(v1, v2); d != "" {
+				t.Errorf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
+				return
 			}
 		})
 	}
-}
-
-func jsonEqual(t *testing.T, b1, b2 []byte) string {
-	var v1, v2 interface{}
-	if err := json.Unmarshal(b1, &v1); err != nil {
-		t.Fatal("json.Unmarshal(b1, &v1) failed:", err)
-	}
-	if err := json.Unmarshal(b2, &v2); err != nil {
-		t.Fatal("json.Unmarshal(b2, &v2) failed:", err)
-	}
-	return cmp.Diff(v1, v2)
 }
