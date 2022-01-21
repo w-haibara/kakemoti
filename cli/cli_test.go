@@ -19,6 +19,7 @@ func TestStartExecution(t *testing.T) {
 		{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"pass(parameters)", "pass_parameters", "_workflow/inputs/input1.json", "_workflow/outputs/output11.json"},
 		{"pass(intrinsic)", "pass_intrinsic", "_workflow/inputs/input4.json", "_workflow/outputs/output12.json"},
+		{"pass(ctxobj)", "pass_ctxobj", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 		{"wait", "wait", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
@@ -31,10 +32,10 @@ func TestStartExecution(t *testing.T) {
 		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},
 		{"task(catch)", "task_catch", "_workflow/inputs/input1.json", "_workflow/inputs/input1.json"},
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
-		{"task(ctx)", "task_ctx", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
+		{"task(ctxobj)", "task_ctxobj", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 		{"map", "map", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
 		{"map(concurrency)", "map_concurrency", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
-		//{"map(contextobj)", "map_contextobj", "_workflow/inputs/input8.json", "_workflow/outputs/output13.json"},
+		{"map(ctxobj)", "map_ctxobj", "_workflow/inputs/input8.json", "_workflow/outputs/output13.json"},
 	}
 
 	if err := os.Chdir("../"); err != nil {
