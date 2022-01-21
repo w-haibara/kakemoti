@@ -18,7 +18,7 @@ import (
 func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
-		return JoinByPath(ctx, v1, contextobj.Get(ctx), path)
+		return JoinByPath(ctx, v1, contextobj.GetAll(ctx), path)
 	}
 
 	if err := path.Expr.Set(v1, v2); err != nil {
@@ -31,7 +31,7 @@ func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{
 func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
-		return UnjoinByPath(ctx, contextobj.Get(ctx), path)
+		return UnjoinByPath(ctx, contextobj.GetAll(ctx), path)
 	}
 
 	nodes := path.Expr.Get(v)

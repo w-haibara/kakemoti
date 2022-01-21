@@ -33,7 +33,25 @@ func Set(ctx context.Context, key string, val interface{}) context.Context {
 	return context.WithValue(ctx, contextObjectKey, obj)
 }
 
-func Get(ctx context.Context) map[string]interface{} {
+func Get(ctx context.Context, key string) (interface{}, bool) {
+	v := ctx.Value(contextObjectKey)
+	if v == nil {
+		return nil, false
+	}
+
+	obj, ok := v.(Obj)
+	if !ok {
+		return nil, false
+	}
+
+	res, ok := obj.obj[key]
+	if !ok {
+		return nil, false
+	}
+	return res, true
+}
+
+func GetAll(ctx context.Context) map[string]interface{} {
 	v := ctx.Value(contextObjectKey)
 	if v == nil {
 		return nil
@@ -45,4 +63,10 @@ func Get(ctx context.Context) map[string]interface{} {
 	}
 
 	return obj.obj
+}
+
+func Del(ctx context.Context, key string) context.Context {
+	v := GetAll(ctx)
+	delete(v, key)
+	return context.WithValue(ctx, contextObjectKey, v)
 }

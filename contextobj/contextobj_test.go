@@ -29,11 +29,26 @@ func Test(t *testing.T) {
 			for k, v := range tt.want {
 				ctx = Set(ctx, k, v)
 			}
-			got := Get(ctx)
+			got := GetAll(ctx)
 			if got == nil {
-				t.Error("Get(ctx) returns nil")
+				t.Error("GetAll(ctx) returns nil")
 			} else if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got %#v, want %#v", got, tt.want)
+				t.Errorf("GetAll(ctx) failed: got %#v, want %#v", got, tt.want)
+			}
+
+			for k, v := range tt.want {
+				ctx = Set(ctx, k, v)
+			}
+			got = make(map[string]interface{})
+			for k := range tt.want {
+				v, ok := Get(ctx, k)
+				if !ok {
+					t.Error("Get(ctx, k) returns not ok")
+				}
+				got[k] = v
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Get(ctx, k) failed: got %#v, want %#v", got, tt.want)
 			}
 		})
 	}
