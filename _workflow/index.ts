@@ -537,11 +537,14 @@ function parallel(stack: Stack): sfn.IChainable {
     .branch(pass(stack))
     .branch(succeed(stack));
 }
-/*
 function map(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State");
+  const map = new sfn.Map(stack, 'Map State', {
+    maxConcurrency: 1,
+    itemsPath: sfn.JsonPath.stringAt('$.inputForMap'),
+  });
+  map.iterator(new sfn.Pass(stack, 'Pass State'));
+  return map
 }
-*/
 
 const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   pass,
@@ -562,6 +565,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   task_catch,
   task_ctx,
   parallel,
+  map,
 ];
 
 function list() {
