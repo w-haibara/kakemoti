@@ -33,6 +33,7 @@ func TestStartExecution(t *testing.T) {
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
 		{"task(ctx)", "task_ctx", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 		{"map", "map", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
+		{"map(concurrency)", "map_concurrency", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
 	}
 
 	if err := os.Chdir("../"); err != nil {

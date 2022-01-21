@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/w-haibara/kakemoti/compiler"
+	"golang.org/x/sync/errgroup"
 )
 
 func (w Workflow) evalMap(ctx context.Context, state compiler.MapState, input interface{}) (interface{}, statesError) {
@@ -26,15 +27,36 @@ func (w Workflow) evalMap(ctx context.Context, state compiler.MapState, input in
 	var outputs parallelOutputs
 	outputs.v = make([]interface{}, len(items))
 
+	var eg errgroup.Group
+	count := state.MaxConcurrency
 	for i, item := range items {
-		o, err := iter.Exec(ctx, item)
-		if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
-			return nil, statesError{"", err}
+		i := i
+		item := item
+		fn := func() error {
+			o, err := iter.Exec(ctx, item)
+			if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
+				return err
+			}
+
+			outputs.mu.Lock()
+			outputs.v[i] = o
+			outputs.mu.Unlock()
+
+			return nil
 		}
 
-		outputs.mu.Lock()
-		outputs.v[i] = o
-		outputs.mu.Unlock()
+		count--
+		if count > 0 {
+			eg.Go(fn)
+		} else {
+			if err := fn(); err != nil {
+				return nil, statesError{"", err}
+			}
+		}
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, NewStatesError("", err)
 	}
 
 	return outputs.v, NewStatesError("", nil)

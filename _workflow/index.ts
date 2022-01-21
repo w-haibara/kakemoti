@@ -545,6 +545,14 @@ function map(stack: Stack): sfn.IChainable {
   map.iterator(new sfn.Pass(stack, 'Pass State'));
   return map
 }
+function map_concurrency(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, 'Map State', {
+    maxConcurrency: 3,
+    itemsPath: sfn.JsonPath.stringAt('$.inputForMap'),
+  });
+  map.iterator(new sfn.Pass(stack, 'Pass State'));
+  return map
+}
 
 const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   pass,
@@ -566,6 +574,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   task_ctx,
   parallel,
   map,
+  map_concurrency,
 ];
 
 function list() {
