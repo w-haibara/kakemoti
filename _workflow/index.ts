@@ -538,20 +538,28 @@ function parallel(stack: Stack): sfn.IChainable {
     .branch(succeed(stack));
 }
 function map(stack: Stack): sfn.IChainable {
-  const map = new sfn.Map(stack, 'Map State', {
+  const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 1,
-    itemsPath: sfn.JsonPath.stringAt('$.inputForMap'),
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
   });
-  map.iterator(new sfn.Pass(stack, 'Pass State'));
-  return map
+  map.iterator(new sfn.Pass(stack, "Pass State"));
+  return map;
 }
 function map_concurrency(stack: Stack): sfn.IChainable {
-  const map = new sfn.Map(stack, 'Map State', {
+  const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 3,
-    itemsPath: sfn.JsonPath.stringAt('$.inputForMap'),
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
   });
-  map.iterator(new sfn.Pass(stack, 'Pass State'));
-  return map
+  map.iterator(new sfn.Pass(stack, "Pass State"));
+  return map;
+}
+function map_contextobj(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, "Map State", {
+    maxConcurrency: 3,
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+  });
+  map.iterator(new sfn.Pass(stack, "Pass State"));
+  return map;
 }
 
 const workflows: ((stack: Stack) => sfn.IChainable)[] = [
@@ -575,6 +583,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   parallel,
   map,
   map_concurrency,
+  map_contextobj,
 ];
 
 function list() {

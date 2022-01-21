@@ -1,0 +1,8 @@
+{
+  "inputForMap": [
+    {
+      "index.$": "$$.Map.Item.Index",
+      "value.$": "$$.Map.Item.Value"
+    }
+  ]
+}
