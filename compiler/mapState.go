@@ -21,7 +21,7 @@ func (raw RawMapState) decode(name string) (State, error) {
 		return nil, err
 	}
 
-	path, err := NewPath(raw.ItemsPath)
+	path, err := NewReferencePath(raw.ItemsPath)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -38,6 +38,6 @@ func (raw RawMapState) decode(name string) (State, error) {
 type MapState struct {
 	CommonState5
 	Iterator       Workflow
-	ItemsPath      Path
+	ItemsPath      ReferencePath
 	MaxConcurrency int64
 }

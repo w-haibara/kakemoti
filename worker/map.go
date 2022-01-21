@@ -15,7 +15,7 @@ func (w Workflow) evalMap(ctx context.Context, state compiler.MapState, input in
 		return nil, statesError{"", err}
 	}
 
-	v, err := compiler.UnjoinByPath(ctx, input, &state.ItemsPath)
+	v, err := compiler.UnjoinByPath(ctx, input, &state.ItemsPath.Path)
 	if err != nil {
 		return nil, NewStatesError("", err)
 	}
