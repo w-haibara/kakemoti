@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/log"
 	"github.com/w-haibara/kakemoti/worker"
 )
@@ -68,6 +69,7 @@ func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
 		}
 	}()
 
+	ctx = contextobj.New(ctx)
 	return worker.Exec(ctx, *workflow, input, logger)
 }
 
