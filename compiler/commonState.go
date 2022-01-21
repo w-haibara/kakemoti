@@ -1,9 +1,5 @@
 package compiler
 
-import (
-	"encoding/json"
-)
-
 const (
 	FieldsType1 = iota
 	FieldsType2
@@ -131,7 +127,7 @@ type CommonState4 struct {
 	CommonState3
 	RawResultPath *string `json:"ResultPath"`
 	ResultPath    *ReferencePath
-	Parameters    *json.RawMessage `json:"Parameters"`
+	Parameters    interface{} `json:"Parameters"`
 }
 
 func (state CommonState4) FieldsType() int {
@@ -164,9 +160,9 @@ func (state CommonState4) decode(name string) (State, error) {
 
 type CommonState5 struct {
 	CommonState4
-	ResultSelector *json.RawMessage `json:"ResultSelector"`
-	Retry          []Retry          `json:"Retry"`
-	Catch          []Catch          `json:"Catch"`
+	ResultSelector interface{} `json:"ResultSelector"`
+	Retry          []Retry     `json:"Retry"`
+	Catch          []Catch     `json:"Catch"`
 }
 
 func (state CommonState5) FieldsType() int {

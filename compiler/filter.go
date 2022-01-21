@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -372,8 +371,12 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 	return out, nil
 }
 
-func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
-	payload1, err := resolvePayload(ctx, input, payload)
+func ResolvePayload(ctx context.Context, input interface{}, payload interface{}) (interface{}, error) {
+	v, ok := payload.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid type of payload: [%#v]", payload)
+	}
+	payload1, err := resolvePayload(ctx, input, v)
 	if err != nil {
 		return nil, err
 	}
@@ -401,17 +404,7 @@ func FilterByParameters(ctx context.Context, state State, input interface{}) (in
 		return input, nil
 	}
 
-	str := ""
-	if err := json.Unmarshal(*v.Parameters, &str); err == nil {
-		return input, nil
-	}
-
-	parameter := make(map[string]interface{})
-	if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
-	}
-
-	return ResolvePayload(ctx, input, parameter)
+	return ResolvePayload(ctx, input, v.Parameters)
 }
 
 func FilterByResultSelector(ctx context.Context, state State, result interface{}) (interface{}, error) {
@@ -424,12 +417,7 @@ func FilterByResultSelector(ctx context.Context, state State, result interface{}
 		return result, nil
 	}
 
-	selector := make(map[string]interface{})
-	if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
-	}
-
-	return ResolvePayload(ctx, result, selector)
+	return ResolvePayload(ctx, result, v.ResultSelector)
 }
 
 func GenerateEffectiveResult(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
