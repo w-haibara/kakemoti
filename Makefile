@@ -18,7 +18,7 @@ asl-gen-all: _workflow/index.js
 
 .PHONY: test
 test: asl-gen-all
-	go test -count=1 ./...
+	go test -v -count=1 ./...
 
 input = ""
 .PHONY: run
