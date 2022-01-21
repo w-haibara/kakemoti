@@ -4,17 +4,20 @@ import (
 	"context"
 )
 
-type Key struct {
-	key string
-}
+type Key string
 
-var contextObjectKey Key = Key{"context object key"}
+var contextObjectKey Key = Key("context object key")
 
 type Obj struct {
 	obj map[string]interface{}
 }
 
 func New(ctx context.Context) context.Context {
+	v := ctx.Value(contextObjectKey)
+	if v != nil {
+		return ctx
+	}
+
 	return context.WithValue(ctx, contextObjectKey, Obj{map[string]interface{}{}})
 }
 
