@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/log"
 	"github.com/w-haibara/kakemoti/worker"
 )
@@ -23,7 +22,7 @@ type Options struct {
 	Timeout int64
 }
 
-func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
+func StartExecution(ctx context.Context, coj *compiler.CtxObj, opt Options) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -69,8 +68,11 @@ func StartExecution(ctx context.Context, opt Options) ([]byte, error) {
 		}
 	}()
 
-	ctx = contextobj.New(ctx)
-	return worker.Exec(ctx, *workflow, input, logger)
+	if coj == nil {
+		coj = &compiler.CtxObj{}
+	}
+
+	return worker.Exec(ctx, coj, *workflow, input, logger)
 }
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {

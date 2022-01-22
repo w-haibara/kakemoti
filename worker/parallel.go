@@ -14,7 +14,7 @@ type parallelOutputs struct {
 	v  []interface{}
 }
 
-func (w Workflow) evalParallel(ctx context.Context, state compiler.ParallelState, input interface{}) (interface{}, statesError) {
+func (w Workflow) evalParallel(ctx context.Context, coj *compiler.CtxObj, state compiler.ParallelState, input interface{}) (interface{}, statesError) {
 	var eg errgroup.Group
 	var outputs parallelOutputs
 	outputs.v = make([]interface{}, len(state.Branches))
@@ -26,7 +26,7 @@ func (w Workflow) evalParallel(ctx context.Context, state compiler.ParallelState
 				return err
 			}
 
-			o, err := w.Exec(ctx, input)
+			o, err := w.Exec(ctx, coj, input)
 			if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
 				return err
 			}

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/w-haibara/kakemoti/contextobj"
+	"github.com/w-haibara/kakemoti/compiler"
 )
 
 func TestStartExecution(t *testing.T) {
@@ -45,9 +45,14 @@ func TestStartExecution(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := contextobj.New(context.Background())
-			ctx = contextobj.Set(ctx, "aaa", 111)
-			out, err := StartExecution(ctx, Options{
+			ctx := context.Background()
+			coj := new(compiler.CtxObj)
+			v, err := coj.SetByString("$.aaa", 111)
+			if err != nil {
+				t.Error("coj.Set() failed:", err)
+			}
+			coj = v
+			out, err := StartExecution(ctx, coj, Options{
 				Logfile: "",
 				Input:   tt.inputFile,
 				ASL:     "_workflow/asl/" + tt.asl + ".asl.json",

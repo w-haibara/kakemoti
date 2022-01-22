@@ -6,7 +6,7 @@ type RawMapState struct {
 	CommonState5
 	Iterator       ASL    `json:"Iterator"`
 	ItemsPath      string `json:"ItemsPath"`
-	MaxConcurrency int64  `json:"MaxConcurrency"`
+	MaxConcurrency int    `json:"MaxConcurrency"`
 }
 
 func (raw RawMapState) decode(name string) (State, error) {
@@ -39,5 +39,5 @@ type MapState struct {
 	CommonState5
 	Iterator       Workflow
 	ItemsPath      ReferencePath
-	MaxConcurrency int64
+	MaxConcurrency int
 }

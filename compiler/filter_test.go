@@ -25,7 +25,7 @@ func Test_parseIntrinsicFunction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotName, gotArgs, err := parseIntrinsicFunction(context.Background(), tt.fnstr, tt.input)
+			gotName, gotArgs, err := parseIntrinsicFunction(context.Background(), &CtxObj{}, tt.fnstr, tt.input)
 			if err != nil {
 				t.Errorf("parseIntrinsicFunction() error = %v", err)
 				return
