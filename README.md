@@ -8,7 +8,7 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [x] Comment
   - [x] Version
   - [x] TimeoutSeconds
-- [ ] States
+- [x] States
   - [x] Pass State
   - [x] Task State
   - [x] Choice State
