@@ -546,6 +546,34 @@ function parallel(stack: Stack): sfn.IChainable {
     .branch(pass(stack))
     .branch(succeed(stack));
 }
+function parallel_ctxobj(stack: Stack): sfn.IChainable {
+  const s1 = new sfn.Pass(stack, "S1", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+  const s2 = new sfn.Pass(stack, "S2", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+  const s3 = new sfn.Pass(stack, "S3", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+
+  return new sfn.Parallel(stack, "Parallel State")
+    .branch(s1)
+    .branch(s2)
+    .branch(s3);
+}
 function map(stack: Stack): sfn.IChainable {
   const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 1,
@@ -598,6 +626,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   task_catch,
   task_ctxobj,
   parallel,
+  parallel_ctxobj,
   map,
   map_concurrency,
   map_ctxobj,
