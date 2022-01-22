@@ -36,6 +36,7 @@ func TestStartExecution(t *testing.T) {
 		{"map", "map", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
 		{"map(concurrency)", "map_concurrency", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
 		{"map(ctxobj)", "map_ctxobj", "_workflow/inputs/input8.json", "_workflow/outputs/output14.json"},
+		{"map(ctxobj2)", "map_ctxobj2", "_workflow/inputs/input8.json", "_workflow/outputs/output15.json"},
 	}
 
 	if err := os.Chdir("../"); err != nil {

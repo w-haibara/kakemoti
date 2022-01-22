@@ -605,6 +605,20 @@ function map_ctxobj(stack: Stack): sfn.IChainable {
   );
   return map;
 }
+function map_ctxobj2(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, "Map State", {
+    maxConcurrency: 3,
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+  });
+  map.iterator(
+    new sfn.Pass(stack, "Pass State", {
+      parameters: {
+        "ctx_aaa.$": "$$.aaa",
+      },
+    })
+  );
+  return map;
+}
 
 const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   pass,
@@ -630,6 +644,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   map,
   map_concurrency,
   map_ctxobj,
+  map_ctxobj2,
 ];
 
 function list() {

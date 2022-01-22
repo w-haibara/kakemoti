@@ -46,8 +46,12 @@ func (w Workflow) evalMap(ctx context.Context, coj *compiler.CtxObj, state compi
 			if err != nil {
 				return err
 			}
+			c3, err := c2.SetAll(coj.GetAll())
+			if err != nil {
+				return err
+			}
 
-			o, err := iter.Exec(ctx, c2, items[i])
+			o, err := iter.Exec(ctx, c3, items[i])
 			if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
 				return err
 			}

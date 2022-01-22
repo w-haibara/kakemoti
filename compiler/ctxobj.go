@@ -26,6 +26,25 @@ func (c *CtxObj) Set(path *Path, val interface{}) (*CtxObj, error) {
 	return &CtxObj{v}, nil
 }
 
+func (c *CtxObj) SetAll(val interface{}) (*CtxObj, error) {
+	m, ok := val.(map[string]interface{})
+	if !ok {
+		return c, nil
+	}
+
+	var res CtxObj
+	res = *c
+	var err error
+	for k, v := range m {
+		c, err = res.SetByString(k, v)
+		if err != nil {
+			return nil, err
+		}
+		res = *c
+	}
+	return &res, nil
+}
+
 func (c *CtxObj) GetByString(path string) (interface{}, bool) {
 	p, err := NewPath(path)
 	if err != nil {
