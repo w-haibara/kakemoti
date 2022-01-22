@@ -50,6 +50,15 @@ function pass_intrinsic(stack: Stack): sfn.IChainable {
     },
   });
 }
+function pass_ctxobj(stack: Stack): sfn.IChainable {
+  return new sfn.Pass(stack, "Pass State", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+}
 function wait(stack: Stack): sfn.IChainable {
   return new sfn.Wait(stack, "Wait State", {
     time: sfn.WaitTime.duration(Duration.seconds(1)),
@@ -507,7 +516,7 @@ function task_retry(stack: Stack): sfn.IChainable {
   const chain = new sfn.Parallel(stack, "Chain").branch(task);
   chain.addRetry({
     maxAttempts: 10,
-    backoffRate: 0,
+    backoffRate: 1,
     interval: Duration.seconds(0),
   });
   return chain;
@@ -522,7 +531,7 @@ function task_catch(stack: Stack): sfn.IChainable {
   });
   return task;
 }
-function task_ctx(stack: Stack): sfn.IChainable {
+function task_ctxobj(stack: Stack): sfn.IChainable {
   return new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
     resultSelector: {
@@ -537,11 +546,65 @@ function parallel(stack: Stack): sfn.IChainable {
     .branch(pass(stack))
     .branch(succeed(stack));
 }
-/*
-function map(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State");
+function parallel_ctxobj(stack: Stack): sfn.IChainable {
+  const s1 = new sfn.Pass(stack, "S1", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+  const s2 = new sfn.Pass(stack, "S2", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+  const s3 = new sfn.Pass(stack, "S3", {
+    parameters: {
+      "ctx_aaa.$": "$$.aaa",
+    },
+    resultPath: "$.result.ctx",
+    outputPath: "$.result",
+  });
+
+  return new sfn.Parallel(stack, "Parallel State")
+    .branch(s1)
+    .branch(s2)
+    .branch(s3);
 }
-*/
+function map(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, "Map State", {
+    maxConcurrency: 1,
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+  });
+  map.iterator(new sfn.Pass(stack, "Pass State"));
+  return map;
+}
+function map_concurrency(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, "Map State", {
+    maxConcurrency: 3,
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+  });
+  map.iterator(new sfn.Pass(stack, "Pass State"));
+  return map;
+}
+function map_ctxobj(stack: Stack): sfn.IChainable {
+  const map = new sfn.Map(stack, "Map State", {
+    maxConcurrency: 3,
+    itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+  });
+  map.iterator(
+    new sfn.Pass(stack, "Pass State", {
+      parameters: {
+        "index.$": "$$.Map.Item.Index",
+        "value.$": "$$.Map.Item.Value",
+      },
+    })
+  );
+  return map;
+}
 
 const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   pass,
@@ -549,6 +612,7 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   pass_result,
   pass_parameters,
   pass_intrinsic,
+  pass_ctxobj,
   wait,
   succeed,
   fail,
@@ -560,8 +624,12 @@ const workflows: ((stack: Stack) => sfn.IChainable)[] = [
   task_filter,
   task_retry,
   task_catch,
-  task_ctx,
+  task_ctxobj,
   parallel,
+  parallel_ctxobj,
+  map,
+  map_concurrency,
+  map_ctxobj,
 ];
 
 function list() {

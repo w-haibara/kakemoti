@@ -19,15 +19,21 @@ type RawTaskState struct {
 	HeartbeatSecondsPath string `json:"HeartbeatSecondsPath"` // TODO
 }
 
-func (s *RawTaskState) decode() (*TaskState, error) {
-	v := strings.SplitN(s.RawResource, ":", 2)
+func (raw *RawTaskState) decode(name string) (State, error) {
+	s, err := raw.CommonState5.decode(name)
+	if err != nil {
+		return nil, err
+	}
+	raw.CommonState5 = s.Common()
+
+	v := strings.SplitN(raw.RawResource, ":", 2)
 
 	if len(v) != 2 {
 		return nil, ErrInvalidTaskResource
 	}
 
-	return &TaskState{
-		RawTaskState: s,
+	return TaskState{
+		RawTaskState: raw,
 		Resouce: TaskResouce{
 			Type: v[0],
 			Path: v[1],

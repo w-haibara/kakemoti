@@ -21,7 +21,12 @@ func invalidTypeError() error {
 	return fmt.Errorf("invalid type, line: %v", line)
 }
 
-func (raw RawChoiceState) decode() (*ChoiceState, error) {
+func (raw RawChoiceState) decode(name string) (State, error) {
+	s, err := raw.CommonState2.decode(name)
+	if err != nil {
+		return nil, err
+	}
+
 	choices := make([]Choice, len(raw.Choices))
 	for i, raw := range raw.Choices {
 		n, ok := raw["Next"]
@@ -44,8 +49,8 @@ func (raw RawChoiceState) decode() (*ChoiceState, error) {
 		}
 	}
 
-	return &ChoiceState{
-		CommonState2: raw.CommonState2,
+	return ChoiceState{
+		CommonState2: s.Common().CommonState2,
 		Choices:      choices,
 		Default:      raw.Default,
 	}, nil
@@ -527,7 +532,7 @@ type ChoiceState struct {
 	Default string
 }
 
-func (state ChoiceState) GetNext() string {
+func (state ChoiceState) Next() string {
 	return ""
 }
 

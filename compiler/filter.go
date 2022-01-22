@@ -2,7 +2,6 @@ package compiler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,14 +10,13 @@ import (
 	"github.com/ohler55/ojg"
 	"github.com/ohler55/ojg/jp"
 	"github.com/ohler55/ojg/sen"
-	"github.com/w-haibara/kakemoti/contextobj"
 	"github.com/w-haibara/kakemoti/intrinsic"
 )
 
-func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{}, error) {
+func JoinByPath(coj *CtxObj, v1, v2 interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
-		return JoinByPath(ctx, v1, contextobj.Get(ctx), path)
+		return JoinByPath(coj, v1, coj.GetAll(), path)
 	}
 
 	if err := path.Expr.Set(v1, v2); err != nil {
@@ -28,10 +26,10 @@ func JoinByPath(ctx context.Context, v1, v2 interface{}, path *Path) (interface{
 	return v1, nil
 }
 
-func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, error) {
+func UnjoinByPath(coj *CtxObj, v interface{}, path *Path) (interface{}, error) {
 	if path.IsContextPath {
 		path.IsContextPath = false
-		return UnjoinByPath(ctx, contextobj.Get(ctx), path)
+		return UnjoinByPath(coj, coj.GetAll(), path)
 	}
 
 	nodes := path.Expr.Get(v)
@@ -42,8 +40,8 @@ func UnjoinByPath(ctx context.Context, v interface{}, path *Path) (interface{}, 
 	return nodes[0], nil
 }
 
-func GetString(ctx context.Context, input interface{}, path Path) (string, error) {
-	v, err := UnjoinByPath(ctx, input, &path)
+func GetString(coj *CtxObj, input interface{}, path Path) (string, error) {
+	v, err := UnjoinByPath(coj, input, &path)
 	if err != nil {
 		return "", err
 	}
@@ -56,8 +54,8 @@ func GetString(ctx context.Context, input interface{}, path Path) (string, error
 	return v1, nil
 }
 
-func GetNumeric(ctx context.Context, input interface{}, path Path) (float64, error) {
-	v, err := UnjoinByPath(ctx, input, &path)
+func GetNumeric(coj *CtxObj, input interface{}, path Path) (float64, error) {
+	v, err := UnjoinByPath(coj, input, &path)
 	if err != nil {
 		return 0, err
 	}
@@ -70,8 +68,8 @@ func GetNumeric(ctx context.Context, input interface{}, path Path) (float64, err
 	return v1, nil
 }
 
-func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &path)
+func GetBool(coj *CtxObj, input interface{}, path Path) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &path)
 	if err != nil {
 		return false, err
 	}
@@ -84,8 +82,8 @@ func GetBool(ctx context.Context, input interface{}, path Path) (bool, error) {
 	return v1, nil
 }
 
-func GetTimestamp(ctx context.Context, input interface{}, path Path) (Timestamp, error) {
-	v, err := GetString(ctx, input, path)
+func GetTimestamp(coj *CtxObj, input interface{}, path Path) (Timestamp, error) {
+	v, err := GetString(coj, input, path)
 	if err != nil {
 		return Timestamp{}, err
 	}
@@ -98,43 +96,43 @@ func GetTimestamp(ctx context.Context, input interface{}, path Path) (Timestamp,
 	return v1, nil
 }
 
-func FilterByInputPath(ctx context.Context, state State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType2 {
+func FilterByInputPath(coj *CtxObj, state State, input interface{}) (interface{}, error) {
+	if state.FieldsType() < FieldsType2 {
 		return input, nil
 	}
 
-	v := state.Body.Common().CommonState2
+	v := state.Common().CommonState2
 	if v.InputPath == nil {
 		return input, nil
 	}
 
-	return UnjoinByPath(ctx, input, v.InputPath)
+	return UnjoinByPath(coj, input, v.InputPath)
 }
 
-func FilterByResultPath(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType4 {
+func FilterByResultPath(coj *CtxObj, state State, rawinput, result interface{}) (interface{}, error) {
+	if state.FieldsType() < FieldsType4 {
 		return result, nil
 	}
 
-	v := state.Body.Common().CommonState4
+	v := state.Common().CommonState4
 	if v.ResultPath == nil {
 		return result, nil
 	}
 
-	return JoinByPath(ctx, rawinput, result, &v.ResultPath.Path)
+	return JoinByPath(coj, rawinput, result, &v.ResultPath.Path)
 }
 
-func FilterByOutputPath(ctx context.Context, state State, output interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType2 {
+func FilterByOutputPath(coj *CtxObj, state State, output interface{}) (interface{}, error) {
+	if state.FieldsType() < FieldsType2 {
 		return output, nil
 	}
 
-	v := state.Body.Common().CommonState2
+	v := state.Common().CommonState2
 	if v.OutputPath == nil {
 		return output, nil
 	}
 
-	return UnjoinByPath(ctx, output, v.OutputPath)
+	return UnjoinByPath(coj, output, v.OutputPath)
 }
 
 func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
@@ -145,7 +143,7 @@ func SetObjectByKey(v1, v2 interface{}, key string) (interface{}, error) {
 	return v1, nil
 }
 
-func resolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+func resolvePayload(ctx context.Context, coj *CtxObj, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
 		temp, ok := val.(map[string]interface{})
@@ -154,7 +152,7 @@ func resolvePayload(ctx context.Context, input interface{}, payload map[string]i
 			continue
 		}
 
-		v, err := ResolvePayload(ctx, input, temp)
+		v, err := ResolvePayload(ctx, coj, input, temp)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +161,7 @@ func resolvePayload(ctx context.Context, input interface{}, payload map[string]i
 	return out, nil
 }
 
-func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+func resolvePayloadByPath(coj *CtxObj, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
 		if !strings.HasSuffix(key, ".$") {
@@ -186,7 +184,7 @@ func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[st
 			return nil, err
 		}
 
-		got, err := UnjoinByPath(ctx, input, &p)
+		got, err := UnjoinByPath(coj, input, &p)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +206,7 @@ func resolvePayloadByPath(ctx context.Context, input interface{}, payload map[st
 	return out, nil
 }
 
-func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}) (string, []interface{}, error) {
+func parseIntrinsicFunction(ctx context.Context, coj *CtxObj, fnstr string, input interface{}) (string, []interface{}, error) {
 	var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
 
 	fnAndArgsStr := func() (string, string, error) {
@@ -230,7 +228,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 		if err != nil {
 			return nil, err
 		}
-		v, err := UnjoinByPath(ctx, input, &p)
+		v, err := UnjoinByPath(coj, input, &p)
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +270,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 			return v, nil
 		}
 
-		fn, args, err := parseIntrinsicFunction(ctx, str, input)
+		fn, args, err := parseIntrinsicFunction(ctx, coj, str, input)
 		if err != nil {
 			return nil, err
 		}
@@ -343,7 +341,7 @@ func parseIntrinsicFunction(ctx context.Context, fnstr string, input interface{}
 	return fn, args, nil
 }
 
-func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
+func resolveIntrinsicFunction(ctx context.Context, coj *CtxObj, input interface{}, payload map[string]interface{}) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	for key, val := range payload {
 		if !strings.HasSuffix(key, ".$") {
@@ -356,7 +354,7 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 			return nil, fmt.Errorf("value of payload template is not string: %v", fnstr)
 		}
 
-		fn, args, err := parseIntrinsicFunction(ctx, fnstr, input)
+		fn, args, err := parseIntrinsicFunction(ctx, coj, fnstr, input)
 		if err != nil {
 			return nil, err
 		}
@@ -372,18 +370,22 @@ func resolveIntrinsicFunction(ctx context.Context, input interface{}, payload ma
 	return out, nil
 }
 
-func ResolvePayload(ctx context.Context, input interface{}, payload map[string]interface{}) (interface{}, error) {
-	payload1, err := resolvePayload(ctx, input, payload)
+func ResolvePayload(ctx context.Context, coj *CtxObj, input interface{}, payload interface{}) (interface{}, error) {
+	v, ok := payload.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("invalid type of payload: [%#v]", payload)
+	}
+	payload1, err := resolvePayload(ctx, coj, input, v)
 	if err != nil {
 		return nil, err
 	}
 
-	payload2, err := resolvePayloadByPath(ctx, input, payload1)
+	payload2, err := resolvePayloadByPath(coj, input, payload1)
 	if err != nil {
 		return nil, err
 	}
 
-	payload3, err := resolveIntrinsicFunction(ctx, input, payload2)
+	payload3, err := resolveIntrinsicFunction(ctx, coj, input, payload2)
 	if err != nil {
 		return nil, err
 	}
@@ -391,54 +393,39 @@ func ResolvePayload(ctx context.Context, input interface{}, payload map[string]i
 	return payload3, err
 }
 
-func FilterByParameters(ctx context.Context, state State, input interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType4 {
+func FilterByParameters(ctx context.Context, coj *CtxObj, state State, input interface{}) (interface{}, error) {
+	if state.FieldsType() < FieldsType4 {
 		return input, nil
 	}
 
-	v := state.Body.Common().CommonState4
+	v := state.Common().CommonState4
 	if v.Parameters == nil {
 		return input, nil
 	}
 
-	str := ""
-	if err := json.Unmarshal(*v.Parameters, &str); err == nil {
-		return input, nil
-	}
-
-	parameter := make(map[string]interface{})
-	if err := json.Unmarshal(*v.Parameters, &parameter); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal(*v.Parameters, &selector) failed: %v", err)
-	}
-
-	return ResolvePayload(ctx, input, parameter)
+	return ResolvePayload(ctx, coj, input, v.Parameters)
 }
 
-func FilterByResultSelector(ctx context.Context, state State, result interface{}) (interface{}, error) {
-	if state.Body.FieldsType() < FieldsType5 {
+func FilterByResultSelector(ctx context.Context, coj *CtxObj, state State, result interface{}) (interface{}, error) {
+	if state.FieldsType() < FieldsType5 {
 		return result, nil
 	}
 
-	v := state.Body.Common()
+	v := state.Common()
 	if v.ResultSelector == nil {
 		return result, nil
 	}
 
-	selector := make(map[string]interface{})
-	if err := json.Unmarshal(*v.ResultSelector, &selector); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal(*v.ResultSelector, &selector) failed: %v", err)
-	}
-
-	return ResolvePayload(ctx, result, selector)
+	return ResolvePayload(ctx, coj, result, v.ResultSelector)
 }
 
-func GenerateEffectiveResult(ctx context.Context, state State, rawinput, result interface{}) (interface{}, error) {
-	v1, err := FilterByResultSelector(ctx, state, result)
+func GenerateEffectiveResult(ctx context.Context, coj *CtxObj, state State, rawinput, result interface{}) (interface{}, error) {
+	v1, err := FilterByResultSelector(ctx, coj, state, result)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
 	}
 
-	v2, err := FilterByResultPath(ctx, state, rawinput, v1)
+	v2, err := FilterByResultPath(coj, state, rawinput, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
 	}
@@ -446,13 +433,13 @@ func GenerateEffectiveResult(ctx context.Context, state State, rawinput, result 
 	return v2, nil
 }
 
-func GenerateEffectiveInput(ctx context.Context, state State, input interface{}) (interface{}, error) {
-	v1, err := FilterByInputPath(ctx, state, input)
+func GenerateEffectiveInput(ctx context.Context, coj *CtxObj, state State, input interface{}) (interface{}, error) {
+	v1, err := FilterByInputPath(coj, state, input)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
 	}
 
-	v2, err := FilterByParameters(ctx, state, v1)
+	v2, err := FilterByParameters(ctx, coj, state, v1)
 	if err != nil {
 		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
 	}

@@ -1,21 +1,20 @@
 package compiler
 
 import (
-	"context"
 	"errors"
 )
 
 type Condition interface {
-	Eval(ctx context.Context, input interface{}) (bool, error)
+	Eval(coj *CtxObj, input interface{}) (bool, error)
 }
 
 type AndRule struct {
 	V []Condition
 }
 
-func (r AndRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+func (r AndRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
 	for _, v := range r.V {
-		b, err := v.Eval(ctx, input)
+		b, err := v.Eval(coj, input)
 		if err != nil {
 			return false, err
 		}
@@ -31,10 +30,10 @@ type OrRule struct {
 	V []Condition
 }
 
-func (r OrRule) Eval(ctx context.Context, input interface{}) (bool, error) {
+func (r OrRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
 	res := false
 	for _, v := range r.V {
-		b, err := v.Eval(ctx, input)
+		b, err := v.Eval(coj, input)
 		if err != nil {
 			return false, err
 		}
@@ -48,8 +47,8 @@ type NotRule struct {
 	V Condition
 }
 
-func (r NotRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	b, err := r.V.Eval(ctx, input)
+func (r NotRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	b, err := r.V.Eval(coj, input)
 	if err != nil {
 		return false, err
 	}
@@ -62,8 +61,8 @@ type StringEqualsRule struct {
 	V2 string
 }
 
-func (r StringEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -76,13 +75,13 @@ type StringEqualsPathRule struct {
 	V2 Path
 }
 
-func (r StringEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetString(ctx, input, r.V2)
+	v2, err := GetString(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -95,8 +94,8 @@ type StringLessThanRule struct {
 	V2 string
 }
 
-func (r StringLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringLessThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -109,13 +108,13 @@ type StringLessThanPathRule struct {
 	V2 Path
 }
 
-func (r StringLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringLessThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetString(ctx, input, r.V2)
+	v2, err := GetString(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -128,8 +127,8 @@ type StringLessThanEqualsRule struct {
 	V2 string
 }
 
-func (r StringLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringLessThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -142,13 +141,13 @@ type StringLessThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r StringLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringLessThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetString(ctx, input, r.V2)
+	v2, err := GetString(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -161,8 +160,8 @@ type StringGreaterThanRule struct {
 	V2 string
 }
 
-func (r StringGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringGreaterThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -175,13 +174,13 @@ type StringGreaterThanPathRule struct {
 	V2 Path
 }
 
-func (r StringGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringGreaterThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetString(ctx, input, r.V2)
+	v2, err := GetString(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -194,8 +193,8 @@ type StringGreaterThanEqualsRule struct {
 	V2 string
 }
 
-func (r StringGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringGreaterThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -208,13 +207,13 @@ type StringGreaterThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r StringGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringGreaterThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetString(ctx, input, r.V2)
+	v2, err := GetString(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -229,8 +228,8 @@ type StringMatchesRule struct {
 
 var ErrOpenBackslashFound = errors.New("open backslash found")
 
-func (r StringMatchesRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetString(ctx, input, r.V1)
+func (r StringMatchesRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetString(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -290,8 +289,8 @@ type NumericEqualsRule struct {
 	V2 float64
 }
 
-func (r NumericEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -304,13 +303,13 @@ type NumericEqualsPathRule struct {
 	V2 Path
 }
 
-func (r NumericEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetNumeric(ctx, input, r.V2)
+	v2, err := GetNumeric(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -323,8 +322,8 @@ type NumericLessThanRule struct {
 	V2 float64
 }
 
-func (r NumericLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericLessThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -337,13 +336,13 @@ type NumericLessThanPathRule struct {
 	V2 Path
 }
 
-func (r NumericLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericLessThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetNumeric(ctx, input, r.V2)
+	v2, err := GetNumeric(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -356,8 +355,8 @@ type NumericLessThanEqualsRule struct {
 	V2 float64
 }
 
-func (r NumericLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericLessThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -370,13 +369,13 @@ type NumericLessThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r NumericLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericLessThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetNumeric(ctx, input, r.V2)
+	v2, err := GetNumeric(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -389,8 +388,8 @@ type NumericGreaterThanRule struct {
 	V2 float64
 }
 
-func (r NumericGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericGreaterThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -403,13 +402,13 @@ type NumericGreaterThanPathRule struct {
 	V2 Path
 }
 
-func (r NumericGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericGreaterThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetNumeric(ctx, input, r.V2)
+	v2, err := GetNumeric(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -422,8 +421,8 @@ type NumericGreaterThanEqualsRule struct {
 	V2 float64
 }
 
-func (r NumericGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericGreaterThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -436,13 +435,13 @@ type NumericGreaterThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r NumericGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetNumeric(ctx, input, r.V1)
+func (r NumericGreaterThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetNumeric(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetNumeric(ctx, input, r.V2)
+	v2, err := GetNumeric(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -455,8 +454,8 @@ type BooleanEqualsRule struct {
 	V2 bool
 }
 
-func (r BooleanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetBool(ctx, input, r.V1)
+func (r BooleanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetBool(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -469,13 +468,13 @@ type BooleanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r BooleanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetBool(ctx, input, r.V1)
+func (r BooleanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetBool(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetBool(ctx, input, r.V2)
+	v2, err := GetBool(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -488,8 +487,8 @@ type TimestampEqualsRule struct {
 	V2 Timestamp
 }
 
-func (r TimestampEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -502,13 +501,13 @@ type TimestampEqualsPathRule struct {
 	V2 Path
 }
 
-func (r TimestampEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetTimestamp(ctx, input, r.V2)
+	v2, err := GetTimestamp(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -521,8 +520,8 @@ type TimestampLessThanRule struct {
 	V2 Timestamp
 }
 
-func (r TimestampLessThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampLessThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -535,13 +534,13 @@ type TimestampLessThanPathRule struct {
 	V2 Path
 }
 
-func (r TimestampLessThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampLessThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetTimestamp(ctx, input, r.V2)
+	v2, err := GetTimestamp(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -554,8 +553,8 @@ type TimestampLessThanEqualsRule struct {
 	V2 Timestamp
 }
 
-func (r TimestampLessThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampLessThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -568,13 +567,13 @@ type TimestampLessThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r TimestampLessThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampLessThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetTimestamp(ctx, input, r.V2)
+	v2, err := GetTimestamp(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -587,8 +586,8 @@ type TimestampGreaterThanRule struct {
 	V2 Timestamp
 }
 
-func (r TimestampGreaterThanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampGreaterThanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -601,13 +600,13 @@ type TimestampGreaterThanPathRule struct {
 	V2 Path
 }
 
-func (r TimestampGreaterThanPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampGreaterThanPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetTimestamp(ctx, input, r.V2)
+	v2, err := GetTimestamp(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -620,8 +619,8 @@ type TimestampGreaterThanEqualsRule struct {
 	V2 Timestamp
 }
 
-func (r TimestampGreaterThanEqualsRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampGreaterThanEqualsRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -634,13 +633,13 @@ type TimestampGreaterThanEqualsPathRule struct {
 	V2 Path
 }
 
-func (r TimestampGreaterThanEqualsPathRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v1, err := GetTimestamp(ctx, input, r.V1)
+func (r TimestampGreaterThanEqualsPathRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v1, err := GetTimestamp(coj, input, r.V1)
 	if err != nil {
 		return false, err
 	}
 
-	v2, err := GetTimestamp(ctx, input, r.V2)
+	v2, err := GetTimestamp(coj, input, r.V2)
 	if err != nil {
 		return false, err
 	}
@@ -652,8 +651,8 @@ type IsNullRule struct {
 	V1 Path
 }
 
-func (r IsNullRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsNullRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -665,8 +664,8 @@ type IsPresentRule struct {
 	V1 Path
 }
 
-func (r IsPresentRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	_, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsPresentRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	_, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, nil
 	}
@@ -678,8 +677,8 @@ type IsNumericRule struct {
 	V1 Path
 }
 
-func (r IsNumericRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsNumericRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -696,8 +695,8 @@ type IsStringRule struct {
 	V1 Path
 }
 
-func (r IsStringRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsStringRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -710,8 +709,8 @@ type IsBooleanRule struct {
 	V1 Path
 }
 
-func (r IsBooleanRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsBooleanRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, err
 	}
@@ -724,8 +723,8 @@ type IsTimestampRule struct {
 	V1 Path
 }
 
-func (r IsTimestampRule) Eval(ctx context.Context, input interface{}) (bool, error) {
-	v, err := UnjoinByPath(ctx, input, &r.V1)
+func (r IsTimestampRule) Eval(coj *CtxObj, input interface{}) (bool, error) {
+	v, err := UnjoinByPath(coj, input, &r.V1)
 	if err != nil {
 		return false, err
 	}

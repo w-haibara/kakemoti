@@ -9,14 +9,14 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type outputs struct {
+type parallelOutputs struct {
 	mu sync.Mutex
 	v  []interface{}
 }
 
-func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelState, input interface{}) (interface{}, statesError) {
+func (w Workflow) evalParallel(ctx context.Context, coj *compiler.CtxObj, state compiler.ParallelState, input interface{}) (interface{}, statesError) {
 	var eg errgroup.Group
-	var outputs outputs
+	var outputs parallelOutputs
 	outputs.v = make([]interface{}, len(state.Branches))
 	for i := range state.Branches {
 		i := i
@@ -26,7 +26,7 @@ func (w Workflow) evalParallel(ctx context.Context, state *compiler.ParallelStat
 				return err
 			}
 
-			o, err := w.Exec(ctx, input)
+			o, err := w.Exec(ctx, coj, input)
 			if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
 				return err
 			}

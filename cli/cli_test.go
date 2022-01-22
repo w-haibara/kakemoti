@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/w-haibara/kakemoti/contextobj"
+	"github.com/w-haibara/kakemoti/compiler"
 )
 
 func TestStartExecution(t *testing.T) {
@@ -19,6 +19,7 @@ func TestStartExecution(t *testing.T) {
 		{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"pass(parameters)", "pass_parameters", "_workflow/inputs/input1.json", "_workflow/outputs/output11.json"},
 		{"pass(intrinsic)", "pass_intrinsic", "_workflow/inputs/input4.json", "_workflow/outputs/output12.json"},
+		{"pass(ctxobj)", "pass_ctxobj", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
 		{"wait", "wait", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"succeed", "succeed", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"fail", "fail", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
@@ -31,44 +32,56 @@ func TestStartExecution(t *testing.T) {
 		{"task(filter)", "task_filter", "_workflow/inputs/input3.json", "_workflow/outputs/output9.json"},
 		{"task(catch)", "task_catch", "_workflow/inputs/input1.json", "_workflow/inputs/input1.json"},
 		{"task(retry)", "task_retry", "_workflow/inputs/input1.json", "_workflow/outputs/output8.json"},
-		{"task(ctx)", "task_ctx", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
+		{"task(ctxobj)", "task_ctxobj", "_workflow/inputs/input1.json", "_workflow/outputs/output10.json"},
+		{"map", "map", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
+		{"map(concurrency)", "map_concurrency", "_workflow/inputs/input7.json", "_workflow/outputs/output13.json"},
+		{"map(ctxobj)", "map_ctxobj", "_workflow/inputs/input8.json", "_workflow/outputs/output14.json"},
 	}
 
 	if err := os.Chdir("../"); err != nil {
-		t.Fatal(`os.Chdir("../"):`, err)
+		t.Error(`os.Chdir("../"):`, err)
+		return
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := contextobj.New(context.Background())
-			ctx = contextobj.Set(ctx, "aaa", 111)
-			out, err := StartExecution(ctx, Options{
+			ctx := context.Background()
+			coj := new(compiler.CtxObj)
+			v, err := coj.SetByString("$.aaa", 111)
+			if err != nil {
+				t.Error("coj.Set() failed:", err)
+			}
+			coj = v
+			out, err := StartExecution(ctx, coj, Options{
 				Logfile: "",
 				Input:   tt.inputFile,
 				ASL:     "_workflow/asl/" + tt.asl + ".asl.json",
 				Timeout: 0,
 			})
 			if err != nil {
-				t.Fatal("StartExecution() failed:", err)
+				t.Error("StartExecution() failed:", err)
+				return
 			}
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
-				t.Fatal("os.ReadFile(tt.wantFile) failed:", err)
+				t.Error("os.ReadFile(tt.wantFile) failed:", err)
+				return
 			}
-			if d := jsonEqual(t, []byte(out), want); d != "" {
-				t.Fatalf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
+
+			var v1, v2 interface{}
+			if err := json.Unmarshal(out, &v1); err != nil {
+				t.Error("json.Unmarshal(b1, &v1) failed:", err)
+				return
+			}
+			if err := json.Unmarshal(want, &v2); err != nil {
+				t.Error("json.Unmarshal(b2, &v2) failed:", err)
+				return
+			}
+
+			if d := cmp.Diff(v1, v2); d != "" {
+				t.Errorf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
+				return
 			}
 		})
 	}
-}
-
-func jsonEqual(t *testing.T, b1, b2 []byte) string {
-	var v1, v2 interface{}
-	if err := json.Unmarshal(b1, &v1); err != nil {
-		t.Fatal("json.Unmarshal(b1, &v1) failed:", err)
-	}
-	if err := json.Unmarshal(b2, &v2); err != nil {
-		t.Fatal("json.Unmarshal(b2, &v2) failed:", err)
-	}
-	return cmp.Diff(v1, v2)
 }
