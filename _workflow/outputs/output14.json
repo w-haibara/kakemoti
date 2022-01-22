@@ -1,0 +1,14 @@
+[
+  {
+    "index": 0,
+    "value": { "type": "A" }
+  },
+  {
+    "index": 1,
+    "value": { "type": "B" }
+  },
+  {
+    "index": 2,
+    "value": { "type": "C" }
+  }
+]

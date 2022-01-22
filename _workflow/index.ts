@@ -567,7 +567,14 @@ function map_ctxobj(stack: Stack): sfn.IChainable {
     maxConcurrency: 3,
     itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
   });
-  map.iterator(new sfn.Pass(stack, "Pass State"));
+  map.iterator(
+    new sfn.Pass(stack, "Pass State", {
+      parameters: {
+        "index.$": "$$.Map.Item.Index",
+        "value.$": "$$.Map.Item.Value",
+      },
+    })
+  );
   return map;
 }
 
