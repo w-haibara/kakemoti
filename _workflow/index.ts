@@ -3,19 +3,22 @@ import { ScriptTask } from "./script-task.js";
 const path = require("path");
 const fs = require("fs");
 
-function pass(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State");
+type def = [sfn.IChainable, number];
+
+function pass(stack: Stack): def {
+  return [new sfn.Pass(stack, "Pass State"), 0];
 }
-function pass_chain(stack: Stack): sfn.IChainable {
+function pass_chain(stack: Stack): def {
   const p1 = new sfn.Pass(stack, "P1");
   const p2 = new sfn.Pass(stack, "P2");
   const p3 = new sfn.Pass(stack, "P3");
   const p4 = new sfn.Pass(stack, "P4");
   const p5 = new sfn.Pass(stack, "P5");
-  return p1.next(p2).next(p3).next(p4).next(p5);
+  const v = p1.next(p2).next(p3).next(p4).next(p5);
+  return [v, 0];
 }
-function pass_result(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State(result)", {
+function pass_result(stack: Stack): def {
+  const v = new sfn.Pass(stack, "Pass State(result)", {
     result: sfn.Result.fromObject({
       result: {
         aaa: 111,
@@ -24,9 +27,10 @@ function pass_result(stack: Stack): sfn.IChainable {
     }),
     resultPath: "$.resultpath",
   });
+  return [v, 0];
 }
-function pass_parameters(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State(parameter)", {
+function pass_parameters(stack: Stack): def {
+  const v = new sfn.Pass(stack, "Pass State(parameter)", {
     parameters: {
       parameters: {
         aaa: 111,
@@ -34,9 +38,10 @@ function pass_parameters(stack: Stack): sfn.IChainable {
       },
     },
   });
+  return [v, 0];
 }
-function pass_intrinsic(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State(intrinsic)", {
+function pass_intrinsic(stack: Stack): def {
+  const v = new sfn.Pass(stack, "Pass State(intrinsic)", {
     parameters: {
       parameters: {
         aaa: 111,
@@ -49,33 +54,37 @@ function pass_intrinsic(stack: Stack): sfn.IChainable {
       },
     },
   });
+  return [v, 0];
 }
-function pass_ctxobj(stack: Stack): sfn.IChainable {
-  return new sfn.Pass(stack, "Pass State", {
+function pass_ctxobj(stack: Stack): def {
+  const v = new sfn.Pass(stack, "Pass State", {
     parameters: {
       "ctx_aaa.$": "$$.aaa",
     },
     resultPath: "$.result.ctx",
     outputPath: "$.result",
   });
+  return [v, 0];
 }
-function wait(stack: Stack): sfn.IChainable {
-  return new sfn.Wait(stack, "Wait State", {
+function wait(stack: Stack): def {
+  const v = new sfn.Wait(stack, "Wait State", {
     time: sfn.WaitTime.duration(Duration.seconds(1)),
   });
+  return [v, 0];
 }
-function succeed(stack: Stack): sfn.IChainable {
-  return new sfn.Succeed(stack, "Succeed State");
+function succeed(stack: Stack): def {
+  return [new sfn.Succeed(stack, "Succeed State"), 0];
 }
-function fail(stack: Stack): sfn.IChainable {
-  return new sfn.Fail(stack, "Fail State");
+function fail(stack: Stack): def {
+  return [new sfn.Fail(stack, "Fail State"), 0];
 }
-function choice(stack: Stack): sfn.IChainable {
-  return new sfn.Choice(stack, "Choice State")
-    .when(sfn.Condition.booleanEquals("$.bool", true), succeed(stack))
-    .otherwise(fail(stack));
+function choice(stack: Stack): def {
+  const v = new sfn.Choice(stack, "Choice State")
+    .when(sfn.Condition.booleanEquals("$.bool", true), succeed(stack)[0])
+    .otherwise(fail(stack)[0]);
+  return [v, 0];
 }
-function choice_fallback(stack: Stack): sfn.IChainable {
+function choice_fallback(stack: Stack): def {
   const s1 = new sfn.Pass(stack, "State1", {
     result: sfn.Result.fromObject({
       bool: false,
@@ -87,9 +96,9 @@ function choice_fallback(stack: Stack): sfn.IChainable {
   const choice = new sfn.Choice(stack, "Choice State")
     .when(sfn.Condition.booleanEquals("$.bool", false), s3)
     .otherwise(pass);
-  return s2.next(choice);
+  return [s2.next(choice), 0];
 }
-function choice_bool(stack: Stack): sfn.IChainable {
+function choice_bool(stack: Stack): def {
   const ok = new sfn.Pass(stack, "OK", {
     result: sfn.Result.fromObject([
       {
@@ -119,9 +128,10 @@ function choice_bool(stack: Stack): sfn.IChainable {
   const cond3 = sfn.Condition.not(cond1); // true
   const cond4 = sfn.Condition.and(cond2, cond3); // true
   const cond5 = sfn.Condition.and(cond2, cond3, cond4); // true
-  return new sfn.Choice(stack, "Choice State").when(cond5, ok).otherwise(ng);
+  const v = new sfn.Choice(stack, "Choice State").when(cond5, ok).otherwise(ng);
+  return [v, 0];
 }
-function choice_data_test(stack: Stack): sfn.IChainable {
+function choice_data_test(stack: Stack): def {
   const ok = new sfn.Pass(stack, "OK", {
     result: sfn.Result.fromObject([
       {
@@ -143,7 +153,7 @@ function choice_data_test(stack: Stack): sfn.IChainable {
     resultPath: sfn.JsonPath.DISCARD,
   });
 
-  return new sfn.Choice(stack, "Choice State")
+  const v = new sfn.Choice(stack, "Choice State")
     .when(
       sfn.Condition.and(
         /**
@@ -485,14 +495,16 @@ function choice_data_test(stack: Stack): sfn.IChainable {
       ok
     )
     .otherwise(ng);
+  return [v, 0];
 }
-function task(stack: Stack): sfn.IChainable {
-  return new ScriptTask(stack, "Task State", {
+function task(stack: Stack): def {
+  const v = new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
   });
+  return [v, 0];
 }
-function task_filter(stack: Stack): sfn.IChainable {
-  return new ScriptTask(stack, "Task State", {
+function task_filter(stack: Stack): def {
+  const v = new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
     inputPath: "$.inputpath",
     parameters: sfn.TaskInput.fromObject({
@@ -507,8 +519,9 @@ function task_filter(stack: Stack): sfn.IChainable {
     resultPath: "$.resultpath.outputpath",
     outputPath: "$.resultpath",
   });
+  return [v, 0];
 }
-function task_retry(stack: Stack): sfn.IChainable {
+function task_retry(stack: Stack): def {
   const task = new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script2.sh",
     resultPath: "$.args",
@@ -519,9 +532,9 @@ function task_retry(stack: Stack): sfn.IChainable {
     backoffRate: 1,
     interval: Duration.seconds(0),
   });
-  return chain;
+  return [chain, 0];
 }
-function task_catch(stack: Stack): sfn.IChainable {
+function task_catch(stack: Stack): def {
   const p1 = new sfn.Pass(stack, "Pass State1");
   const task = new ScriptTask(stack, "Task State", {
     scriptPath: "::", // invalid resource path
@@ -529,10 +542,10 @@ function task_catch(stack: Stack): sfn.IChainable {
   task.addCatch(p1, {
     errors: ["States.ALL"],
   });
-  return task;
+  return [task, 0];
 }
-function task_ctxobj(stack: Stack): sfn.IChainable {
-  return new ScriptTask(stack, "Task State", {
+function task_ctxobj(stack: Stack): def {
+  const v = new ScriptTask(stack, "Task State", {
     scriptPath: "_workflow/script/script1.sh",
     resultSelector: {
       ctx: {
@@ -540,13 +553,15 @@ function task_ctxobj(stack: Stack): sfn.IChainable {
       },
     },
   });
+  return [v, 0];
 }
-function parallel(stack: Stack): sfn.IChainable {
-  return new sfn.Parallel(stack, "Parallel State")
-    .branch(pass(stack))
-    .branch(succeed(stack));
+function parallel(stack: Stack): def {
+  const v = new sfn.Parallel(stack, "Parallel State")
+    .branch(pass(stack)[0])
+    .branch(succeed(stack)[0]);
+  return [v, 0];
 }
-function parallel_ctxobj(stack: Stack): sfn.IChainable {
+function parallel_ctxobj(stack: Stack): def {
   const s1 = new sfn.Pass(stack, "S1", {
     parameters: {
       "ctx_aaa.$": "$$.aaa",
@@ -569,28 +584,29 @@ function parallel_ctxobj(stack: Stack): sfn.IChainable {
     outputPath: "$.result",
   });
 
-  return new sfn.Parallel(stack, "Parallel State")
+  const v = new sfn.Parallel(stack, "Parallel State")
     .branch(s1)
     .branch(s2)
     .branch(s3);
+  return [v, 0];
 }
-function map(stack: Stack): sfn.IChainable {
+function map(stack: Stack): def {
   const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 1,
     itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
   });
   map.iterator(new sfn.Pass(stack, "Pass State"));
-  return map;
+  return [map, 0];
 }
-function map_concurrency(stack: Stack): sfn.IChainable {
+function map_concurrency(stack: Stack): def {
   const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 3,
     itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
   });
   map.iterator(new sfn.Pass(stack, "Pass State"));
-  return map;
+  return [map, 0];
 }
-function map_ctxobj(stack: Stack): sfn.IChainable {
+function map_ctxobj(stack: Stack): def {
   const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 3,
     itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
@@ -603,9 +619,9 @@ function map_ctxobj(stack: Stack): sfn.IChainable {
       },
     })
   );
-  return map;
+  return [map, 0];
 }
-function map_ctxobj2(stack: Stack): sfn.IChainable {
+function map_ctxobj2(stack: Stack): def {
   const map = new sfn.Map(stack, "Map State", {
     maxConcurrency: 3,
     itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
@@ -617,10 +633,10 @@ function map_ctxobj2(stack: Stack): sfn.IChainable {
       },
     })
   );
-  return map;
+  return [map, 0];
 }
 
-const workflows: ((stack: Stack) => sfn.IChainable)[] = [
+const workflows: ((stack: Stack) => def)[] = [
   pass,
   pass_chain,
   pass_result,
@@ -653,13 +669,13 @@ function list() {
   });
 }
 
-function render(sm: sfn.IChainable) {
-  return new Stack().resolve(
-    new sfn.StateGraph(sm.startState, "Graph").toGraphJson()
-  );
+function render(sm: def) {
+  const graph = new sfn.StateGraph(sm[0].startState, "Graph");
+  graph.timeout = Duration.seconds(sm[1]);
+  return new Stack().resolve(graph.toGraphJson());
 }
 
-function toString(sm: sfn.IChainable): string {
+function toString(sm: def): string {
   return JSON.stringify(render(sm), null, "  ");
 }
 
