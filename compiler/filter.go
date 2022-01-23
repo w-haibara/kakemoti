@@ -206,6 +206,8 @@ func resolvePayloadByPath(coj *CtxObj, input interface{}, payload map[string]int
 	return out, nil
 }
 
+var ErrIntrinsicFunctionFailed = errors.New("intrinsic function failed")
+
 func parseIntrinsicFunction(ctx context.Context, coj *CtxObj, fnstr string, input interface{}) (string, []interface{}, error) {
 	var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
 
@@ -330,12 +332,12 @@ func parseIntrinsicFunction(ctx context.Context, coj *CtxObj, fnstr string, inpu
 
 	fn, argsstr, err := fnAndArgsStr()
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("%s: %w", err.Error(), ErrIntrinsicFunctionFailed)
 	}
 
 	args, err := parseArgs(argsstr)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("%s: %w", err.Error(), ErrIntrinsicFunctionFailed)
 	}
 
 	return fn, args, nil

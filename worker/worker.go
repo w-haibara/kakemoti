@@ -275,6 +275,9 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 
 		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
 		if err != nil {
+			if errors.Is(err, compiler.ErrIntrinsicFunctionFailed) {
+				return nil, NewStatesError(StatesErrorIntrinsicFailure, err)
+			}
 			return nil, NewStatesError(StatesErrorParameterPathFailure, fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
 		}
 
@@ -295,6 +298,9 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 	effectiveResult, stateerr := func() (interface{}, statesError) {
 		v1, err := compiler.FilterByResultSelector(ctx, coj, state, result)
 		if err != nil {
+			if errors.Is(err, compiler.ErrIntrinsicFunctionFailed) {
+				return nil, NewStatesError(StatesErrorIntrinsicFailure, err)
+			}
 			return nil, NewStatesError("", fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err))
 		}
 
