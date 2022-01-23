@@ -300,7 +300,7 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 
 		v2, err := compiler.FilterByResultPath(coj, state, rawinput, v1)
 		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err))
+			return nil, NewStatesError(StatesErrorResultPathMatchFailure, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err))
 		}
 
 		return v2, NewStatesError("", nil)
