@@ -129,6 +129,7 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 		w.loggerWithStateInfo(state).WithFields(logrus.Fields{
 			"_input":  input,
 			"_output": out,
+			"_err":    err,
 		}).Println()
 		if errors.Is(err, ErrStateMachineTerminated) {
 			return out, nil, err
@@ -331,58 +332,58 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 }
 
 func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, statesError) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	canceled := make(chan bool, 1)
-	go func() {
-		<-ctx.Done()
-		defer wg.Done()
-
-		canceled <- true
-		w.loggerWithStateInfo(state).Println("w.evalState() canceled.")
-	}()
+	wg := new(sync.WaitGroup)
 
 	var (
-		next   string
-		output interface{}
-		err    statesError
+		next     string
+		output   interface{}
+		stateerr statesError
 	)
 
+	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
 		switch v := state.(type) {
 		case compiler.PassState:
-			output, err = w.evalPass(ctx, v, input)
+			output, stateerr = w.evalPass(ctx, v, input)
 		case compiler.TaskState:
-			output, err = w.evalTask(ctx, v, input)
+			output, stateerr = w.evalTask(ctx, v, input)
 		case compiler.ChoiceState:
-			next, output, err = w.evalChoice(ctx, coj, v, input)
+			next, output, stateerr = w.evalChoice(ctx, coj, v, input)
 		case compiler.WaitState:
-			output, err = w.evalWait(ctx, coj, v, input)
+			output, stateerr = w.evalWait(ctx, coj, v, input)
 		case compiler.SucceedState:
-			output, err = w.evalSucceed(ctx, v, input)
+			output, stateerr = w.evalSucceed(ctx, v, input)
 		case compiler.FailState:
-			output, err = w.evalFail(ctx, v, input)
+			output, stateerr = w.evalFail(ctx, v, input)
 		case compiler.ParallelState:
-			output, err = w.evalParallel(ctx, coj, v, input)
+			output, stateerr = w.evalParallel(ctx, coj, v, input)
 		case compiler.MapState:
-			output, err = w.evalMap(ctx, coj, v, input)
+			output, stateerr = w.evalMap(ctx, coj, v, input)
 		default:
 			panic(fmt.Sprintf("unknow state type: %#v", v))
 		}
 	}()
 
-	wg.Wait()
+	succeed := make(chan bool, 1)
+	go func() {
+		wg.Wait()
+		succeed <- true
+	}()
+
+	timeouted := make(chan bool, 1)
+	go func() {
+		<-ctx.Done()
+		timeouted <- true
+	}()
 
 	select {
-	case <-canceled:
+	case <-succeed:
+		return output, next, stateerr
+	case <-timeouted:
 		return nil, "", NewStatesError(StatesErrorTimeout, nil)
-	default:
 	}
-
-	return output, next, err
 }
 
 func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {

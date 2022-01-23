@@ -19,7 +19,7 @@ type Options struct {
 	Logfile string
 	Input   string
 	ASL     string
-	Timeout int64
+	Timeout int
 }
 
 func StartExecution(ctx context.Context, coj *compiler.CtxObj, opt Options) ([]byte, error) {

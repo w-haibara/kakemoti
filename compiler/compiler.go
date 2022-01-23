@@ -36,7 +36,7 @@ func Compile(ctx context.Context, aslBytes *bytes.Buffer) (*Workflow, error) {
 type ASL struct {
 	Comment        string                     `json:"Comment"`
 	StartAt        *string                    `json:"StartAt"`
-	TimeoutSeconds *int64                     `json:"TimeoutSeconds"`
+	TimeoutSeconds *int                       `json:"TimeoutSeconds"`
 	Version        *string                    `json:"Version"`
 	States         map[string]json.RawMessage `json:"States"`
 }
@@ -67,7 +67,7 @@ func (asl *ASL) validate() error {
 	}
 
 	if asl.TimeoutSeconds == nil {
-		asl.TimeoutSeconds = new(int64)
+		asl.TimeoutSeconds = new(int)
 		*asl.TimeoutSeconds = 0
 	}
 
@@ -154,7 +154,7 @@ func (asl *ASL) makeWorkflow(statesMap map[string]State) (*Workflow, error) {
 type Workflow struct {
 	Comment        string
 	StartAt        string
-	TimeoutSeconds int64
+	TimeoutSeconds int
 	Version        string
 	States         []States
 	StatesIndexMap map[string][2]int
@@ -163,9 +163,9 @@ type Workflow struct {
 func NewWorkflow(asl ASL) *Workflow {
 	m := make(map[string][2]int)
 	var (
-		startAt              = ""
-		timeoutSeconds int64 = 0
-		version              = ""
+		startAt            = ""
+		timeoutSeconds int = 60
+		version            = ""
 	)
 	if asl.StartAt != nil {
 		startAt = *asl.StartAt
