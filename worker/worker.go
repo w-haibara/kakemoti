@@ -153,59 +153,6 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 	return output, branch, nil
 }
 
-func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, statesError) {
-	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
-
-	effectiveInput, stateerr := func() (interface{}, statesError) {
-		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
-		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err))
-		}
-
-		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
-		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
-		}
-
-		return v2, NewStatesError("", nil)
-	}()
-	if !stateerr.IsEmpty() {
-		return nil, "", stateerr
-	}
-
-	result, next, stateerr := w.evalState(ctx, coj, state, effectiveInput)
-	if errors.Is(stateerr, ErrStateMachineTerminated) {
-		return result, "", stateerr
-	}
-	if !stateerr.IsEmpty() {
-		return nil, "", stateerr
-	}
-
-	effectiveResult, stateerr := func() (interface{}, statesError) {
-		v1, err := compiler.FilterByResultSelector(ctx, coj, state, result)
-		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err))
-		}
-
-		v2, err := compiler.FilterByResultPath(coj, state, rawinput, v1)
-		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err))
-		}
-
-		return v2, NewStatesError("", nil)
-	}()
-	if !stateerr.IsEmpty() {
-		return nil, "", stateerr
-	}
-
-	effectiveOutput, err := compiler.FilterByOutputPath(coj, state, effectiveResult)
-	if err != nil {
-		return nil, "", NewStatesError("", err)
-	}
-
-	return effectiveOutput, next, NewStatesError("", nil)
-}
-
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, error) {
 	origresult, next, origerr := w.evalStateWithFilter(ctx, coj, state, input)
 	if origerr.IsEmpty() {
@@ -315,6 +262,59 @@ func (w Workflow) catch(ctx context.Context, coj *compiler.CtxObj, state compile
 	}
 
 	return result, "", stateserr
+}
+
+func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, statesError) {
+	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
+
+	effectiveInput, stateerr := func() (interface{}, statesError) {
+		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
+		if err != nil {
+			return nil, NewStatesError("", fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err))
+		}
+
+		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
+		if err != nil {
+			return nil, NewStatesError("", fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
+		}
+
+		return v2, NewStatesError("", nil)
+	}()
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
+	}
+
+	result, next, stateerr := w.evalState(ctx, coj, state, effectiveInput)
+	if errors.Is(stateerr, ErrStateMachineTerminated) {
+		return result, "", stateerr
+	}
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
+	}
+
+	effectiveResult, stateerr := func() (interface{}, statesError) {
+		v1, err := compiler.FilterByResultSelector(ctx, coj, state, result)
+		if err != nil {
+			return nil, NewStatesError("", fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err))
+		}
+
+		v2, err := compiler.FilterByResultPath(coj, state, rawinput, v1)
+		if err != nil {
+			return nil, NewStatesError("", fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err))
+		}
+
+		return v2, NewStatesError("", nil)
+	}()
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
+	}
+
+	effectiveOutput, err := compiler.FilterByOutputPath(coj, state, effectiveResult)
+	if err != nil {
+		return nil, "", NewStatesError("", err)
+	}
+
+	return effectiveOutput, next, NewStatesError("", nil)
 }
 
 func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, statesError) {
