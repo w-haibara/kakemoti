@@ -36,7 +36,7 @@ func getDulation(ctx context.Context, coj *compiler.CtxObj, state compiler.WaitS
 			return 0, err
 		}
 
-		seconds, ok := v.(int64)
+		seconds, ok := v.(int)
 		if !ok {
 			return 0, fmt.Errorf("invalid type of input.Path(path) result")
 		}

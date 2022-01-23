@@ -29,7 +29,7 @@ func NewStartExecutionCmd() *cobra.Command {
 	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.Input, "input", "", "path of a input json file")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
-	cmd.Flags().Int64Var(&o.Timeout, "timeout", 0, "timeout of a statemachine")
+	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	return cmd
 }

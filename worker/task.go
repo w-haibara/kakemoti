@@ -2,6 +2,8 @@ package worker
 
 import (
 	"context"
+	"errors"
+	"os"
 
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/task"
@@ -13,6 +15,9 @@ func (w Workflow) evalTask(ctx context.Context, state compiler.TaskState, input 
 		return nil, NewStatesError(stateserr, err)
 	}
 	if err != nil {
+		if errors.Is(err, os.ErrPermission) {
+			return nil, NewStatesError(StatesErrorPermissions, err)
+		}
 		return nil, NewStatesError(StatesErrorTaskFailed, err)
 	}
 

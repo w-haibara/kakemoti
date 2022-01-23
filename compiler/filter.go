@@ -206,6 +206,8 @@ func resolvePayloadByPath(coj *CtxObj, input interface{}, payload map[string]int
 	return out, nil
 }
 
+var ErrIntrinsicFunctionFailed = errors.New("intrinsic function failed")
+
 func parseIntrinsicFunction(ctx context.Context, coj *CtxObj, fnstr string, input interface{}) (string, []interface{}, error) {
 	var ErrParseFailed = errors.New("parseIntrinsicFunction() failed")
 
@@ -330,12 +332,12 @@ func parseIntrinsicFunction(ctx context.Context, coj *CtxObj, fnstr string, inpu
 
 	fn, argsstr, err := fnAndArgsStr()
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("%s: %w", err.Error(), ErrIntrinsicFunctionFailed)
 	}
 
 	args, err := parseArgs(argsstr)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("%s: %w", err.Error(), ErrIntrinsicFunctionFailed)
 	}
 
 	return fn, args, nil
@@ -417,32 +419,4 @@ func FilterByResultSelector(ctx context.Context, coj *CtxObj, state State, resul
 	}
 
 	return ResolvePayload(ctx, coj, result, v.ResultSelector)
-}
-
-func GenerateEffectiveResult(ctx context.Context, coj *CtxObj, state State, rawinput, result interface{}) (interface{}, error) {
-	v1, err := FilterByResultSelector(ctx, coj, state, result)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
-	}
-
-	v2, err := FilterByResultPath(coj, state, rawinput, v1)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
-	}
-
-	return v2, nil
-}
-
-func GenerateEffectiveInput(ctx context.Context, coj *CtxObj, state State, input interface{}) (interface{}, error) {
-	v1, err := FilterByInputPath(coj, state, input)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
-	}
-
-	v2, err := FilterByParameters(ctx, coj, state, v1)
-	if err != nil {
-		return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
-	}
-
-	return v2, nil
 }

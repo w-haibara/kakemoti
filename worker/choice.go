@@ -17,5 +17,9 @@ func (w Workflow) evalChoice(ctx context.Context, coj *compiler.CtxObj, state co
 		}
 	}
 
+	if state.Default == "" {
+		return "", nil, NewStatesError(StatesErrorBranchFailed, nil)
+	}
+
 	return state.Default, input, NewStatesError("", nil)
 }

@@ -230,29 +230,26 @@ func TestCompile(t *testing.T) {
 			[]States{
 				{
 					TaskState{
-						&RawTaskState{
-							RawResource: "script:...",
-							CommonState5: CommonState5{
-								Catch: []Catch{
-									{
-										ErrorEquals: []string{"States.ALL"},
-										Next:        "Pass State1",
-									},
+						CommonState5: CommonState5{
+							Catch: []Catch{
+								{
+									ErrorEquals: []string{"States.ALL"},
+									Next:        "Pass State1",
 								},
-								CommonState4: CommonState4{
-									CommonState3: CommonState3{
-										End: true,
-										CommonState2: CommonState2{
-											CommonState1: CommonState1{
-												StateName: "Task State",
-												Type:      "Task",
-											},
+							},
+							CommonState4: CommonState4{
+								CommonState3: CommonState3{
+									End: true,
+									CommonState2: CommonState2{
+										CommonState1: CommonState1{
+											StateName: "Task State",
+											Type:      "Task",
 										},
 									},
 								},
 							},
 						},
-						TaskResouce{
+						Resouce: TaskResouce{
 							"script",
 							"...",
 						},

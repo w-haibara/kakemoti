@@ -40,7 +40,7 @@ func (w Workflow) evalParallel(ctx context.Context, coj *compiler.CtxObj, state 
 	}
 
 	if err := eg.Wait(); err != nil {
-		return nil, NewStatesError("", err)
+		return nil, NewStatesError(StatesErrorBranchFailed, err)
 	}
 
 	return outputs.v, NewStatesError("", nil)

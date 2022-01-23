@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -92,6 +93,12 @@ func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
 }
 
 func (w Workflow) Exec(ctx context.Context, coj *compiler.CtxObj, input interface{}) (interface{}, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	if w.TimeoutSeconds > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(w.TimeoutSeconds))
+	}
+	defer cancel()
+
 	output := input
 	branch := w.States[0]
 	for {
@@ -118,10 +125,11 @@ func (w Workflow) Exec(ctx context.Context, coj *compiler.CtxObj, input interfac
 func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch []compiler.State, input interface{}) (interface{}, []compiler.State, error) {
 	output := input
 	for _, state := range branch {
-		out, next, err := w.evalStateWithFilter(ctx, coj, state, output)
+		out, next, err := w.evalStateWithRetryAndCatch(ctx, coj, state, output)
 		w.loggerWithStateInfo(state).WithFields(logrus.Fields{
 			"_input":  input,
 			"_output": out,
+			"_err":    err,
 		}).Println()
 		if errors.Is(err, ErrStateMachineTerminated) {
 			return out, nil, err
@@ -153,42 +161,13 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 	return output, branch, nil
 }
 
-func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, error) {
-	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
-
-	effectiveInput, err := compiler.GenerateEffectiveInput(ctx, coj, state, rawinput)
-	if err != nil {
-		return nil, "", err
-	}
-
-	result, next, err := w.evalStateWithRetryAndCatch(ctx, coj, state, effectiveInput)
-	if errors.Is(err, ErrStateMachineTerminated) {
-		return result, "", err
-	}
-	if err != nil {
-		return nil, "", err
-	}
-
-	effectiveResult, err := compiler.GenerateEffectiveResult(ctx, coj, state, rawinput, result)
-	if err != nil {
-		return nil, "", err
-	}
-
-	effectiveOutput, err := compiler.FilterByOutputPath(coj, state, effectiveResult)
-	if err != nil {
-		return nil, "", err
-	}
-
-	return effectiveOutput, next, nil
-}
-
 func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, error) {
-	origresult, next, origerr := w.evalState(ctx, coj, state, input)
+	origresult, next, origerr := w.evalStateWithFilter(ctx, coj, state, input)
 	if origerr.IsEmpty() {
 		return origresult, next, nil
 	}
 
-	w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name(), origerr)
+	w.loggerWithStateInfo(state).Printf("%s failed: %s", state.Name(), origerr.Error())
 
 	if state.FieldsType() < compiler.FieldsType5 {
 		return origresult, next, origerr
@@ -293,35 +272,156 @@ func (w Workflow) catch(ctx context.Context, coj *compiler.CtxObj, state compile
 	return result, "", stateserr
 }
 
-func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, statesError) {
-	var (
-		next   string
-		output interface{}
-		err    statesError
-	)
+func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, statesError) {
+	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
 
-	switch v := state.(type) {
-	case compiler.PassState:
-		output, err = w.evalPass(ctx, v, input)
-	case compiler.TaskState:
-		output, err = w.evalTask(ctx, v, input)
-	case compiler.ChoiceState:
-		next, output, err = w.evalChoice(ctx, coj, v, input)
-	case compiler.WaitState:
-		output, err = w.evalWait(ctx, coj, v, input)
-	case compiler.SucceedState:
-		output, err = w.evalSucceed(ctx, v, input)
-	case compiler.FailState:
-		output, err = w.evalFail(ctx, v, input)
-	case compiler.ParallelState:
-		output, err = w.evalParallel(ctx, coj, v, input)
-	case compiler.MapState:
-		output, err = w.evalMap(ctx, coj, v, input)
-	default:
-		panic(fmt.Sprintf("unknow state type: %#v", v))
+	effectiveInput, stateerr := func() (interface{}, statesError) {
+		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
+		if err != nil {
+			return nil, NewStatesError("", fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err))
+		}
+
+		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
+		if err != nil {
+			if errors.Is(err, compiler.ErrIntrinsicFunctionFailed) {
+				return nil, NewStatesError(StatesErrorIntrinsicFailure, err)
+			}
+			return nil, NewStatesError(StatesErrorParameterPathFailure, fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
+		}
+
+		return v2, NewStatesError("", nil)
+	}()
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
 	}
 
-	return output, next, err
+	result, next, stateerr := w.evalState(ctx, coj, state, effectiveInput)
+	if errors.Is(stateerr, ErrStateMachineTerminated) {
+		return result, "", stateerr
+	}
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
+	}
+
+	effectiveResult, stateerr := func() (interface{}, statesError) {
+		v1, err := compiler.FilterByResultSelector(ctx, coj, state, result)
+		if err != nil {
+			if errors.Is(err, compiler.ErrIntrinsicFunctionFailed) {
+				return nil, NewStatesError(StatesErrorIntrinsicFailure, err)
+			}
+			return nil, NewStatesError("", fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err))
+		}
+
+		v2, err := compiler.FilterByResultPath(coj, state, rawinput, v1)
+		if err != nil {
+			return nil, NewStatesError(StatesErrorResultPathMatchFailure, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err))
+		}
+
+		return v2, NewStatesError("", nil)
+	}()
+	if !stateerr.IsEmpty() {
+		return nil, "", stateerr
+	}
+
+	effectiveOutput, err := compiler.FilterByOutputPath(coj, state, effectiveResult)
+	if err != nil {
+		return nil, "", NewStatesError("", err)
+	}
+
+	return effectiveOutput, next, NewStatesError("", nil)
+}
+
+func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, statesError) {
+	wg := new(sync.WaitGroup)
+
+	var (
+		next     string
+		output   interface{}
+		stateerr statesError
+	)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		switch v := state.(type) {
+		case compiler.PassState:
+			output, stateerr = w.evalPass(ctx, v, input)
+		case compiler.TaskState:
+			var (
+				o    interface{}
+				serr statesError
+			)
+
+			wg2 := new(sync.WaitGroup)
+			wg2.Add(1)
+			go func() {
+				defer wg2.Done()
+				o, serr = w.evalTask(ctx, v, input)
+			}()
+
+			succeed := make(chan bool, 1)
+			go func() {
+				wg2.Wait()
+				succeed <- true
+			}()
+
+			timeouted := make(chan bool, 1)
+			go func() {
+				s, ok := state.(compiler.TaskState)
+				if !ok {
+					return
+				}
+				d := s.HeartbeatSeconds
+				if d == nil {
+					return
+				}
+				time.Sleep(time.Duration(*d))
+				timeouted <- true
+			}()
+
+			select {
+			case <-succeed:
+				output = o
+				stateerr = serr
+			case <-timeouted:
+				stateerr = NewStatesError(StatesErrorHeartbeatTimeout, nil)
+			}
+		case compiler.ChoiceState:
+			next, output, stateerr = w.evalChoice(ctx, coj, v, input)
+		case compiler.WaitState:
+			output, stateerr = w.evalWait(ctx, coj, v, input)
+		case compiler.SucceedState:
+			output, stateerr = w.evalSucceed(ctx, v, input)
+		case compiler.FailState:
+			output, stateerr = w.evalFail(ctx, v, input)
+		case compiler.ParallelState:
+			output, stateerr = w.evalParallel(ctx, coj, v, input)
+		case compiler.MapState:
+			output, stateerr = w.evalMap(ctx, coj, v, input)
+		default:
+			panic(fmt.Sprintf("unknow state type: %#v", v))
+		}
+	}()
+
+	succeed := make(chan bool, 1)
+	go func() {
+		wg.Wait()
+		succeed <- true
+	}()
+
+	timeouted := make(chan bool, 1)
+	go func() {
+		<-ctx.Done()
+		timeouted <- true
+	}()
+
+	select {
+	case <-succeed:
+		return output, next, stateerr
+	case <-timeouted:
+		return nil, "", NewStatesError(StatesErrorTimeout, nil)
+	}
 }
 
 func (w Workflow) nextBranch(state compiler.State) ([]compiler.State, error) {
