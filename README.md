@@ -88,5 +88,5 @@ kakemoti is a simple tool that executes workflows defined in the [Amazon States 
   - [x] States.ResultPathMatchFailure
   - [x] States.ParameterPathFailure
   - [x] States.BranchFailed
-  - [ ] States.NoChoiceMatched
+  - [x] States.NoChoiceMatched
   - [ ] States.IntrinsicFailure
