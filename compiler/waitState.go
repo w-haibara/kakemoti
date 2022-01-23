@@ -2,7 +2,7 @@ package compiler
 
 type RawWaitState struct {
 	CommonState3
-	Seconds       *int64  `json:"Seconds"`
+	Seconds       *int    `json:"Seconds"`
 	Timestamp     *string `json:"Timestamp"`
 	SecondsPath   *string `json:"SecondsPath"`
 	TimestampPath *string `json:"TimestampPath"`
@@ -16,6 +16,7 @@ func (state RawWaitState) decode(name string) (State, error) {
 
 	res := WaitState{
 		CommonState3: s.Common().CommonState3,
+		Seconds:      state.Seconds,
 	}
 
 	if state.Timestamp != nil {
@@ -47,7 +48,7 @@ func (state RawWaitState) decode(name string) (State, error) {
 
 type WaitState struct {
 	CommonState3
-	Seconds       *int64
+	Seconds       *int
 	Timestamp     *Timestamp
 	SecondsPath   *Path
 	TimestampPath *Path

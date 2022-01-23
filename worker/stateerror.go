@@ -1,6 +1,9 @@
 package worker
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 const (
 	StatesErrorALL                    = "States.ALL"
@@ -32,10 +35,21 @@ func (e statesError) StatesError() string {
 }
 
 func (e statesError) Error() string {
-	return e.err.Error()
+	if e.IsEmpty() {
+		return "nil"
+	}
+	s1 := e.statesErr
+	s2 := "nil"
+	if e.err != nil {
+		s2 = e.err.Error()
+	}
+	return fmt.Sprintf("StateError=[%s], Error=[%s]", s1, s2)
 }
 
-func (e statesError) IsEmpty() bool {
+func (e *statesError) IsEmpty() bool {
+	if e == nil {
+		return true
+	}
 	return e.statesErr == "" && e.err == nil
 }
 

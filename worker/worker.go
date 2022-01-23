@@ -93,6 +93,12 @@ func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
 }
 
 func (w Workflow) Exec(ctx context.Context, coj *compiler.CtxObj, input interface{}) (interface{}, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	if w.TimeoutSeconds > 0 {
+		ctx, cancel = context.WithTimeout(ctx, time.Second*time.Duration(w.TimeoutSeconds))
+	}
+	defer cancel()
+
 	output := input
 	branch := w.States[0]
 	for {
@@ -160,7 +166,7 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, coj *compiler.
 		return origresult, next, nil
 	}
 
-	w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name(), origerr)
+	w.loggerWithStateInfo(state).Printf("%s failed: %s", state.Name(), origerr.Error())
 
 	if state.FieldsType() < compiler.FieldsType5 {
 		return origresult, next, origerr
@@ -328,6 +334,15 @@ func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state com
 	var wg sync.WaitGroup
 	wg.Add(1)
 
+	canceled := make(chan bool, 1)
+	go func() {
+		<-ctx.Done()
+		defer wg.Done()
+
+		canceled <- true
+		w.loggerWithStateInfo(state).Println("w.evalState() canceled.")
+	}()
+
 	var (
 		next   string
 		output interface{}
@@ -360,6 +375,12 @@ func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state com
 	}()
 
 	wg.Wait()
+
+	select {
+	case <-canceled:
+		return nil, "", NewStatesError(StatesErrorTimeout, nil)
+	default:
+	}
 
 	return output, next, err
 }
