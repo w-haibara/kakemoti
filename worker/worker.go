@@ -348,7 +348,45 @@ func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state com
 		case compiler.PassState:
 			output, stateerr = w.evalPass(ctx, v, input)
 		case compiler.TaskState:
-			output, stateerr = w.evalTask(ctx, v, input)
+			var (
+				o    interface{}
+				serr statesError
+			)
+
+			wg2 := new(sync.WaitGroup)
+			wg2.Add(1)
+			go func() {
+				defer wg2.Done()
+				o, serr = w.evalTask(ctx, v, input)
+			}()
+
+			succeed := make(chan bool, 1)
+			go func() {
+				wg2.Wait()
+				succeed <- true
+			}()
+
+			timeouted := make(chan bool, 1)
+			go func() {
+				s, ok := state.(compiler.TaskState)
+				if !ok {
+					return
+				}
+				d := s.HeartbeatSeconds
+				if d == nil {
+					return
+				}
+				time.Sleep(time.Duration(*d))
+				timeouted <- true
+			}()
+
+			select {
+			case <-succeed:
+				output = o
+				stateerr = serr
+			case <-timeouted:
+				stateerr = NewStatesError(StatesErrorHeartbeatTimeout, nil)
+			}
 		case compiler.ChoiceState:
 			next, output, stateerr = w.evalChoice(ctx, coj, v, input)
 		case compiler.WaitState:
