@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -324,32 +325,41 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 }
 
 func (w Workflow) evalState(ctx context.Context, coj *compiler.CtxObj, state compiler.State, input interface{}) (interface{}, string, statesError) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	var (
 		next   string
 		output interface{}
 		err    statesError
 	)
 
-	switch v := state.(type) {
-	case compiler.PassState:
-		output, err = w.evalPass(ctx, v, input)
-	case compiler.TaskState:
-		output, err = w.evalTask(ctx, v, input)
-	case compiler.ChoiceState:
-		next, output, err = w.evalChoice(ctx, coj, v, input)
-	case compiler.WaitState:
-		output, err = w.evalWait(ctx, coj, v, input)
-	case compiler.SucceedState:
-		output, err = w.evalSucceed(ctx, v, input)
-	case compiler.FailState:
-		output, err = w.evalFail(ctx, v, input)
-	case compiler.ParallelState:
-		output, err = w.evalParallel(ctx, coj, v, input)
-	case compiler.MapState:
-		output, err = w.evalMap(ctx, coj, v, input)
-	default:
-		panic(fmt.Sprintf("unknow state type: %#v", v))
-	}
+	go func() {
+		defer wg.Done()
+
+		switch v := state.(type) {
+		case compiler.PassState:
+			output, err = w.evalPass(ctx, v, input)
+		case compiler.TaskState:
+			output, err = w.evalTask(ctx, v, input)
+		case compiler.ChoiceState:
+			next, output, err = w.evalChoice(ctx, coj, v, input)
+		case compiler.WaitState:
+			output, err = w.evalWait(ctx, coj, v, input)
+		case compiler.SucceedState:
+			output, err = w.evalSucceed(ctx, v, input)
+		case compiler.FailState:
+			output, err = w.evalFail(ctx, v, input)
+		case compiler.ParallelState:
+			output, err = w.evalParallel(ctx, coj, v, input)
+		case compiler.MapState:
+			output, err = w.evalMap(ctx, coj, v, input)
+		default:
+			panic(fmt.Sprintf("unknow state type: %#v", v))
+		}
+	}()
+
+	wg.Wait()
 
 	return output, next, err
 }
