@@ -156,7 +156,19 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, error) {
 	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
 
-	effectiveInput, err := compiler.GenerateEffectiveInput(ctx, coj, state, rawinput)
+	effectiveInput, err := func() (interface{}, error) {
+		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
+		if err != nil {
+			return nil, fmt.Errorf("FilterByInputPath(state, rawinput) failed: %v", err)
+		}
+
+		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
+		if err != nil {
+			return nil, fmt.Errorf("FilterByParameters(state, input) failed: %v", err)
+		}
+
+		return v2, nil
+	}()
 	if err != nil {
 		return nil, "", err
 	}
@@ -169,7 +181,19 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 		return nil, "", err
 	}
 
-	effectiveResult, err := compiler.GenerateEffectiveResult(ctx, coj, state, rawinput, result)
+	effectiveResult, err := func() (interface{}, error) {
+		v1, err := compiler.FilterByResultSelector(ctx, coj, state, result)
+		if err != nil {
+			return nil, fmt.Errorf("FilterByResultSelector(state, result) failed: %v", err)
+		}
+
+		v2, err := compiler.FilterByResultPath(coj, state, rawinput, v1)
+		if err != nil {
+			return nil, fmt.Errorf("FilterByResultPath(state, rawinput, result) failed: %v", err)
+		}
+
+		return v2, nil
+	}()
 	if err != nil {
 		return nil, "", err
 	}
