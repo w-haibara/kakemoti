@@ -275,7 +275,7 @@ func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj,
 
 		v2, err := compiler.FilterByParameters(ctx, coj, state, v1)
 		if err != nil {
-			return nil, NewStatesError("", fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
+			return nil, NewStatesError(StatesErrorParameterPathFailure, fmt.Errorf("FilterByParameters(state, input) failed: %v", err))
 		}
 
 		return v2, NewStatesError("", nil)
