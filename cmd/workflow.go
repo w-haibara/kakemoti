@@ -27,7 +27,7 @@ func NewWorkflowCmd() *cobra.Command {
 }
 
 func NewWorkflowExecCmd() *cobra.Command {
-	o := cli.Options{}
+	o := cli.WorkflowExecOpt{}
 
 	cmd := &cobra.Command{
 		Use:   "exec",
@@ -35,7 +35,7 @@ func NewWorkflowExecCmd() *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			result, err := cli.WorkflowExec(ctx, nil, o)
+			result, err := o.WorkflowExec(ctx, nil)
 			if err != nil {
 				log.Fatal(err)
 			}
