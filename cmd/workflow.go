@@ -1,7 +1,8 @@
-package workflow
+package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,12 +11,28 @@ import (
 	"github.com/w-haibara/kakemoti/cli"
 )
 
-func NewStartExecutionCmd() *cobra.Command {
+func NewWorkflowCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "workflow",
+		Short: "",
+		Long:  ``,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("Unknown command")
+			}
+			fmt.Println("workflow called")
+			return nil
+		},
+	}
+}
+
+func NewWorkflowExecCmd() *cobra.Command {
 	o := cli.Options{}
 
 	cmd := &cobra.Command{
-		Use:   "start-execution",
-		Short: "Starts a statemachine execution",
+		Use:   "exec",
+		Short: "exec workflow",
+		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 			result, err := cli.StartExecution(ctx, nil, o)
@@ -32,4 +49,10 @@ func NewStartExecutionCmd() *cobra.Command {
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	return cmd
+}
+
+func init() {
+	cmd := NewWorkflowCmd()
+	cmd.AddCommand(NewWorkflowExecCmd())
+	rootCmd.AddCommand(cmd)
 }
