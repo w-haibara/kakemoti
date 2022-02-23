@@ -22,7 +22,7 @@ type Options struct {
 	Timeout int
 }
 
-func StartExecution(ctx context.Context, coj *compiler.CtxObj, opt Options) ([]byte, error) {
+func WorkflowExec(ctx context.Context, coj *compiler.CtxObj, opt Options) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}

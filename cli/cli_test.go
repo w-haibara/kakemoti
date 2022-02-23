@@ -10,7 +10,7 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-func TestStartExecution(t *testing.T) {
+func TestWorkflowExec(t *testing.T) {
 	tests := []struct {
 		name, asl, inputFile, wantFile string
 	}{
@@ -53,14 +53,14 @@ func TestStartExecution(t *testing.T) {
 				t.Error("coj.Set() failed:", err)
 			}
 			coj = v
-			out, err := StartExecution(ctx, coj, Options{
+			out, err := WorkflowExec(ctx, coj, Options{
 				Logfile: "",
 				Input:   tt.inputFile,
 				ASL:     "_workflow/asl/" + tt.asl + ".asl.json",
 				Timeout: 0,
 			})
 			if err != nil {
-				t.Error("StartExecution() failed:", err)
+				t.Error("WorkflowExec() failed:", err)
 				return
 			}
 			want, err := os.ReadFile(tt.wantFile)
