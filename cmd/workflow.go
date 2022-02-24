@@ -11,8 +11,12 @@ import (
 	"github.com/w-haibara/kakemoti/cli"
 )
 
-func NewWorkflowCmd() *cobra.Command {
-	return &cobra.Command{
+func init() {
+	rootCmd.AddCommand(workflowCmd())
+}
+
+func workflowCmd() *cobra.Command {
+	cmd := &cobra.Command{
 		Use:   "workflow",
 		Short: "",
 		Long:  ``,
@@ -24,9 +28,13 @@ func NewWorkflowCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.AddCommand(workflowExecCmd())
+
+	return cmd
 }
 
-func NewWorkflowExecCmd() *cobra.Command {
+func workflowExecCmd() *cobra.Command {
 	o := cli.WorkflowExecOpt{}
 
 	cmd := &cobra.Command{
@@ -49,10 +57,4 @@ func NewWorkflowExecCmd() *cobra.Command {
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	return cmd
-}
-
-func init() {
-	cmd := NewWorkflowCmd()
-	cmd.AddCommand(NewWorkflowExecCmd())
-	rootCmd.AddCommand(cmd)
 }
