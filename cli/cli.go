@@ -33,10 +33,10 @@ func (opt ExecWorkflowOneceOpt) ExecWorkflowOnece(ctx context.Context, coj *comp
 		opt.ExecWorkflowOpt.Logfile = logfile
 	}
 
-	var workflowMap = make(map[string]compiler.Workflow)
+	var workflow compiler.Workflow
 
 	rfn := func(name string, w compiler.Workflow) error {
-		workflowMap[name] = w
+		workflow = w
 		return nil
 	}
 	if err := opt.registerWorkflow(ctx, nil, rfn); err != nil {
@@ -44,7 +44,7 @@ func (opt ExecWorkflowOneceOpt) ExecWorkflowOnece(ctx context.Context, coj *comp
 	}
 
 	ffn := func(name string) (compiler.Workflow, error) {
-		return workflowMap[name], nil
+		return workflow, nil
 	}
 	result, err := opt.execWorkflow(ctx, coj, ffn)
 	if err != nil {
