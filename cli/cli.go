@@ -15,14 +15,14 @@ import (
 	"github.com/w-haibara/kakemoti/worker"
 )
 
-type WorkflowExecOpt struct {
+type ExecWorkflowOpt struct {
 	Logfile string
 	Input   string
 	ASL     string
 	Timeout int
 }
 
-func (opt WorkflowExecOpt) WorkflowExec(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
+func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}

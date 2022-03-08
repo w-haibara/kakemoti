@@ -53,13 +53,13 @@ func TestWorkflowExec(t *testing.T) {
 				t.Error("coj.Set() failed:", err)
 			}
 			coj = v
-			opt := WorkflowExecOpt{
+			opt := ExecWorkflowOpt{
 				Logfile: "",
 				Input:   tt.inputFile,
 				ASL:     "_workflow/asl/" + tt.asl + ".asl.json",
 				Timeout: 0,
 			}
-			out, err := opt.WorkflowExec(ctx, coj)
+			out, err := opt.ExecWorkflow(ctx, coj)
 			if err != nil {
 				t.Error("WorkflowExec() failed:", err)
 				return
