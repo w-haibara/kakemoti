@@ -52,6 +52,17 @@ type RegisterWorkflowOpt struct {
 }
 
 func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+	return opt.registerWorkflow(ctx, coj,
+		func(name string, w compiler.Workflow) error {
+			tmpWorkflowMap[name] = w
+			return nil
+		},
+	)
+}
+
+type registerWorkflowFunc func(name string, w compiler.Workflow) error
+
+func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compiler.CtxObj, fn registerWorkflowFunc) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -83,7 +94,9 @@ func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compil
 		logger.Fatalln(err)
 	}
 
-	tmpWorkflowMap[opt.WorkflowName] = *workflow
+	if err := fn(opt.WorkflowName, *workflow); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -96,6 +109,16 @@ type ExecWorkflowOpt struct {
 }
 
 func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
+	return opt.execWorkflow(ctx, coj,
+		func(name string) (compiler.Workflow, error) {
+			return tmpWorkflowMap[name], nil
+		},
+	)
+}
+
+type fetchWorkflowFunc func(name string) (compiler.Workflow, error)
+
+func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxObj, fn fetchWorkflowFunc) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -126,7 +149,12 @@ func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxOb
 		coj = &compiler.CtxObj{}
 	}
 
-	return worker.Exec(ctx, coj, tmpWorkflowMap[opt.WorkflowName], input, logger)
+	w, err := fn(opt.WorkflowName)
+	if err != nil {
+		return nil, err
+	}
+
+	return worker.Exec(ctx, coj, w, input, logger)
 }
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {
