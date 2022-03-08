@@ -51,7 +51,7 @@ func workflowExecCmd() *cobra.Command {
 				log.Fatal(err)
 			}
 
-			result, err := o.ExecWorkflowOnece(ctx, nil, logfile, id.String())
+			result, err := o.ExecWorkflowOnce(ctx, nil, logfile, id.String())
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -10,7 +10,7 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-func TestWorkflowExec(t *testing.T) {
+func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 	tests := []struct {
 		name, asl, inputFile, wantFile string
 	}{
@@ -62,7 +62,7 @@ func TestWorkflowExec(t *testing.T) {
 					Timeout: 0,
 				},
 			}
-			out, err := opt.ExecWorkflowOnece(ctx, coj, "", tt.name)
+			out, err := opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
 			if err != nil {
 				t.Error("WorkflowExec() failed:", err)
 				return
