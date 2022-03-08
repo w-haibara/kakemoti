@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/w-haibara/kakemoti/cli"
 )
@@ -35,7 +36,8 @@ func workflowCmd() *cobra.Command {
 }
 
 func workflowExecCmd() *cobra.Command {
-	o := cli.ExecWorkflowOpt{}
+	o := cli.ExecWorkflowOneceOpt{}
+	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "exec",
@@ -43,15 +45,22 @@ func workflowExecCmd() *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			result, err := o.ExecWorkflow(ctx, nil)
+
+			id, err := uuid.NewRandom()
 			if err != nil {
 				log.Fatal(err)
 			}
+
+			result, err := o.ExecWorkflowOnece(ctx, nil, logfile, id.String())
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			fmt.Fprintln(os.Stdout, string(result))
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
+	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.Input, "input", "", "path of a input json file")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")

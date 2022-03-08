@@ -15,14 +15,43 @@ import (
 	"github.com/w-haibara/kakemoti/worker"
 )
 
-type ExecWorkflowOpt struct {
-	Logfile string
-	Input   string
-	ASL     string
-	Timeout int
+var tmpWorkflowMap = make(map[string]compiler.Workflow)
+
+type ExecWorkflowOneceOpt struct {
+	*RegisterWorkflowOpt
+	*ExecWorkflowOpt
 }
 
-func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
+func (opt ExecWorkflowOneceOpt) ExecWorkflowOnece(ctx context.Context, coj *compiler.CtxObj, logfile string, workflowName string) ([]byte, error) {
+	opt.RegisterWorkflowOpt.WorkflowName = workflowName
+	opt.ExecWorkflowOpt.WorkflowName = workflowName
+
+	if opt.RegisterWorkflowOpt.Logfile == "" {
+		opt.RegisterWorkflowOpt.Logfile = logfile
+	}
+	if opt.ExecWorkflowOpt.Logfile == "" {
+		opt.ExecWorkflowOpt.Logfile = logfile
+	}
+
+	if err := opt.RegisterWorkflow(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	result, err := opt.ExecWorkflow(ctx, coj)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+type RegisterWorkflowOpt struct {
+	Logfile      string
+	ASL          string
+	WorkflowName string
+}
+
+func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -34,10 +63,6 @@ func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxOb
 			panic(err.Error())
 		}
 	}()
-
-	if strings.TrimSpace(opt.Input) == "" {
-		logger.Fatalln("input option value is empty")
-	}
 
 	if strings.TrimSpace(opt.ASL) == "" {
 		logger.Fatalln("ASL option value is empty")
@@ -58,6 +83,35 @@ func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxOb
 		logger.Fatalln(err)
 	}
 
+	tmpWorkflowMap[opt.WorkflowName] = *workflow
+
+	return nil
+}
+
+type ExecWorkflowOpt struct {
+	Logfile      string
+	WorkflowName string
+	Input        string
+	Timeout      int
+}
+
+func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	if strings.TrimSpace(opt.Input) == "" {
+		logger.Fatalln("input option value is empty")
+	}
+
 	f2, input, err := readFile(opt.Input)
 	if err != nil {
 		logger.Fatalln(err)
@@ -72,7 +126,7 @@ func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxOb
 		coj = &compiler.CtxObj{}
 	}
 
-	return worker.Exec(ctx, coj, *workflow, input, logger)
+	return worker.Exec(ctx, coj, tmpWorkflowMap[opt.WorkflowName], input, logger)
 }
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {
