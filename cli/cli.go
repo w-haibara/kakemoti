@@ -2,78 +2,14 @@ package cli
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/log"
-	"github.com/w-haibara/kakemoti/worker"
 )
-
-type Options struct {
-	Logfile string
-	Input   string
-	ASL     string
-	Timeout int
-}
-
-func StartExecution(ctx context.Context, coj *compiler.CtxObj, opt Options) ([]byte, error) {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
-	if strings.TrimSpace(opt.Input) == "" {
-		logger.Fatalln("input option value is empty")
-	}
-
-	if strings.TrimSpace(opt.ASL) == "" {
-		logger.Fatalln("ASL option value is empty")
-	}
-
-	f1, asl, err := readFile(opt.ASL)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	defer func() {
-		if err := f1.Close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
-	workflow, err := compiler.Compile(ctx, asl)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-
-	f2, input, err := readFile(opt.Input)
-	if err != nil {
-		logger.Fatalln(err)
-	}
-	defer func() {
-		if err := f2.Close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
-	if coj == nil {
-		coj = &compiler.CtxObj{}
-	}
-
-	return worker.Exec(ctx, coj, *workflow, input, logger)
-}
 
 func setLogOutput(l *log.Logger, path string) (close func() error) {
 	id, err := uuid.NewRandom()

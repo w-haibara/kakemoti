@@ -23,7 +23,7 @@ test: asl-gen-all
 input = ""
 .PHONY: run
 run: kakemoti
-	./kakemoti start-execution \
+	./kakemoti workflow exec \
 		--asl _workflow/asl/${asl}.asl.json \
 		--input ${input}
 
