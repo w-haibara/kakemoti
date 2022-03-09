@@ -2,13 +2,19 @@ package cli
 
 import (
 	"context"
+	"encoding/gob"
 	"strings"
 
+	"github.com/ohler55/ojg/jp"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/db"
 	"github.com/w-haibara/kakemoti/log"
 	"github.com/w-haibara/kakemoti/worker"
 )
+
+func init() {
+	registeerTypesForGob()
+}
 
 type ExecWorkflowOneceOpt struct {
 	*RegisterWorkflowOpt
@@ -148,4 +154,65 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 	}
 
 	return worker.Exec(ctx, coj, w, input, logger)
+}
+
+func registeerTypesForGob() {
+	gob.Register(map[string]interface{}{})
+	gob.Register([]interface{}{})
+
+	gob.Register(compiler.ChoiceState{})
+	gob.Register(compiler.CommonState5{})
+	gob.Register(compiler.FailState{})
+	gob.Register(compiler.MapState{})
+	gob.Register(compiler.ParallelState{})
+	gob.Register(compiler.PassState{})
+	gob.Register(compiler.SucceedState{})
+	gob.Register(compiler.TaskState{})
+	gob.Register(compiler.WaitState{})
+
+	gob.Register(compiler.AndRule{})
+	gob.Register(compiler.OrRule{})
+	gob.Register(compiler.NotRule{})
+	gob.Register(compiler.StringEqualsRule{})
+	gob.Register(compiler.StringEqualsPathRule{})
+	gob.Register(compiler.StringLessThanRule{})
+	gob.Register(compiler.StringLessThanPathRule{})
+	gob.Register(compiler.StringLessThanEqualsRule{})
+	gob.Register(compiler.StringLessThanEqualsPathRule{})
+	gob.Register(compiler.StringGreaterThanRule{})
+	gob.Register(compiler.StringGreaterThanPathRule{})
+	gob.Register(compiler.StringGreaterThanEqualsRule{})
+	gob.Register(compiler.StringGreaterThanEqualsPathRule{})
+	gob.Register(compiler.StringMatchesRule{})
+	gob.Register(compiler.NumericEqualsRule{})
+	gob.Register(compiler.NumericEqualsPathRule{})
+	gob.Register(compiler.NumericLessThanRule{})
+	gob.Register(compiler.NumericLessThanPathRule{})
+	gob.Register(compiler.NumericLessThanEqualsRule{})
+	gob.Register(compiler.NumericLessThanEqualsPathRule{})
+	gob.Register(compiler.NumericGreaterThanRule{})
+	gob.Register(compiler.NumericGreaterThanPathRule{})
+	gob.Register(compiler.NumericGreaterThanEqualsRule{})
+	gob.Register(compiler.NumericGreaterThanEqualsPathRule{})
+	gob.Register(compiler.BooleanEqualsRule{})
+	gob.Register(compiler.BooleanEqualsPathRule{})
+	gob.Register(compiler.TimestampEqualsRule{})
+	gob.Register(compiler.TimestampEqualsPathRule{})
+	gob.Register(compiler.TimestampLessThanRule{})
+	gob.Register(compiler.TimestampLessThanPathRule{})
+	gob.Register(compiler.TimestampLessThanEqualsRule{})
+	gob.Register(compiler.TimestampLessThanEqualsPathRule{})
+	gob.Register(compiler.TimestampGreaterThanRule{})
+	gob.Register(compiler.TimestampGreaterThanPathRule{})
+	gob.Register(compiler.TimestampGreaterThanEqualsRule{})
+	gob.Register(compiler.TimestampGreaterThanEqualsPathRule{})
+	gob.Register(compiler.IsNullRule{})
+	gob.Register(compiler.IsPresentRule{})
+	gob.Register(compiler.IsNumericRule{})
+	gob.Register(compiler.IsStringRule{})
+	gob.Register(compiler.IsBooleanRule{})
+	gob.Register(compiler.IsTimestampRule{})
+
+	gob.Register(jp.Root(0))
+	gob.Register(jp.Child(""))
 }

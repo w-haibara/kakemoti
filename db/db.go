@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/glebarez/sqlite"
-	"github.com/k0kubun/pp"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/config"
 	"gorm.io/gorm"
@@ -17,7 +16,6 @@ var dbFileName = ""
 
 func init() {
 	dbFileName = filepath.Join(config.ConfigDir(), "workflow.db")
-	_, _ = pp.Println(dbFileName)
 
 	if _, err := os.Stat(dbFileName); err == nil {
 		return
@@ -68,10 +66,9 @@ func FetchWorkflow(name string) (compiler.Workflow, error) {
 
 	var w Workflows
 	db.First(&w, "name = ?", name)
-	_, _ = pp.Println("db read", w)
 
-	var wb bytes.Buffer
-	dec := gob.NewDecoder(&wb)
+	wb := bytes.NewBuffer(w.Workflow)
+	dec := gob.NewDecoder(wb)
 
 	var workflow compiler.Workflow
 	if err := dec.Decode(&workflow); err != nil {

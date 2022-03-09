@@ -10,7 +10,7 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
+func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 	type tcase struct {
 		name, asl, inputFile, wantFile string
 	}
@@ -46,9 +46,9 @@ func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 	}
 
 	type fn func(ctx context.Context, coj *compiler.CtxObj, tt tcase) ([]byte, error)
-	runTests := func(f fn, tests []tcase) {
+	runTests := func(prefix string, f fn, tests []tcase) {
 		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
+			t.Run(prefix+"_"+tt.name, func(t *testing.T) {
 				ctx := context.Background()
 				coj := new(compiler.CtxObj)
 				v, err := coj.SetByString("$.aaa", 111)
@@ -99,15 +99,17 @@ func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 		}
 		return opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
 	}
-	runTests(f1, tests)
+	runTests("ExecWorkflowOnce", f1, tests)
 
 	f2 := func(ctx context.Context, coj *compiler.CtxObj, tt tcase) ([]byte, error) {
 		o1 := RegisterWorkflowOpt{
-			ASL: "_workflow/asl/" + tt.asl + ".asl.json",
+			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
+			WorkflowName: tt.name,
 		}
 		o2 := &ExecWorkflowOpt{
-			Input:   tt.inputFile,
-			Timeout: 0,
+			WorkflowName: tt.name,
+			Input:        tt.inputFile,
+			Timeout:      0,
 		}
 
 		if err := o1.RegisterWorkflow(ctx, nil); err != nil {
@@ -121,5 +123,5 @@ func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 
 		return result, nil
 	}
-	runTests(f2, tests)
+	runTests("RegisterWorkflow_ExecWorkflow", f2, tests)
 }
