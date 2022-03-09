@@ -37,7 +37,6 @@ func workflowCmd() *cobra.Command {
 }
 
 func workflowRegisterCmd() *cobra.Command {
-	var name *string
 	o := cli.RegisterWorkflowOpt{}
 	logfile := ""
 
@@ -55,7 +54,7 @@ func workflowRegisterCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
-	cmd.Flags().StringVar(name, "name", "", "workflow name")
+	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 
 	return cmd
 }

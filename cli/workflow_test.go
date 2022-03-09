@@ -90,10 +90,10 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 
 	f1 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
 		opt := ExecWorkflowOneceOpt{
-			RegisterWorkflowOpt: &RegisterWorkflowOpt{
+			RegisterWorkflowOpt: RegisterWorkflowOpt{
 				ASL: "_workflow/asl/" + tt.asl + ".asl.json",
 			},
-			ExecWorkflowOpt: &ExecWorkflowOpt{
+			ExecWorkflowOpt: ExecWorkflowOpt{
 				Input:   tt.inputFile,
 				Timeout: 0,
 			},

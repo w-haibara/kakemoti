@@ -17,8 +17,8 @@ func init() {
 }
 
 type ExecWorkflowOneceOpt struct {
-	*RegisterWorkflowOpt
-	*ExecWorkflowOpt
+	RegisterWorkflowOpt
+	ExecWorkflowOpt
 }
 
 func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compiler.CtxObj, logfile string, workflowName string) ([]byte, error) {
