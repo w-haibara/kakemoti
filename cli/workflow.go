@@ -5,11 +5,10 @@ import (
 	"strings"
 
 	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/db"
 	"github.com/w-haibara/kakemoti/log"
 	"github.com/w-haibara/kakemoti/worker"
 )
-
-var tmpWorkflowMap = make(map[string]compiler.Workflow)
 
 type ExecWorkflowOneceOpt struct {
 	*RegisterWorkflowOpt
@@ -55,12 +54,7 @@ type RegisterWorkflowOpt struct {
 }
 
 func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
-	return opt.registerWorkflow(ctx, coj,
-		func(name string, w compiler.Workflow) error {
-			tmpWorkflowMap[name] = w
-			return nil
-		},
-	)
+	return opt.registerWorkflow(ctx, coj, db.RegisterWorkflow)
 }
 
 type registerWorkflowFunc func(name string, w compiler.Workflow) error
@@ -112,11 +106,7 @@ type ExecWorkflowOpt struct {
 }
 
 func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
-	return opt.execWorkflow(ctx, coj,
-		func(name string) (compiler.Workflow, error) {
-			return tmpWorkflowMap[name], nil
-		},
-	)
+	return opt.execWorkflow(ctx, coj, db.FetchWorkflow)
 }
 
 type fetchWorkflowFunc func(name string) (compiler.Workflow, error)
