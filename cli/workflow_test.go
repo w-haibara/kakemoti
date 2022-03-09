@@ -10,11 +10,11 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
-type WorkflowExecTestCase struct {
+type workflowExecTestCase struct {
 	name, asl, inputFile, wantFile string
 }
 
-var WorkflowExecTests = []WorkflowExecTestCase{
+var workflowExecTests = []workflowExecTestCase{
 	{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 	{"pass(result)", "pass_result", "_workflow/inputs/input1.json", "_workflow/outputs/output5.json"},
 	{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
@@ -46,8 +46,8 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 		return
 	}
 
-	type fn func(ctx context.Context, coj *compiler.CtxObj, tt WorkflowExecTestCase) ([]byte, error)
-	runTests := func(prefix string, f fn, tests []WorkflowExecTestCase) {
+	type fn func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error)
+	runTests := func(prefix string, f fn, tests []workflowExecTestCase) {
 		for _, tt := range tests {
 			t.Run(prefix+"_"+tt.name, func(t *testing.T) {
 				ctx := context.Background()
@@ -88,7 +88,7 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 		}
 	}
 
-	f1 := func(ctx context.Context, coj *compiler.CtxObj, tt WorkflowExecTestCase) ([]byte, error) {
+	f1 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
 		opt := ExecWorkflowOneceOpt{
 			RegisterWorkflowOpt: &RegisterWorkflowOpt{
 				ASL: "_workflow/asl/" + tt.asl + ".asl.json",
@@ -100,9 +100,9 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 		}
 		return opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
 	}
-	runTests("ExecWorkflowOnce", f1, WorkflowExecTests)
+	runTests("ExecWorkflowOnce", f1, workflowExecTests)
 
-	f2 := func(ctx context.Context, coj *compiler.CtxObj, tt WorkflowExecTestCase) ([]byte, error) {
+	f2 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
 		o1 := RegisterWorkflowOpt{
 			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
 			WorkflowName: tt.name,
@@ -124,5 +124,5 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 
 		return result, nil
 	}
-	runTests("RegisterWorkflow_ExecWorkflow", f2, WorkflowExecTests)
+	runTests("RegisterWorkflow_ExecWorkflow", f2, workflowExecTests)
 }
