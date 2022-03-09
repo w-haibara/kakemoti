@@ -36,6 +36,7 @@ func workflowCmd() *cobra.Command {
 }
 
 func workflowExecCmd() *cobra.Command {
+	var name *string
 	o := cli.ExecWorkflowOneceOpt{}
 	logfile := ""
 
@@ -51,7 +52,16 @@ func workflowExecCmd() *cobra.Command {
 				log.Fatal(err)
 			}
 
-			result, err := o.ExecWorkflowOnce(ctx, nil, logfile, id.String())
+			var (
+				result []byte
+			)
+			if name != nil {
+				opt := o.ExecWorkflowOpt
+				opt.WorkflowName = *name
+				result, err = opt.ExecWorkflow(ctx, nil)
+			} else {
+				result, err = o.ExecWorkflowOnce(ctx, nil, logfile, id.String())
+			}
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -62,8 +72,10 @@ func workflowExecCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.Input, "input", "", "path of a input json file")
-	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
+
+	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
+	cmd.Flags().StringVar(name, "name", "", "workflow name")
 
 	return cmd
 }
