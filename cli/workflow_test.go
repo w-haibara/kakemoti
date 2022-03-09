@@ -11,9 +11,10 @@ import (
 )
 
 func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
-	tests := []struct {
+	type tcase struct {
 		name, asl, inputFile, wantFile string
-	}{
+	}
+	tests := []tcase{
 		{"pass", "pass", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
 		{"pass(result)", "pass_result", "_workflow/inputs/input1.json", "_workflow/outputs/output5.json"},
 		{"pass(chain)", "pass_chain", "_workflow/inputs/input1.json", "_workflow/outputs/output1.json"},
@@ -44,6 +45,19 @@ func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 		return
 	}
 
+	exec := func(ctx context.Context, coj *compiler.CtxObj, tt tcase) ([]byte, error) {
+		opt := ExecWorkflowOneceOpt{
+			RegisterWorkflowOpt: &RegisterWorkflowOpt{
+				ASL: "_workflow/asl/" + tt.asl + ".asl.json",
+			},
+			ExecWorkflowOpt: &ExecWorkflowOpt{
+				Input:   tt.inputFile,
+				Timeout: 0,
+			},
+		}
+		return opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
@@ -53,20 +67,13 @@ func TestExecWorkflowOneceOpt_ExecWorkflowOnce(t *testing.T) {
 				t.Error("coj.Set() failed:", err)
 			}
 			coj = v
-			opt := ExecWorkflowOneceOpt{
-				RegisterWorkflowOpt: &RegisterWorkflowOpt{
-					ASL: "_workflow/asl/" + tt.asl + ".asl.json",
-				},
-				ExecWorkflowOpt: &ExecWorkflowOpt{
-					Input:   tt.inputFile,
-					Timeout: 0,
-				},
-			}
-			out, err := opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
+
+			out, err := exec(ctx, coj, tt)
 			if err != nil {
 				t.Error("WorkflowExec() failed:", err)
 				return
 			}
+
 			want, err := os.ReadFile(tt.wantFile)
 			if err != nil {
 				t.Error("os.ReadFile(tt.wantFile) failed:", err)
