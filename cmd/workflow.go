@@ -30,19 +30,43 @@ func workflowCmd() *cobra.Command {
 		},
 	}
 
+	cmd.AddCommand(workflowRegisterCmd())
 	cmd.AddCommand(workflowExecCmd())
 
 	return cmd
 }
 
-func workflowExecCmd() *cobra.Command {
+func workflowRegisterCmd() *cobra.Command {
 	var name *string
+	o := cli.RegisterWorkflowOpt{}
+	logfile := ""
+
+	cmd := &cobra.Command{
+		Use:   "register",
+		Short: "register a workflow",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			if err := o.RegisterWorkflow(ctx, nil); err != nil {
+				log.Fatal(err)
+			}
+		},
+	}
+
+	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
+	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
+	cmd.Flags().StringVar(name, "name", "", "workflow name")
+
+	return cmd
+}
+
+func workflowExecCmd() *cobra.Command {
 	o := cli.ExecWorkflowOneceOpt{}
 	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "exec",
-		Short: "exec workflow",
+		Short: "exec a workflow",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
@@ -55,10 +79,8 @@ func workflowExecCmd() *cobra.Command {
 			var (
 				result []byte
 			)
-			if name != nil {
-				opt := o.ExecWorkflowOpt
-				opt.WorkflowName = *name
-				result, err = opt.ExecWorkflow(ctx, nil)
+			if o.ExecWorkflowOpt.WorkflowName != "" {
+				result, err = o.ExecWorkflow(ctx, nil)
 			} else {
 				result, err = o.ExecWorkflowOnce(ctx, nil, logfile, id.String())
 			}
@@ -75,7 +97,7 @@ func workflowExecCmd() *cobra.Command {
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
-	cmd.Flags().StringVar(name, "name", "", "workflow name")
+	cmd.Flags().StringVar(&o.ExecWorkflowOpt.WorkflowName, "name", "", "workflow name")
 
 	return cmd
 }
