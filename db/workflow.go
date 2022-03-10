@@ -68,3 +68,22 @@ func FetchWorkflow(name string) (compiler.Workflow, error) {
 
 	return workflow, nil
 }
+
+func ListWorkflow(name string) ([]string, error) {
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	var w []Workflows
+	if err := db.Find(&w).Error; err != nil {
+		return nil, err
+	}
+
+	res := []string{}
+	for _, v := range w {
+		res = append(res, v.Name)
+	}
+
+	return res, nil
+}

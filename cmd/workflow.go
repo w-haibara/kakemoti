@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ func workflowCmd() *cobra.Command {
 	cmd.AddCommand(workflowRegisterCmd())
 	cmd.AddCommand(workflowRmCmd())
 	cmd.AddCommand(workflowExecCmd())
+	cmd.AddCommand(workflowListCmd())
 
 	return cmd
 }
@@ -118,6 +120,35 @@ func workflowExecCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
 	cmd.Flags().StringVar(&o.ExecWorkflowOpt.WorkflowName, "name", "", "workflow name")
+
+	return cmd
+}
+
+func workflowListCmd() *cobra.Command {
+	o := cli.ListWorkflowOpt{}
+	logfile := ""
+
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "list workflows",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			names, err := o.ListWorkflow()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			str := ""
+			for i, v := range names {
+				str += fmt.Sprintln(strconv.Itoa(i)+".", v)
+			}
+
+			fmt.Fprintln(os.Stdout, str)
+		},
+	}
+
+	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
+	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 
 	return cmd
 }

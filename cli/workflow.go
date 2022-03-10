@@ -177,6 +177,27 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 	return worker.Exec(ctx, coj, w, input, logger)
 }
 
+type ListWorkflowOpt struct {
+	Logfile      string
+	WorkflowName string
+}
+
+func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			logger.Fatalln(err)
+		}
+	}()
+
+	return db.ListWorkflow(opt.WorkflowName)
+}
+
 func registeerTypesForGob() {
 	gob.Register(map[string]interface{}{})
 	gob.Register([]interface{}{})
