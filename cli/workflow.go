@@ -104,6 +104,27 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 	return nil
 }
 
+type RmWorkflowOpt struct {
+	Logfile      string
+	WorkflowName string
+}
+
+func (opt RmWorkflowOpt) RmWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	return db.RmWorkflow(opt.WorkflowName)
+}
+
 type ExecWorkflowOpt struct {
 	Logfile      string
 	WorkflowName string

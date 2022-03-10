@@ -31,6 +31,7 @@ func workflowCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(workflowRegisterCmd())
+	cmd.AddCommand(workflowRmCmd())
 	cmd.AddCommand(workflowExecCmd())
 
 	return cmd
@@ -38,7 +39,6 @@ func workflowCmd() *cobra.Command {
 
 func workflowRegisterCmd() *cobra.Command {
 	o := cli.RegisterWorkflowOpt{}
-	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "register",
@@ -52,8 +52,29 @@ func workflowRegisterCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
+	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
+	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
+
+	return cmd
+}
+
+func workflowRmCmd() *cobra.Command {
+	o := cli.RmWorkflowOpt{}
+
+	cmd := &cobra.Command{
+		Use:   "rm",
+		Short: "remove a workflow",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			ctx := context.Background()
+			if err := o.RmWorkflow(ctx, nil); err != nil {
+				log.Fatal(err)
+			}
+		},
+	}
+
+	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 
 	return cmd
