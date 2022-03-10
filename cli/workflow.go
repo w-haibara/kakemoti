@@ -109,7 +109,7 @@ type RmWorkflowOpt struct {
 	WorkflowName string
 }
 
-func (opt RmWorkflowOpt) RmWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+func (opt RmWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -122,7 +122,7 @@ func (opt RmWorkflowOpt) RmWorkflow(ctx context.Context, coj *compiler.CtxObj) e
 		}
 	}()
 
-	return db.RmWorkflow(opt.WorkflowName)
+	return db.RemoveWorkflow(opt.WorkflowName)
 }
 
 type ExecWorkflowOpt struct {

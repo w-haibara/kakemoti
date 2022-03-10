@@ -68,7 +68,7 @@ func workflowRmCmd() *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
-			if err := o.RmWorkflow(ctx, nil); err != nil {
+			if err := o.RemoveWorkflow(ctx, nil); err != nil {
 				log.Fatal(err)
 			}
 		},

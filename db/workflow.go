@@ -36,7 +36,7 @@ func RegisterWorkflow(name string, w compiler.Workflow) error {
 	return nil
 }
 
-func RmWorkflow(name string) error {
+func RemoveWorkflow(name string) error {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return err
