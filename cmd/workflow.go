@@ -62,7 +62,7 @@ func workflowRegisterCmd() *cobra.Command {
 }
 
 func workflowRmCmd() *cobra.Command {
-	o := cli.RmWorkflowOpt{}
+	o := cli.RemoveWorkflowOpt{}
 
 	cmd := &cobra.Command{
 		Use:   "rm",
