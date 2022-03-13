@@ -108,6 +108,7 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 type RemoveWorkflowOpt struct {
 	Logfile      string
 	WorkflowName string
+	Force        bool
 }
 
 func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
@@ -123,7 +124,7 @@ func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.C
 		}
 	}()
 
-	if !confirm("WARNING! This will remove the workflow: " + opt.WorkflowName) {
+	if !opt.Force && !confirm("WARNING! This will remove the workflow: "+opt.WorkflowName) {
 		return nil
 	}
 
@@ -143,7 +144,7 @@ func (opt RemoveWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.Ctx
 		}
 	}()
 
-	if !confirm("WARNING! This will remove all workflows") {
+	if !opt.Force && !confirm("WARNING! This will remove all workflows") {
 		return nil
 	}
 

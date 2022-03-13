@@ -154,6 +154,7 @@ func workflowRmCmd() *cobra.Command {
 	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 	cmd.Flags().BoolVar(&all, "all", false, "remove all workflows")
+	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
 	return cmd
 }
@@ -178,6 +179,7 @@ func workflowDropCmd() *cobra.Command {
 	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 	cmd.Flags().BoolVar(&all, "all", false, "remove all workflows")
+	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
 	return cmd
 }
