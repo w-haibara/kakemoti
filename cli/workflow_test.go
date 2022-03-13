@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
@@ -100,12 +101,53 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 		}
 		return opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
 	}
-	runTests("ExecWorkflowOnce", f1, workflowExecTests)
+	runTests("ExecOnce", f1, workflowExecTests)
 
 	f2 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
+		name := tt.name + func() string {
+			id, err := uuid.NewRandom()
+			if err != nil {
+				panic(err.Error())
+			}
+			return id.String()
+		}()
+
+		o1 := RegisterWorkflowOpt{
+			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
+			WorkflowName: name,
+		}
+		o2 := &ExecWorkflowOpt{
+			WorkflowName: name,
+			Input:        tt.inputFile,
+			Timeout:      0,
+		}
+		o3 := &RemoveWorkflowOpt{
+			WorkflowName: name,
+			Force:        true,
+		}
+
+		if err := o1.RegisterWorkflow(ctx, coj); err != nil {
+			return nil, err
+		}
+
+		result, err := o2.ExecWorkflow(ctx, coj)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := o3.RemoveWorkflow(ctx, coj); err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	}
+	runTests("Register_Exec_Remove", f2, workflowExecTests)
+
+	f3 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
 		o1 := RegisterWorkflowOpt{
 			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
 			WorkflowName: tt.name,
+			Force:        true,
 		}
 		o2 := &ExecWorkflowOpt{
 			WorkflowName: tt.name,
@@ -113,7 +155,7 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 			Timeout:      0,
 		}
 
-		if err := o1.RegisterWorkflow(ctx, nil); err != nil {
+		if err := o1.RegisterWorkflow(ctx, coj); err != nil {
 			return nil, err
 		}
 
@@ -124,5 +166,5 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 
 		return result, nil
 	}
-	runTests("RegisterWorkflow_ExecWorkflow", f2, workflowExecTests)
+	runTests("RegisterForce_Exec", f3, workflowExecTests)
 }

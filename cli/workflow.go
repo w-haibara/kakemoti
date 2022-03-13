@@ -34,7 +34,7 @@ func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compi
 
 	var workflow compiler.Workflow
 
-	rfn := func(name string, w compiler.Workflow) error {
+	rfn := func(name string, w compiler.Workflow, force bool) error {
 		workflow = w
 		return nil
 	}
@@ -57,13 +57,14 @@ type RegisterWorkflowOpt struct {
 	Logfile      string
 	ASL          string
 	WorkflowName string
+	Force        bool
 }
 
 func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
 	return opt.registerWorkflow(ctx, coj, db.RegisterWorkflow)
 }
 
-type registerWorkflowFunc func(name string, w compiler.Workflow) error
+type registerWorkflowFunc func(name string, w compiler.Workflow, force bool) error
 
 func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compiler.CtxObj, fn registerWorkflowFunc) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
@@ -97,11 +98,57 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 		logger.Fatalln(err)
 	}
 
-	if err := fn(opt.WorkflowName, *workflow); err != nil {
+	if err := fn(opt.WorkflowName, *workflow, opt.Force); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+type RemoveWorkflowOpt struct {
+	Logfile      string
+	WorkflowName string
+	Force        bool
+}
+
+func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	if !opt.Force && !confirm("WARNING! This will remove the workflow: "+opt.WorkflowName) {
+		return nil
+	}
+
+	return db.RemoveWorkflow(opt.WorkflowName)
+}
+
+func (opt RemoveWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	if !opt.Force && !confirm("WARNING! This will remove all workflows") {
+		return nil
+	}
+
+	return db.DropWorkflow()
 }
 
 type ExecWorkflowOpt struct {
@@ -154,6 +201,27 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 	}
 
 	return worker.Exec(ctx, coj, w, input, logger)
+}
+
+type ListWorkflowOpt struct {
+	Logfile      string
+	WorkflowName string
+}
+
+func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			logger.Fatalln(err)
+		}
+	}()
+
+	return db.ListWorkflow(opt.WorkflowName)
 }
 
 func registeerTypesForGob() {
