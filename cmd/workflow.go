@@ -110,6 +110,12 @@ func workflowExecCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
 
+			if len(args) < 1 {
+				log.Fatal(MsgMustSpecifyWorkflowName)
+			}
+
+			o.ExecWorkflowOpt.WorkflowName = args[0]
+
 			id, err := uuid.NewRandom()
 			if err != nil {
 				log.Fatal(err)
@@ -136,7 +142,6 @@ func workflowExecCmd() *cobra.Command {
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
-	cmd.Flags().StringVar(&o.ExecWorkflowOpt.WorkflowName, "name", "", "workflow name")
 
 	return cmd
 }
