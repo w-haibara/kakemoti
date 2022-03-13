@@ -40,6 +40,8 @@ func workflowCmd() *cobra.Command {
 	return cmd
 }
 
+var MsgMustSpecifyWorkflowName = "You must specify a workflow name."
+
 func workflowRegisterCmd() *cobra.Command {
 	o := cli.RegisterWorkflowOpt{}
 
@@ -49,7 +51,7 @@ func workflowRegisterCmd() *cobra.Command {
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
-				log.Fatal("You must specify a workflow name.")
+				log.Fatal(MsgMustSpecifyWorkflowName)
 			}
 
 			o.WorkflowName = args[0]
