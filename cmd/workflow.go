@@ -138,8 +138,8 @@ func workflowRmCmd() *cobra.Command {
 	all := true
 
 	cmd := &cobra.Command{
-		Use:   "drop",
-		Short: "drop the workflows table",
+		Use:   "rm",
+		Short: "remove a workflow",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
@@ -162,8 +162,8 @@ func workflowDropCmd() *cobra.Command {
 	all := true
 
 	cmd := &cobra.Command{
-		Use:   "rm",
-		Short: "remove a workflow",
+		Use:   "drop",
+		Short: "drop the workflows table",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx := context.Background()
