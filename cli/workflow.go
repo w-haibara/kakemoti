@@ -125,6 +125,22 @@ func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.C
 	return db.RemoveWorkflow(opt.WorkflowName)
 }
 
+func (opt RemoveWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			panic(err.Error())
+		}
+	}()
+
+	return db.DropWorkflow()
+}
+
 type ExecWorkflowOpt struct {
 	Logfile      string
 	WorkflowName string

@@ -49,6 +49,19 @@ func RemoveWorkflow(name string) error {
 	return nil
 }
 
+func DropWorkflow() error {
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
+	if err := db.Migrator().DropTable(&Workflows{}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FetchWorkflow(name string) (compiler.Workflow, error) {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
