@@ -25,7 +25,7 @@ var ErrWorkflowNameAlreadyExists = func(name string) error {
 	return fmt.Errorf("the workflow name already exists: %s", name)
 }
 
-func RegisterWorkflow(name string, w compiler.Workflow) error {
+func RegisterWorkflow(name string, w compiler.Workflow, force bool) error {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func RegisterWorkflow(name string, w compiler.Workflow) error {
 	if err != nil {
 		return err
 	}
-	if exists {
+	if !force && exists {
 		return ErrWorkflowNameAlreadyExists(name)
 	}
 
@@ -46,10 +46,17 @@ func RegisterWorkflow(name string, w compiler.Workflow) error {
 		return err
 	}
 
-	db.Create(&Workflows{
-		Name:     name,
-		Workflow: wb.Bytes(),
-	})
+	if !force && exists {
+		db.Create(&Workflows{
+			Name:     name,
+			Workflow: wb.Bytes(),
+		})
+	} else {
+		db.Save(&Workflows{
+			Name:     name,
+			Workflow: wb.Bytes(),
+		})
+	}
 
 	return nil
 }
