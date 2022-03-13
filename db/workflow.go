@@ -46,13 +46,13 @@ func RegisterWorkflow(name string, w compiler.Workflow, force bool) error {
 		return err
 	}
 
-	if !force && exists {
-		db.Create(&Workflows{
+	if force && exists {
+		db.Save(&Workflows{
 			Name:     name,
 			Workflow: wb.Bytes(),
 		})
 	} else {
-		db.Save(&Workflows{
+		db.Create(&Workflows{
 			Name:     name,
 			Workflow: wb.Bytes(),
 		})
