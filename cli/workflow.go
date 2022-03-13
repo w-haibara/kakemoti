@@ -122,6 +122,10 @@ func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.C
 		}
 	}()
 
+	if !confirm("WARNING! This will remove the workflow: " + opt.WorkflowName) {
+		return nil
+	}
+
 	return db.RemoveWorkflow(opt.WorkflowName)
 }
 
@@ -137,6 +141,10 @@ func (opt RemoveWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.Ctx
 			panic(err.Error())
 		}
 	}()
+
+	if !confirm("WARNING! This will remove all workflows") {
+		return nil
+	}
 
 	return db.DropWorkflow()
 }
