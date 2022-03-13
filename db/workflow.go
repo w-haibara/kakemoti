@@ -31,17 +31,7 @@ func RegisterWorkflow(name string, w compiler.Workflow) error {
 		return err
 	}
 
-	exists, err := func() (bool, error) {
-		var w Workflows
-		res := db.Find(&w, "name = ?", name)
-		if err := res.Error; err != nil {
-			return false, err
-		}
-		if res.RowsAffected == 0 {
-			return false, nil
-		}
-		return true, nil
-	}()
+	exists, err := isExistsWorkflowName(db, name)
 	if err != nil {
 		return err
 	}
@@ -62,6 +52,18 @@ func RegisterWorkflow(name string, w compiler.Workflow) error {
 	})
 
 	return nil
+}
+
+func isExistsWorkflowName(db *gorm.DB, name string) (bool, error) {
+	var w Workflows
+	res := db.Find(&w, "name = ?", name)
+	if err := res.Error; err != nil {
+		return false, err
+	}
+	if res.RowsAffected == 0 {
+		return false, nil
+	}
+	return true, nil
 }
 
 func RemoveWorkflow(name string) error {
