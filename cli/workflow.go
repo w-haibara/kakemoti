@@ -131,7 +131,12 @@ func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.C
 	return db.RemoveWorkflow(opt.WorkflowName)
 }
 
-func (opt RemoveWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
+type DropWorkflowOpt struct {
+	Logfile string
+	Force   bool
+}
+
+func (opt DropWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
