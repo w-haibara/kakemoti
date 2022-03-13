@@ -1,7 +1,6 @@
 package db
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/glebarez/sqlite"
@@ -13,10 +12,6 @@ var dbFileName = ""
 
 func init() {
 	dbFileName = filepath.Join(config.ConfigDir(), "workflow.db")
-
-	if _, err := os.Stat(dbFileName); err == nil {
-		return
-	}
 
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
