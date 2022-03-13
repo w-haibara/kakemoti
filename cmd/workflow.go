@@ -58,7 +58,7 @@ func workflowRegisterCmd() *cobra.Command {
 	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
 	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
-	cmd.Flags().BoolVar(&o.Force, "force", false, "if the name isn't exists, will update it")
+	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
 	return cmd
 }
