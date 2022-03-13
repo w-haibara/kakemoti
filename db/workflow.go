@@ -15,6 +15,12 @@ type Workflows struct {
 	Workflow []byte
 }
 
+func MustMigrateWorkflows(db *gorm.DB) {
+	if err := db.AutoMigrate(&Workflows{}); err != nil {
+		panic(err.Error())
+	}
+}
+
 func RegisterWorkflow(name string, w compiler.Workflow) error {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {

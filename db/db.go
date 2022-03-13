@@ -18,7 +18,5 @@ func init() {
 		panic(err.Error())
 	}
 
-	if err := db.AutoMigrate(&Workflows{}); err != nil {
-		panic(err.Error())
-	}
+	MustMigrateWorkflows(db)
 }
