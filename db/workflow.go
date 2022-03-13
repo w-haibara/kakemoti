@@ -10,8 +10,7 @@ import (
 )
 
 type Workflows struct {
-	gorm.Model
-	Name     string
+	Name     string `gorm:"primaryKey"`
 	Workflow []byte
 }
 
