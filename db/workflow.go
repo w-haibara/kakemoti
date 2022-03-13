@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 
 	"github.com/glebarez/sqlite"
 	"github.com/w-haibara/kakemoti/compiler"
@@ -20,10 +21,32 @@ func MustMigrateWorkflows(db *gorm.DB) {
 	}
 }
 
+var ErrWorkflowNameAlreadyExists = func(name string) error {
+	return fmt.Errorf("the workflow name already exists: %s", name)
+}
+
 func RegisterWorkflow(name string, w compiler.Workflow) error {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return err
+	}
+
+	exists, err := func() (bool, error) {
+		var w Workflows
+		res := db.Find(&w, "name = ?", name)
+		if err := res.Error; err != nil {
+			return false, err
+		}
+		if res.RowsAffected == 0 {
+			return false, nil
+		}
+		return true, nil
+	}()
+	if err != nil {
+		return err
+	}
+	if exists {
+		return ErrWorkflowNameAlreadyExists(name)
 	}
 
 	var wb bytes.Buffer
