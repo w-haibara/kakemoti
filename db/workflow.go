@@ -119,7 +119,7 @@ func FetchWorkflow(name string) (compiler.Workflow, error) {
 	return workflow, nil
 }
 
-func ListWorkflow(name string) ([]string, error) {
+func ListWorkflow() ([]string, error) {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return nil, err

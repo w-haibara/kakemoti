@@ -204,8 +204,7 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 }
 
 type ListWorkflowOpt struct {
-	Logfile      string
-	WorkflowName string
+	Logfile string
 }
 
 func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
@@ -221,7 +220,7 @@ func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
 		}
 	}()
 
-	return db.ListWorkflow(opt.WorkflowName)
+	return db.ListWorkflow()
 }
 
 func registeerTypesForGob() {

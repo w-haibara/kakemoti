@@ -95,7 +95,6 @@ func workflowListCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
-	cmd.Flags().StringVar(&o.WorkflowName, "name", "", "workflow name")
 
 	return cmd
 }
