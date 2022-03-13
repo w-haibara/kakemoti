@@ -44,10 +44,16 @@ func workflowRegisterCmd() *cobra.Command {
 	o := cli.RegisterWorkflowOpt{}
 
 	cmd := &cobra.Command{
-		Use:   "register",
+		Use:   "register [WORKFLOW NAME]",
 		Short: "register a workflow",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) < 1 {
+				log.Fatal("You must specify a workflow name.")
+			}
+
+			o.WorkflowName = args[0]
+
 			ctx := context.Background()
 			if err := o.RegisterWorkflow(ctx, nil); err != nil {
 				log.Fatal(err)
