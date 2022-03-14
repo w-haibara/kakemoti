@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"encoding/gob"
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/ohler55/ojg/jp"
@@ -212,7 +214,7 @@ type ListWorkflowOpt struct {
 	Logfile string
 }
 
-func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
+func (opt ListWorkflowOpt) ListWorkflow(w io.Writer) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -225,7 +227,18 @@ func (opt ListWorkflowOpt) ListWorkflow() ([]string, error) {
 		}
 	}()
 
-	return db.ListWorkflow()
+	workflows, err := db.ListWorkflow()
+	if err != nil {
+		return err
+	}
+
+	res := ""
+	for i, v := range workflows {
+		res += fmt.Sprintln(i, v.Name, v.CreatedAt)
+	}
+	fmt.Fprintln(w, res)
+
+	return nil
 }
 
 func registeerTypesForGob() {

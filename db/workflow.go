@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/w-haibara/kakemoti/compiler"
@@ -11,8 +12,10 @@ import (
 )
 
 type Workflows struct {
-	Name     string `gorm:"primaryKey"`
-	Workflow []byte
+	Name      string `gorm:"primaryKey"`
+	ASL       string
+	Workflow  []byte
+	CreatedAt time.Time
 }
 
 func MustMigrateWorkflows(db *gorm.DB) {
@@ -48,13 +51,15 @@ func RegisterWorkflow(name string, w compiler.Workflow, force bool) error {
 
 	if force && exists {
 		db.Save(&Workflows{
-			Name:     name,
-			Workflow: wb.Bytes(),
+			Name:      name,
+			Workflow:  wb.Bytes(),
+			CreatedAt: time.Now(),
 		})
 	} else {
 		db.Create(&Workflows{
-			Name:     name,
-			Workflow: wb.Bytes(),
+			Name:      name,
+			Workflow:  wb.Bytes(),
+			CreatedAt: time.Now(),
 		})
 	}
 
@@ -119,7 +124,7 @@ func FetchWorkflow(name string) (compiler.Workflow, error) {
 	return workflow, nil
 }
 
-func ListWorkflow() ([]string, error) {
+func ListWorkflow() ([]Workflows, error) {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return nil, err
@@ -130,10 +135,5 @@ func ListWorkflow() ([]string, error) {
 		return nil, err
 	}
 
-	res := []string{}
-	for _, v := range w {
-		res = append(res, v.Name)
-	}
-
-	return res, nil
+	return w, nil
 }

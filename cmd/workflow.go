@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -79,17 +78,9 @@ func workflowListCmd() *cobra.Command {
 		Short: "list workflows",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			names, err := o.ListWorkflow()
-			if err != nil {
+			if err := o.ListWorkflow(os.Stdout); err != nil {
 				log.Fatal(err)
 			}
-
-			str := ""
-			for i, v := range names {
-				str += fmt.Sprintln(strconv.Itoa(i)+".", v)
-			}
-
-			fmt.Fprintln(os.Stdout, str)
 		},
 	}
 
