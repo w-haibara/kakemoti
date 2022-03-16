@@ -86,6 +86,7 @@ func workflowListCmd() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().BoolVar(&o.JSON, "json", false, "output as json")
 	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 
 	return cmd

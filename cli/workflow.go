@@ -3,6 +3,8 @@ package cli
 import (
 	"context"
 	"encoding/gob"
+	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -213,6 +215,7 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 
 type ListWorkflowOpt struct {
 	Writer  io.Writer
+	JSON    bool
 	Logfile string
 }
 
@@ -229,9 +232,33 @@ func (opt ListWorkflowOpt) ListWorkflow() error {
 		}
 	}()
 
-	workflows, err := db.ListWorkflow()
+	workflows, err := func() ([]db.Workflows, error) {
+		w, err := db.ListWorkflow()
+		if err != nil {
+			return nil, err
+		}
+
+		res := make([]db.Workflows, len(w))
+		for i, v := range w {
+			v.Workflow = nil
+			res[i] = v
+		}
+
+		return nil, nil
+	}()
 	if err != nil {
 		return err
+	}
+
+	if opt.JSON {
+		b, err := json.MarshalIndent(workflows, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(b))
+
+		return nil
 	}
 
 	table := tablewriter.NewWriter(opt.Writer)
