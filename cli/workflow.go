@@ -3,11 +3,12 @@ package cli
 import (
 	"context"
 	"encoding/gob"
-	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/ohler55/ojg/jp"
+	"github.com/olekukonko/tablewriter"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/db"
 	"github.com/w-haibara/kakemoti/log"
@@ -211,10 +212,11 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 }
 
 type ListWorkflowOpt struct {
+	Writer  io.Writer
 	Logfile string
 }
 
-func (opt ListWorkflowOpt) ListWorkflow(w io.Writer) error {
+func (opt ListWorkflowOpt) ListWorkflow() error {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -232,11 +234,15 @@ func (opt ListWorkflowOpt) ListWorkflow(w io.Writer) error {
 		return err
 	}
 
-	res := ""
-	for i, v := range workflows {
-		res += fmt.Sprintln(i, v.Name, v.CreatedAt)
+	table := tablewriter.NewWriter(opt.Writer)
+	table.SetHeader([]string{"Name", "CreatedAt"})
+	for _, v := range workflows {
+		table.Append([]string{
+			v.Name,
+			v.CreatedAt.Format(time.RFC3339),
+		})
 	}
-	fmt.Fprintln(w, res)
+	table.Render()
 
 	return nil
 }

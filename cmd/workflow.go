@@ -78,7 +78,9 @@ func workflowListCmd() *cobra.Command {
 		Short: "list workflows",
 		Long:  ``,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.ListWorkflow(os.Stdout); err != nil {
+			o.Writer = os.Stdout
+
+			if err := o.ListWorkflow(); err != nil {
 				log.Fatal(err)
 			}
 		},
