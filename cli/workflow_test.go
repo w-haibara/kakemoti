@@ -118,25 +118,24 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
 			WorkflowName: name,
 		}
+		if err := o1.RegisterWorkflow(ctx, coj); err != nil {
+			return nil, err
+		}
+
 		o2 := ExecWorkflowOpt{
 			WorkflowName: name,
 			Input:        tt.inputFile,
 			Timeout:      0,
 		}
-		o3 := RemoveWorkflowOpt{
-			WorkflowName: name,
-			Force:        true,
-		}
-
-		if err := o1.RegisterWorkflow(ctx, coj); err != nil {
-			return nil, err
-		}
-
 		result, err := o2.ExecWorkflow(ctx, coj)
 		if err != nil {
 			return nil, err
 		}
 
+		o3 := RemoveWorkflowOpt{
+			WorkflowName: name,
+			Force:        true,
+		}
 		if err := o3.RemoveWorkflow(ctx, coj); err != nil {
 			return nil, err
 		}
