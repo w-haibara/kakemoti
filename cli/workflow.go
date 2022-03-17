@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/gob"
 	"encoding/json"
@@ -39,7 +40,7 @@ func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compi
 
 	var workflow compiler.Workflow
 
-	rfn := func(name string, w compiler.Workflow, force bool) error {
+	rfn := func(name string, w compiler.Workflow, asl []byte, force bool) error {
 		workflow = w
 		return nil
 	}
@@ -69,7 +70,7 @@ func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compil
 	return opt.registerWorkflow(ctx, coj, db.RegisterWorkflow)
 }
 
-type registerWorkflowFunc func(name string, w compiler.Workflow, force bool) error
+type registerWorkflowFunc func(name string, w compiler.Workflow, asl []byte, force bool) error
 
 func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compiler.CtxObj, fn registerWorkflowFunc) error {
 	if strings.TrimSpace(opt.Logfile) == "" {
@@ -98,12 +99,15 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 		}
 	}()
 
+	aslb := asl.Bytes()
+	asl = bytes.NewBuffer(aslb)
+
 	workflow, err := compiler.Compile(ctx, asl)
 	if err != nil {
 		logger.Fatalln(err)
 	}
 
-	if err := fn(opt.WorkflowName, *workflow, opt.Force); err != nil {
+	if err := fn(opt.WorkflowName, *workflow, aslb, opt.Force); err != nil {
 		return err
 	}
 
@@ -232,26 +236,13 @@ func (opt ListWorkflowOpt) ListWorkflow() error {
 		}
 	}()
 
-	workflows, err := func() ([]db.Workflows, error) {
-		w, err := db.ListWorkflow()
-		if err != nil {
-			return nil, err
-		}
-
-		res := make([]db.Workflows, len(w))
-		for i, v := range w {
-			v.Workflow = nil
-			res[i] = v
-		}
-
-		return nil, nil
-	}()
+	w, err := db.ListWorkflow()
 	if err != nil {
 		return err
 	}
 
 	if opt.JSON {
-		b, err := json.MarshalIndent(workflows, "", "  ")
+		b, err := json.MarshalIndent(w, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -263,7 +254,7 @@ func (opt ListWorkflowOpt) ListWorkflow() error {
 
 	table := tablewriter.NewWriter(opt.Writer)
 	table.SetHeader([]string{"Name", "CreatedAt"})
-	for _, v := range workflows {
+	for _, v := range w {
 		table.Append([]string{
 			v.Name,
 			v.CreatedAt.Format(time.RFC3339),

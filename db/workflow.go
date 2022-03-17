@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/gob"
 	"fmt"
 	"time"
@@ -28,7 +29,7 @@ var ErrWorkflowNameAlreadyExists = func(name string) error {
 	return fmt.Errorf("the workflow name already exists: %s", name)
 }
 
-func RegisterWorkflow(name string, w compiler.Workflow, force bool) error {
+func RegisterWorkflow(name string, w compiler.Workflow, asl []byte, force bool) error {
 	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
 	if err != nil {
 		return err
@@ -49,18 +50,17 @@ func RegisterWorkflow(name string, w compiler.Workflow, force bool) error {
 		return err
 	}
 
+	wf := &Workflows{
+		Name:      name,
+		ASL:       base64.StdEncoding.EncodeToString(asl),
+		Workflow:  wb.Bytes(),
+		CreatedAt: time.Now(),
+	}
+
 	if force && exists {
-		db.Save(&Workflows{
-			Name:      name,
-			Workflow:  wb.Bytes(),
-			CreatedAt: time.Now(),
-		})
+		db.Save(wf)
 	} else {
-		db.Create(&Workflows{
-			Name:      name,
-			Workflow:  wb.Bytes(),
-			CreatedAt: time.Now(),
-		})
+		db.Create(wf)
 	}
 
 	return nil
