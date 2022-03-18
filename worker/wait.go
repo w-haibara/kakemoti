@@ -17,7 +17,7 @@ func (w Workflow) evalWait(ctx context.Context, coj *compiler.CtxObj, state comp
 		return nil, NewStatesError("", err)
 	}
 
-	log.WithFields(w.infoFields()).Printf("Wait %s from %s", d, time.Now())
+	log.WithFields(workflowFields(w)).Printf("Wait %s from %s", d, time.Now())
 	time.Sleep(d)
 
 	return input, NewStatesError("", nil)

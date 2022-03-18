@@ -68,31 +68,6 @@ func NewWorkflow(w *compiler.Workflow) (*Workflow, error) {
 	return &Workflow{w, id.String()}, nil
 }
 
-func (w Workflow) infoFields() log.Fields {
-	return log.Fields{
-		"id":      w.ID,
-		"startat": w.StartAt,
-		"timeout": w.TimeoutSeconds,
-		"line":    Line(),
-	}
-}
-
-func errorFields(err error) log.Fields {
-	return log.Fields{
-		"Error": err,
-		"Line":  LineN(4),
-	}
-}
-
-func stateInfoFields(s compiler.State) log.Fields {
-	return log.Fields{
-		"Type": s.Common().Type,
-		"Name": s.Name(),
-		"Next": s.Next(),
-		"Line": Line(),
-	}
-}
-
 func (w Workflow) Exec(ctx context.Context, coj *compiler.CtxObj, input interface{}) (interface{}, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	if w.TimeoutSeconds > 0 {
@@ -127,7 +102,7 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 	output := input
 	for _, state := range branch {
 		out, next, err := w.evalStateWithRetryAndCatch(ctx, coj, state, output)
-		log.WithFields(stateInfoFields(state)).
+		log.WithFields(stateFields(state)).
 			WithFields(log.Fields{
 				"_input":  input,
 				"_output": out,
@@ -169,7 +144,7 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, coj *compiler.
 		return origresult, next, nil
 	}
 
-	log.WithFields(stateInfoFields(state)).Printf("%s failed: %s", state.Name(), origerr.Error())
+	log.WithFields(stateFields(state)).Printf("%s failed: %s", state.Name(), origerr.Error())
 
 	if state.FieldsType() < compiler.FieldsType5 {
 		return origresult, next, origerr
@@ -218,7 +193,7 @@ func (w Workflow) retry(ctx context.Context, coj *compiler.CtxObj, state compile
 				ind += math.Pow(backoffRate, float64(count))
 			}
 
-			log.WithFields(stateInfoFields(state)).
+			log.WithFields(stateFields(state)).
 				WithFields(
 					log.Fields{
 						"retry-interval": ind,
@@ -229,7 +204,7 @@ func (w Workflow) retry(ctx context.Context, coj *compiler.CtxObj, state compile
 				return r, n, err
 			}
 
-			log.WithFields(stateInfoFields(state)).Printf("%s failed: %v", state.Name(), err)
+			log.WithFields(stateFields(state)).Printf("%s failed: %v", state.Name(), err)
 
 			if count == maxAttempts-1 {
 				return r, n, err
@@ -276,7 +251,7 @@ func (w Workflow) catch(ctx context.Context, coj *compiler.CtxObj, state compile
 }
 
 func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, statesError) {
-	log.WithFields(stateInfoFields(state)).Println("eval state:", state.Name())
+	log.WithFields(stateFields(state)).Println("eval state:", state.Name())
 
 	effectiveInput, stateerr := func() (interface{}, statesError) {
 		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
