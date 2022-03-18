@@ -32,6 +32,19 @@ func (w Workflows) DecodeASL() (string, error) {
 	return string(b), nil
 }
 
+func (w *Workflows) EncodeAndSetsWorkflow(workflow compiler.Workflow) error {
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+
+	if err := enc.Encode(&workflow); err != nil {
+		return err
+	}
+
+	w.Workflow = b.Bytes()
+
+	return nil
+}
+
 func (w Workflows) DecodeWorkflow() (compiler.Workflow, error) {
 	wb := bytes.NewBuffer(w.Workflow)
 	dec := gob.NewDecoder(wb)
@@ -68,19 +81,14 @@ func RegisterWorkflow(name string, w compiler.Workflow, asl []byte, force bool) 
 		return ErrWorkflowNameAlreadyExists(name)
 	}
 
-	var wb bytes.Buffer
-	enc := gob.NewEncoder(&wb)
-
-	if err := enc.Encode(w); err != nil {
-		return err
-	}
-
 	wf := &Workflows{
 		Name:      name,
-		Workflow:  wb.Bytes(),
 		CreatedAt: time.Now(),
 	}
 	wf.EncodeAndSetASL(asl)
+	if err := wf.EncodeAndSetsWorkflow(w); err != nil {
+		return err
+	}
 
 	if force && exists {
 		db.Save(wf)
