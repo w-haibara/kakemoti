@@ -9,6 +9,10 @@ import (
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
+func init() {
+	log.SetFormatter(&log.JSONFormatter{})
+}
+
 func workflowFields(w Workflow) log.Fields {
 	return log.Fields{
 		"id":      w.ID,
