@@ -1,6 +1,10 @@
 package worker
 
 import (
+	"fmt"
+	"path/filepath"
+	"runtime"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
 )
@@ -28,4 +32,19 @@ func stateFields(s compiler.State) log.Fields {
 		"Next": s.Next(),
 		"Line": Line(),
 	}
+}
+
+func Line() string {
+	return LineN(3)
+}
+
+func LineN(n int) string {
+	_, path, line, ok := runtime.Caller(n)
+	if !ok {
+		return "---"
+	}
+
+	_, file := filepath.Split(path)
+
+	return fmt.Sprintf("%s:%d", file, line)
 }
