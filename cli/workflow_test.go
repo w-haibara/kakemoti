@@ -99,7 +99,7 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 				Timeout: 0,
 			},
 		}
-		return opt.ExecWorkflowOnce(ctx, coj, "", tt.name)
+		return opt.ExecWorkflowOnce(ctx, coj, tt.name)
 	}
 	runTests("ExecOnce", f1, workflowExecTests)
 

@@ -63,7 +63,6 @@ func workflowRegisterCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.ASL, "asl", "", "path of a ASL file")
 	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
@@ -72,7 +71,6 @@ func workflowRegisterCmd() *cobra.Command {
 
 func workflowListCmd() *cobra.Command {
 	o := cli.ListWorkflowOpt{}
-	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -88,14 +86,12 @@ func workflowListCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&o.JSON, "json", false, "output as json")
-	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 
 	return cmd
 }
 
 func workflowShowCmd() *cobra.Command {
 	o := cli.ShowWorkflowOpt{}
-	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "show",
@@ -117,14 +113,12 @@ func workflowShowCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&o.JSON, "json", false, "output as json")
-	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 
 	return cmd
 }
 
 func workflowExecCmd() *cobra.Command {
 	o := cli.ExecWorkflowOneceOpt{}
-	logfile := ""
 
 	cmd := &cobra.Command{
 		Use:   "exec",
@@ -150,7 +144,7 @@ func workflowExecCmd() *cobra.Command {
 			if o.ExecWorkflowOpt.WorkflowName != "" {
 				result, err = o.ExecWorkflow(ctx, nil)
 			} else {
-				result, err = o.ExecWorkflowOnce(ctx, nil, logfile, id.String())
+				result, err = o.ExecWorkflowOnce(ctx, nil, id.String())
 			}
 			if err != nil {
 				log.Fatal(err)
@@ -160,7 +154,6 @@ func workflowExecCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
 	cmd.Flags().StringVar(&o.Input, "input", "", "path of a input json file")
 	cmd.Flags().IntVar(&o.Timeout, "timeout", 0, "timeout of a statemachine")
 
@@ -191,7 +184,6 @@ func workflowRmCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
 	return cmd
@@ -212,7 +204,6 @@ func workflowDropCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&o.Logfile, "log", "", "path of log files")
 	cmd.Flags().BoolVarP(&o.Force, "force", "f", false, "if the name isn't exists, will update it")
 
 	return cmd

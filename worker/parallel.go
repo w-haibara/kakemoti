@@ -21,7 +21,7 @@ func (w Workflow) evalParallel(ctx context.Context, coj *compiler.CtxObj, state 
 	for i := range state.Branches {
 		i := i
 		eg.Go(func() error {
-			w, err := NewWorkflow(&state.Branches[i], w.Logger)
+			w, err := NewWorkflow(&state.Branches[i])
 			if err != nil {
 				return err
 			}

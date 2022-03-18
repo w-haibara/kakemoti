@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
 )
 
@@ -16,7 +17,7 @@ func (w Workflow) evalWait(ctx context.Context, coj *compiler.CtxObj, state comp
 		return nil, NewStatesError("", err)
 	}
 
-	w.loggerWithInfo().Printf("Wait %s from %s", d, time.Now())
+	log.WithFields(workflowFields(w)).Printf("Wait %s from %s", d, time.Now())
 	time.Sleep(d)
 
 	return input, NewStatesError("", nil)
