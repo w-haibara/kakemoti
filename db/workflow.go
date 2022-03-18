@@ -19,6 +19,27 @@ type Workflows struct {
 	CreatedAt time.Time
 }
 
+func (w Workflows) DecodeASL() (string, error) {
+	b, err := base64.StdEncoding.DecodeString(w.ASL)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
+
+func (w Workflows) DecodeWorkflow() (compiler.Workflow, error) {
+	wb := bytes.NewBuffer(w.Workflow)
+	dec := gob.NewDecoder(wb)
+
+	var workflow compiler.Workflow
+	if err := dec.Decode(&workflow); err != nil {
+		return compiler.Workflow{}, err
+	}
+
+	return workflow, nil
+}
+
 func MustMigrateWorkflows(db *gorm.DB) {
 	if err := db.AutoMigrate(&Workflows{}); err != nil {
 		panic(err.Error())
@@ -102,26 +123,6 @@ func DropWorkflow() error {
 	}
 
 	return nil
-}
-
-func FetchWorkflow(name string) (compiler.Workflow, error) {
-	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
-	if err != nil {
-		return compiler.Workflow{}, err
-	}
-
-	var w Workflows
-	db.First(&w, "name = ?", name)
-
-	wb := bytes.NewBuffer(w.Workflow)
-	dec := gob.NewDecoder(wb)
-
-	var workflow compiler.Workflow
-	if err := dec.Decode(&workflow); err != nil {
-		return compiler.Workflow{}, err
-	}
-
-	return workflow, nil
 }
 
 func GetWorkflow(name string) (Workflows, error) {

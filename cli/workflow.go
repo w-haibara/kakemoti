@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -174,12 +173,24 @@ type ExecWorkflowOpt struct {
 }
 
 func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxObj) ([]byte, error) {
-	return opt.execWorkflow(ctx, coj, db.FetchWorkflow)
+	return opt.execWorkflow(ctx, coj, func(name string) (compiler.Workflow, error) {
+		w, err := db.GetWorkflow(name)
+		if err != nil {
+			return compiler.Workflow{}, err
+		}
+
+		wf, err := w.DecodeWorkflow()
+		if err != nil {
+			return compiler.Workflow{}, err
+		}
+
+		return wf, nil
+	})
 }
 
-type fetchWorkflowFunc func(name string) (compiler.Workflow, error)
+type getWorkflowDataFunc func(name string) (compiler.Workflow, error)
 
-func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxObj, fn fetchWorkflowFunc) ([]byte, error) {
+func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxObj, fn getWorkflowDataFunc) ([]byte, error) {
 	if strings.TrimSpace(opt.Logfile) == "" {
 		opt.Logfile = "logs"
 	}
@@ -310,11 +321,11 @@ func (opt ShowWorkflowOpt) ShowWorkflow() error {
 	})
 	table.Render()
 
-	b, err := base64.StdEncoding.DecodeString(w.ASL)
+	asl, err := w.DecodeASL()
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(opt.Writer, string(b))
+	fmt.Fprintln(opt.Writer, asl)
 
 	return nil
 }
