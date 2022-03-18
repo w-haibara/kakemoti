@@ -7,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -417,19 +415,4 @@ func (w Workflow) nextBranchFromString(next string) ([]compiler.State, error) {
 	}
 
 	return w.States[index[0]][index[1]:], nil
-}
-
-func Line() string {
-	return LineN(3)
-}
-
-func LineN(n int) string {
-	_, path, line, ok := runtime.Caller(n)
-	if !ok {
-		return "---"
-	}
-
-	_, file := filepath.Split(path)
-
-	return fmt.Sprintf("%s:%d", file, line)
 }
