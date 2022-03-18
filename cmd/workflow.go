@@ -32,6 +32,7 @@ func workflowCmd() *cobra.Command {
 
 	cmd.AddCommand(workflowRegisterCmd())
 	cmd.AddCommand(workflowListCmd())
+	cmd.AddCommand(workflowShowCmd())
 	cmd.AddCommand(workflowExecCmd())
 	cmd.AddCommand(workflowRmCmd())
 	cmd.AddCommand(workflowDropCmd())
@@ -81,6 +82,35 @@ func workflowListCmd() *cobra.Command {
 			o.Writer = os.Stdout
 
 			if err := o.ListWorkflow(); err != nil {
+				log.Fatal(err)
+			}
+		},
+	}
+
+	cmd.Flags().BoolVar(&o.JSON, "json", false, "output as json")
+	cmd.Flags().StringVar(&logfile, "log", "", "path of log files")
+
+	return cmd
+}
+
+func workflowShowCmd() *cobra.Command {
+	o := cli.ShowWorkflowOpt{}
+	logfile := ""
+
+	cmd := &cobra.Command{
+		Use:   "show",
+		Short: "show a workflow",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			o.Writer = os.Stdout
+
+			if len(args) < 1 {
+				log.Fatal(MsgMustSpecifyWorkflowName)
+			}
+
+			o.WorkflowName = args[0]
+
+			if err := o.ShowWorkflow(); err != nil {
 				log.Fatal(err)
 			}
 		},

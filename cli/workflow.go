@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -261,6 +262,59 @@ func (opt ListWorkflowOpt) ListWorkflow() error {
 		})
 	}
 	table.Render()
+
+	return nil
+}
+
+type ShowWorkflowOpt struct {
+	Writer       io.Writer
+	WorkflowName string
+	JSON         bool
+	Logfile      string
+}
+
+func (opt ShowWorkflowOpt) ShowWorkflow() error {
+	if strings.TrimSpace(opt.Logfile) == "" {
+		opt.Logfile = "logs"
+	}
+
+	logger := log.NewLogger()
+	close := setLogOutput(logger, opt.Logfile)
+	defer func() {
+		if err := close(); err != nil {
+			logger.Fatalln(err)
+		}
+	}()
+
+	w, err := db.GetWorkflow(opt.WorkflowName)
+	if err != nil {
+		return err
+	}
+
+	if opt.JSON {
+		b, err := json.MarshalIndent(w, "", "  ")
+		if err != nil {
+			return err
+		}
+
+		fmt.Fprintln(opt.Writer, string(b))
+
+		return nil
+	}
+
+	table := tablewriter.NewWriter(opt.Writer)
+	table.SetHeader([]string{"Name", "CreatedAt"})
+	table.Append([]string{
+		w.Name,
+		w.CreatedAt.Format(time.RFC3339),
+	})
+	table.Render()
+
+	b, err := base64.StdEncoding.DecodeString(w.ASL)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(opt.Writer, string(b))
 
 	return nil
 }
