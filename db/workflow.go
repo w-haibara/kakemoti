@@ -19,6 +19,10 @@ type Workflows struct {
 	CreatedAt time.Time
 }
 
+func (w *Workflows) EncodeAndSetASL(asl []byte) {
+	w.ASL = base64.StdEncoding.EncodeToString(asl)
+}
+
 func (w Workflows) DecodeASL() (string, error) {
 	b, err := base64.StdEncoding.DecodeString(w.ASL)
 	if err != nil {
@@ -73,10 +77,10 @@ func RegisterWorkflow(name string, w compiler.Workflow, asl []byte, force bool) 
 
 	wf := &Workflows{
 		Name:      name,
-		ASL:       base64.StdEncoding.EncodeToString(asl),
 		Workflow:  wb.Bytes(),
 		CreatedAt: time.Now(),
 	}
+	wf.EncodeAndSetASL(asl)
 
 	if force && exists {
 		db.Save(wf)
