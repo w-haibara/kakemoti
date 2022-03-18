@@ -103,38 +103,39 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 	}
 	runTests("ExecOnce", f1, workflowExecTests)
 
+	id := func() string {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			panic(err.Error())
+		}
+		return id.String()
+	}()
+
 	f2 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
-		name := tt.name + func() string {
-			id, err := uuid.NewRandom()
-			if err != nil {
-				panic(err.Error())
-			}
-			return id.String()
-		}()
+		name := tt.name + id
 
 		o1 := RegisterWorkflowOpt{
 			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
 			WorkflowName: name,
 		}
-		o2 := &ExecWorkflowOpt{
-			WorkflowName: name,
-			Input:        tt.inputFile,
-			Timeout:      0,
-		}
-		o3 := &RemoveWorkflowOpt{
-			WorkflowName: name,
-			Force:        true,
-		}
-
 		if err := o1.RegisterWorkflow(ctx, coj); err != nil {
 			return nil, err
 		}
 
+		o2 := ExecWorkflowOpt{
+			WorkflowName: name,
+			Input:        tt.inputFile,
+			Timeout:      0,
+		}
 		result, err := o2.ExecWorkflow(ctx, coj)
 		if err != nil {
 			return nil, err
 		}
 
+		o3 := RemoveWorkflowOpt{
+			WorkflowName: name,
+			Force:        true,
+		}
 		if err := o3.RemoveWorkflow(ctx, coj); err != nil {
 			return nil, err
 		}
@@ -143,14 +144,18 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 	}
 	runTests("Register_Exec_Remove", f2, workflowExecTests)
 
+	names := []string{}
 	f3 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
+		name := tt.name + id
+		names = append(names, name)
+
 		o1 := RegisterWorkflowOpt{
 			ASL:          "_workflow/asl/" + tt.asl + ".asl.json",
-			WorkflowName: tt.name,
+			WorkflowName: name,
 			Force:        true,
 		}
-		o2 := &ExecWorkflowOpt{
-			WorkflowName: tt.name,
+		o2 := ExecWorkflowOpt{
+			WorkflowName: name,
 			Input:        tt.inputFile,
 			Timeout:      0,
 		}
@@ -167,4 +172,14 @@ func TestExecWorkflowOnce_AND_RegisterWorkflow_ExecWorkflow(t *testing.T) {
 		return result, nil
 	}
 	runTests("RegisterForce_Exec", f3, workflowExecTests)
+
+	func() {
+		o := RemoveWorkflowOpt{Force: true}
+		for _, name := range names {
+			o.WorkflowName = name
+			if err := o.RemoveWorkflow(context.Background(), nil); err != nil {
+				panic(err.Error())
+			}
+		}
+	}()
 }
