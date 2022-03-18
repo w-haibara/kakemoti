@@ -80,7 +80,7 @@ func (w Workflow) infoFields() log.Fields {
 func (w Workflow) errorFields(err error) log.Fields {
 	return log.Fields{
 		"Error": err,
-		"Line":  Line(),
+		"Line":  LineN(4),
 	}
 }
 
@@ -445,7 +445,11 @@ func (w Workflow) nextBranchFromString(next string) ([]compiler.State, error) {
 }
 
 func Line() string {
-	_, path, line, ok := runtime.Caller(2)
+	return LineN(3)
+}
+
+func LineN(n int) string {
+	_, path, line, ok := runtime.Caller(n)
 	if !ok {
 		return "---"
 	}
