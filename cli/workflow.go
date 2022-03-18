@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/w-haibara/kakemoti/compiler"
 	"github.com/w-haibara/kakemoti/db"
-	"github.com/w-haibara/kakemoti/log"
 	"github.com/w-haibara/kakemoti/worker"
 )
 
@@ -21,16 +21,9 @@ type ExecWorkflowOneceOpt struct {
 	ExecWorkflowOpt
 }
 
-func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compiler.CtxObj, logfile string, workflowName string) ([]byte, error) {
+func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compiler.CtxObj, workflowName string) ([]byte, error) {
 	opt.RegisterWorkflowOpt.WorkflowName = workflowName
 	opt.ExecWorkflowOpt.WorkflowName = workflowName
-
-	if opt.RegisterWorkflowOpt.Logfile == "" {
-		opt.RegisterWorkflowOpt.Logfile = logfile
-	}
-	if opt.ExecWorkflowOpt.Logfile == "" {
-		opt.ExecWorkflowOpt.Logfile = logfile
-	}
 
 	var workflow compiler.Workflow
 
@@ -54,7 +47,6 @@ func (opt ExecWorkflowOneceOpt) ExecWorkflowOnce(ctx context.Context, coj *compi
 }
 
 type RegisterWorkflowOpt struct {
-	Logfile      string
 	ASL          string
 	WorkflowName string
 	Force        bool
@@ -67,29 +59,17 @@ func (opt RegisterWorkflowOpt) RegisterWorkflow(ctx context.Context, coj *compil
 type registerWorkflowFunc func(name string, w compiler.Workflow, asl []byte, force bool) error
 
 func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compiler.CtxObj, fn registerWorkflowFunc) error {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	if strings.TrimSpace(opt.ASL) == "" {
-		logger.Fatalln("ASL option value is empty")
+		log.Fatal("ASL option value is empty")
 	}
 
 	f1, asl, err := readFile(opt.ASL)
 	if err != nil {
-		logger.Fatalln(err)
+		log.Fatal(err)
 	}
 	defer func() {
 		if err := f1.Close(); err != nil {
-			logger.Fatalln(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -98,7 +78,7 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 
 	workflow, err := compiler.Compile(ctx, asl)
 	if err != nil {
-		logger.Fatalln(err)
+		log.Fatal(err)
 	}
 
 	if err := fn(opt.WorkflowName, *workflow, aslb, opt.Force); err != nil {
@@ -109,24 +89,11 @@ func (opt RegisterWorkflowOpt) registerWorkflow(ctx context.Context, coj *compil
 }
 
 type RemoveWorkflowOpt struct {
-	Logfile      string
 	WorkflowName string
 	Force        bool
 }
 
 func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	if !opt.Force && !confirm("WARNING! This will remove the workflow: "+opt.WorkflowName) {
 		return nil
 	}
@@ -135,23 +102,10 @@ func (opt RemoveWorkflowOpt) RemoveWorkflow(ctx context.Context, coj *compiler.C
 }
 
 type DropWorkflowOpt struct {
-	Logfile string
-	Force   bool
+	Force bool
 }
 
 func (opt DropWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxObj) error {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	if !opt.Force && !confirm("WARNING! This will remove all workflows") {
 		return nil
 	}
@@ -160,7 +114,6 @@ func (opt DropWorkflowOpt) DropWorkflow(ctx context.Context, coj *compiler.CtxOb
 }
 
 type ExecWorkflowOpt struct {
-	Logfile      string
 	WorkflowName string
 	Input        string
 	Timeout      int
@@ -185,29 +138,17 @@ func (opt ExecWorkflowOpt) ExecWorkflow(ctx context.Context, coj *compiler.CtxOb
 type getWorkflowDataFunc func(name string) (compiler.Workflow, error)
 
 func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxObj, fn getWorkflowDataFunc) ([]byte, error) {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			panic(err.Error())
-		}
-	}()
-
 	if strings.TrimSpace(opt.Input) == "" {
-		logger.Fatalln("input option value is empty")
+		log.Fatal("input option value is empty")
 	}
 
 	f2, input, err := readFile(opt.Input)
 	if err != nil {
-		logger.Fatalln(err)
+		log.Fatal(err)
 	}
 	defer func() {
 		if err := f2.Close(); err != nil {
-			logger.Fatalln(err)
+			log.Fatal(err)
 		}
 	}()
 
@@ -220,28 +161,15 @@ func (opt ExecWorkflowOpt) execWorkflow(ctx context.Context, coj *compiler.CtxOb
 		return nil, err
 	}
 
-	return worker.Exec(ctx, coj, w, input, logger)
+	return worker.Exec(ctx, coj, w, input)
 }
 
 type ListWorkflowOpt struct {
-	Writer  io.Writer
-	JSON    bool
-	Logfile string
+	Writer io.Writer
+	JSON   bool
 }
 
 func (opt ListWorkflowOpt) ListWorkflow() error {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
 	w, err := db.ListWorkflow()
 	if err != nil {
 		return err
@@ -275,22 +203,9 @@ type ShowWorkflowOpt struct {
 	Writer       io.Writer
 	WorkflowName string
 	JSON         bool
-	Logfile      string
 }
 
 func (opt ShowWorkflowOpt) ShowWorkflow() error {
-	if strings.TrimSpace(opt.Logfile) == "" {
-		opt.Logfile = "logs"
-	}
-
-	logger := log.NewLogger()
-	close := setLogOutput(logger, opt.Logfile)
-	defer func() {
-		if err := close(); err != nil {
-			logger.Fatalln(err)
-		}
-	}()
-
 	w, err := db.GetWorkflow(opt.WorkflowName)
 	if err != nil {
 		return err

@@ -7,14 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/w-haibara/kakemoti/compiler"
-	"github.com/w-haibara/kakemoti/log"
 )
 
 var (
@@ -26,10 +27,10 @@ var (
 	EmptyJSON = []byte("{}")
 )
 
-func Exec(ctx context.Context, coj *compiler.CtxObj, w compiler.Workflow, input *bytes.Buffer, logger *log.Logger) ([]byte, error) {
-	workflow, err := NewWorkflow(&w, logger)
+func Exec(ctx context.Context, coj *compiler.CtxObj, w compiler.Workflow, input *bytes.Buffer) ([]byte, error) {
+	workflow, err := NewWorkflow(&w)
 	if err != nil {
-		logger.Println("Error:", err)
+		log.Println("Error:", err)
 	}
 
 	if input == nil || strings.TrimSpace(input.String()) == "" {
@@ -38,20 +39,17 @@ func Exec(ctx context.Context, coj *compiler.CtxObj, w compiler.Workflow, input 
 
 	var in interface{}
 	if err := json.Unmarshal(input.Bytes(), &in); err != nil {
-		workflow.errorLog(err)
-		return nil, err
+		log.WithFields(workflow.errorFields(err)).Fatal()
 	}
 
 	out, err := workflow.Exec(ctx, coj, in)
 	if !errors.Is(err, ErrStateMachineTerminated) && err != nil {
-		workflow.errorLog(err)
-		return nil, err
+		log.WithFields(workflow.errorFields(err)).Fatal()
 	}
 
 	b, err := json.Marshal(out)
 	if err != nil {
-		workflow.errorLog(err)
-		return nil, err
+		log.WithFields(workflow.errorFields(err)).Fatal()
 	}
 
 	return b, nil
@@ -59,37 +57,40 @@ func Exec(ctx context.Context, coj *compiler.CtxObj, w compiler.Workflow, input 
 
 type Workflow struct {
 	*compiler.Workflow
-	ID     string
-	Logger *log.Logger
+	ID string
 }
 
-func NewWorkflow(w *compiler.Workflow, logger *log.Logger) (*Workflow, error) {
+func NewWorkflow(w *compiler.Workflow) (*Workflow, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
-	return &Workflow{w, id.String(), logger}, nil
+	return &Workflow{w, id.String()}, nil
 }
 
-func (w Workflow) loggerWithInfo() *logrus.Entry {
-	return w.Logger.WithFields(logrus.Fields{
+func (w Workflow) infoFields() log.Fields {
+	return log.Fields{
 		"id":      w.ID,
 		"startat": w.StartAt,
 		"timeout": w.TimeoutSeconds,
-		"line":    log.Line(),
-	})
+		"line":    Line(),
+	}
 }
 
-func (w Workflow) errorLog(err error) {
-	w.loggerWithInfo().WithField("line", log.Line()).Fatalln("Error:", err)
+func (w Workflow) errorFields(err error) log.Fields {
+	return log.Fields{
+		"Error": err,
+		"Line":  Line(),
+	}
 }
 
-func (w Workflow) loggerWithStateInfo(s compiler.State) *logrus.Entry {
-	return w.loggerWithInfo().WithField("line", log.Line()).WithFields(logrus.Fields{
+func (w Workflow) stateInfoFields(s compiler.State) log.Fields {
+	return log.Fields{
 		"Type": s.Common().Type,
 		"Name": s.Name(),
 		"Next": s.Next(),
-	})
+		"Line": Line(),
+	}
 }
 
 func (w Workflow) Exec(ctx context.Context, coj *compiler.CtxObj, input interface{}) (interface{}, error) {
@@ -126,11 +127,12 @@ func (w Workflow) evalBranch(ctx context.Context, coj *compiler.CtxObj, branch [
 	output := input
 	for _, state := range branch {
 		out, next, err := w.evalStateWithRetryAndCatch(ctx, coj, state, output)
-		w.loggerWithStateInfo(state).WithFields(logrus.Fields{
-			"_input":  input,
-			"_output": out,
-			"_err":    err,
-		}).Println()
+		log.WithFields(w.stateInfoFields(state)).
+			WithFields(log.Fields{
+				"_input":  input,
+				"_output": out,
+				"_err":    err,
+			}).Println()
 		if errors.Is(err, ErrStateMachineTerminated) {
 			return out, nil, err
 		}
@@ -167,7 +169,7 @@ func (w Workflow) evalStateWithRetryAndCatch(ctx context.Context, coj *compiler.
 		return origresult, next, nil
 	}
 
-	w.loggerWithStateInfo(state).Printf("%s failed: %s", state.Name(), origerr.Error())
+	log.WithFields(w.stateInfoFields(state)).Printf("%s failed: %s", state.Name(), origerr.Error())
 
 	if state.FieldsType() < compiler.FieldsType5 {
 		return origresult, next, origerr
@@ -216,17 +218,18 @@ func (w Workflow) retry(ctx context.Context, coj *compiler.CtxObj, state compile
 				ind += math.Pow(backoffRate, float64(count))
 			}
 
-			w.loggerWithStateInfo(state).WithFields(
-				logrus.Fields{
-					"retry-interval": ind,
-					"retry-count":    count,
-				}).Println("retry:", state.Name())
+			log.WithFields(w.stateInfoFields(state)).
+				WithFields(
+					log.Fields{
+						"retry-interval": ind,
+						"retry-count":    count,
+					}).Println("retry:", state.Name())
 			r, n, err := w.retryWithInterval(ctx, coj, state, input, ind)
 			if err.IsEmpty() {
 				return r, n, err
 			}
 
-			w.loggerWithStateInfo(state).Printf("%s failed: %v", state.Name(), err)
+			log.WithFields(w.stateInfoFields(state)).Printf("%s failed: %v", state.Name(), err)
 
 			if count == maxAttempts-1 {
 				return r, n, err
@@ -273,7 +276,7 @@ func (w Workflow) catch(ctx context.Context, coj *compiler.CtxObj, state compile
 }
 
 func (w Workflow) evalStateWithFilter(ctx context.Context, coj *compiler.CtxObj, state compiler.State, rawinput interface{}) (interface{}, string, statesError) {
-	w.loggerWithStateInfo(state).Println("eval state:", state.Name())
+	log.WithFields(w.stateInfoFields(state)).Println("eval state:", state.Name())
 
 	effectiveInput, stateerr := func() (interface{}, statesError) {
 		v1, err := compiler.FilterByInputPath(coj, state, rawinput)
@@ -439,4 +442,15 @@ func (w Workflow) nextBranchFromString(next string) ([]compiler.State, error) {
 	}
 
 	return w.States[index[0]][index[1]:], nil
+}
+
+func Line() string {
+	_, path, line, ok := runtime.Caller(2)
+	if !ok {
+		return "---"
+	}
+
+	_, file := filepath.Split(path)
+
+	return fmt.Sprintf("%s:%d", file, line)
 }

@@ -16,7 +16,7 @@ type mapOutputs struct {
 }
 
 func (w Workflow) evalMap(ctx context.Context, coj *compiler.CtxObj, state compiler.MapState, input interface{}) (interface{}, statesError) {
-	iter, err := NewWorkflow(&state.Iterator, w.Logger)
+	iter, err := NewWorkflow(&state.Iterator)
 	if err != nil {
 		return nil, statesError{"", err}
 	}
