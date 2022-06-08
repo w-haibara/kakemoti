@@ -1,5 +1,5 @@
 # kakemoti
-kakemoti is a simple tool that executes workflows defined in the [Amazon States Language](https://states-language.net/). It breaks up large scripts into pieces to improve readability, observability and serviceability.
+kakemoti is a [Amazon States Language](https://states-language.net/) interpreter. 
 
 # TODO
 - [x] Top-level fields
