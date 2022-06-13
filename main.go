@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 	"github.com/w-haibara/kakemoti/worker"
 )
 

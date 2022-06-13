@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 )
 
 func (w Workflow) evalFail(ctx context.Context, state compiler.FailState, input interface{}) (interface{}, statesError) {

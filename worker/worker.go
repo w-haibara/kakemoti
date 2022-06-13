@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 )
 
 var (

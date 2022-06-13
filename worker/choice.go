@@ -3,7 +3,7 @@ package worker
 import (
 	"context"
 
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 )
 
 func (w Workflow) evalChoice(ctx context.Context, coj *compiler.CtxObj, state compiler.ChoiceState, input interface{}) (string, interface{}, statesError) {

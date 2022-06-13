@@ -6,7 +6,7 @@ import (
 	"runtime"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 )
 
 func init() {

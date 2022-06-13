@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/w-haibara/kakemoti/compiler"
+	"github.com/w-haibara/kakemoti/controller/compiler"
 	"golang.org/x/sync/errgroup"
 )
 
