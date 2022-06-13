@@ -42,7 +42,7 @@ func main() {
 
 	fmt.Println("========= workflow.Exec =========")
 	fmt.Println("input:", input)
-	res, err := worker.Exec(ctx, nil, *workflow, bytes.NewBufferString(input))
+	res, err := worker.ExecWorkflow(ctx, nil, *workflow, bytes.NewBufferString(input))
 	if err != nil {
 		panic(err.Error())
 	}
