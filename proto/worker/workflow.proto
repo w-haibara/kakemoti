@@ -1,0 +1,16 @@
+syntax = "proto3";
+package workflow;
+option go_package = "./pb/worker/workflow";
+
+message StartRequest {
+  string workflowName = 1;
+  string input = 2;
+}
+
+message StartResponce {
+  string output = 1;
+}
+
+service WorkflowService {
+  rpc Start(StartRequest) returns (StartResponce) {}
+}

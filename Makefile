@@ -5,6 +5,10 @@ kakemoti: *.go */*.go */*/*.go go.mod
 	gosec -exclude-dir=_workflow ./...
 	go build -o kakemoti
 
+.PHONY: protoc
+protoc:
+	protoc --go_out=plugins=grpc:. proto/worker/*
+
 _workflow/index.js: _workflow/*.ts
 	cd _workflow && yarn install && tsc
 
