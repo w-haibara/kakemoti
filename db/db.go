@@ -1,18 +1,29 @@
 package db
 
-import "sync"
+import (
+	"fmt"
 
-var m = sync.Map{}
+	"github.com/glebarez/sqlite"
+	"gorm.io/gorm"
+)
 
-func Save(id string, v interface{}) {
-	m.Store(id, v)
-}
+var dbFileName = "/tmp/kakemoti/workflows.db"
 
-func Find(id string) interface{} {
-	v, ok := m.Load(id)
-	if !ok {
-		panic("m.Load failed")
+func init() {
+	db, err := gorm.Open(sqlite.Open(dbFileName), &gorm.Config{})
+	if err != nil {
+		panic(err.Error())
 	}
 
-	return v
+	MustMigrateWorkflows(db)
+
+	fmt.Println("===========================================")
+	w, err := ListWorkflow()
+	if err != nil {
+		panic(err.Error())
+	}
+	for i, v := range w {
+		fmt.Println(i, v.Name)
+	}
+	fmt.Println("===========================================")
 }
