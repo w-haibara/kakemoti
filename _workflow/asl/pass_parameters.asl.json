@@ -1,0 +1,16 @@
+{
+  "StartAt": "Pass State(parameter)",
+  "States": {
+    "Pass State(parameter)": {
+      "Type": "Pass",
+      "Parameters": {
+        "parameters": {
+          "aaa": 111,
+          "bbb": 222
+        }
+      },
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

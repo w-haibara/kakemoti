@@ -1,0 +1,97 @@
+{
+  "StartAt": "Choice State",
+  "States": {
+    "Choice State": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Or": [
+                {
+                  "Variable": "$.true",
+                  "BooleanEquals": true
+                },
+                {
+                  "Variable": "$.false",
+                  "BooleanEquals": true
+                }
+              ]
+            },
+            {
+              "Not": {
+                "And": [
+                  {
+                    "Variable": "$.true",
+                    "BooleanEquals": true
+                  },
+                  {
+                    "Variable": "$.false",
+                    "BooleanEquals": true
+                  }
+                ]
+              }
+            },
+            {
+              "And": [
+                {
+                  "Or": [
+                    {
+                      "Variable": "$.true",
+                      "BooleanEquals": true
+                    },
+                    {
+                      "Variable": "$.false",
+                      "BooleanEquals": true
+                    }
+                  ]
+                },
+                {
+                  "Not": {
+                    "And": [
+                      {
+                        "Variable": "$.true",
+                        "BooleanEquals": true
+                      },
+                      {
+                        "Variable": "$.false",
+                        "BooleanEquals": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "Next": "OK"
+        }
+      ],
+      "Default": "NG"
+    },
+    "NG": {
+      "Type": "Pass",
+      "Result": [
+        {
+          "args": {
+            "Payload": "NG"
+          }
+        }
+      ],
+      "ResultPath": null,
+      "End": true
+    },
+    "OK": {
+      "Type": "Pass",
+      "Result": [
+        {
+          "args": {
+            "Payload": "OK"
+          }
+        }
+      ],
+      "ResultPath": null,
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

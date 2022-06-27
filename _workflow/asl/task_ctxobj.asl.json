@@ -1,0 +1,16 @@
+{
+  "StartAt": "Task State",
+  "States": {
+    "Task State": {
+      "End": true,
+      "Type": "Task",
+      "ResultSelector": {
+        "ctx": {
+          "ctx_aaa.$": "$$.aaa"
+        }
+      },
+      "Resource": "script:_workflow/script/script1.sh"
+    }
+  },
+  "TimeoutSeconds": 0
+}

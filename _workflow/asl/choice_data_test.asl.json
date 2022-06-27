@@ -1,0 +1,477 @@
+{
+  "StartAt": "Choice State",
+  "States": {
+    "Choice State": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.string",
+              "StringEquals": "hello"
+            },
+            {
+              "Variable": "$.string",
+              "StringEqualsPath": "$.string"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringEqualsPath": "$.largestring"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThan": "zzzzzzzzz"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringLessThan": "a"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThanPath": "$.largestring"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringLessThanPath": "$.smallstring"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThan": "a"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringGreaterThan": "zzzzzzzzzzzzz"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThanPath": "$.smallstring"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringGreaterThanPath": "$.largestring"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThanEquals": "zzzzzzzzz"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringLessThanEquals": "a"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThanEquals": "hello"
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThanEqualsPath": "$.largestring"
+            },
+            {
+              "Variable": "$.string",
+              "StringLessThanEqualsPath": "$.string"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringLessThanEqualsPath": "$.smallstring"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThanEquals": "a"
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThanEquals": "hello"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringGreaterThanEquals": "zzzzzzzzzzzzz"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThanEqualsPath": "$.smallstring"
+            },
+            {
+              "Variable": "$.string",
+              "StringGreaterThanEqualsPath": "$.string"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringGreaterThanEqualsPath": "$.largestring"
+              }
+            },
+            {
+              "Variable": "$.string",
+              "StringMatches": "hello"
+            },
+            {
+              "Variable": "$.string",
+              "StringMatches": "*"
+            },
+            {
+              "Variable": "$.string",
+              "StringMatches": "*llo"
+            },
+            {
+              "Variable": "$.string",
+              "StringMatches": "hel*"
+            },
+            {
+              "Variable": "$.string",
+              "StringMatches": "*h*e*l*l*o*"
+            },
+            {
+              "Variable": "$.wildslash",
+              "StringMatches": "a\\*b\\\\c"
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "StringMatches": "*xxx*"
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericEquals": 3.14
+            },
+            {
+              "Variable": "$.number",
+              "NumericEqualsPath": "$.number"
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericEqualsPath": "$.largenumber"
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThan": 10000
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericLessThan": 0
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThanPath": "$.largenumber"
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericLessThanPath": "$.smallnumber"
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThan": 0
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericGreaterThan": 10000
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThanPath": "$.smallnumber"
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericGreaterThanPath": "$.largenumber"
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThanEquals": 10000
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThanEquals": 3.14
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericLessThanEquals": 0
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThanEqualsPath": "$.largenumber"
+            },
+            {
+              "Variable": "$.number",
+              "NumericLessThanEqualsPath": "$.number"
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericLessThanEqualsPath": "$.smallnumber"
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThanEquals": 0
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThanEquals": 3.14
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericGreaterThanEquals": 10000
+              }
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThanEqualsPath": "$.smallnumber"
+            },
+            {
+              "Variable": "$.number",
+              "NumericGreaterThanEqualsPath": "$.number"
+            },
+            {
+              "Not": {
+                "Variable": "$.number",
+                "NumericGreaterThanEqualsPath": "$.largenumber"
+              }
+            },
+            {
+              "Variable": "$.bool",
+              "BooleanEquals": true
+            },
+            {
+              "Not": {
+                "Variable": "$.bool",
+                "BooleanEqualsPath": "$.object.bool"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampEquals": "2016-03-14T01:59:00Z"
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampEqualsPath": "$.timestamp"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampEqualsPath": "$.largetimestamp"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThan": "2030-01-23T01:23:00Z"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampLessThan": "1999-11-11T11:11:11Z"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThanPath": "$.largetimestamp"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampLessThanPath": "$.smalltimestamp"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThan": "1999-11-11T11:11:11Z"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampGreaterThan": "2030-01-23T01:23:00Z"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThanPath": "$.smalltimestamp"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampGreaterThanPath": "$.largetimestamp"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThanEquals": "2030-01-23T01:23:00Z"
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThanEquals": "2016-03-14T01:59:00Z"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampLessThanEquals": "1999-11-11T11:11:11Z"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThanEqualsPath": "$.largetimestamp"
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampLessThanEqualsPath": "$.timestamp"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampLessThanEqualsPath": "$.smalltimestamp"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThanEquals": "1999-11-11T11:11:11Z"
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThanEquals": "2016-03-14T01:59:00Z"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampGreaterThanEquals": "2030-01-23T01:23:00Z"
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThanEqualsPath": "$.smalltimestamp"
+            },
+            {
+              "Variable": "$.timestamp",
+              "TimestampGreaterThanEqualsPath": "$.timestamp"
+            },
+            {
+              "Not": {
+                "Variable": "$.timestamp",
+                "TimestampGreaterThanEqualsPath": "$.largetimestamp"
+              }
+            },
+            {
+              "Variable": "$.null",
+              "IsNull": true
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "IsNull": true
+              }
+            },
+            {
+              "Variable": "$.bool",
+              "IsPresent": true
+            },
+            {
+              "Not": {
+                "Variable": "$.non.existing.path",
+                "IsPresent": true
+              }
+            },
+            {
+              "Variable": "$.int",
+              "IsNumeric": true
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "IsNumeric": true
+              }
+            },
+            {
+              "Variable": "$.string",
+              "IsString": true
+            },
+            {
+              "Not": {
+                "Variable": "$.bool",
+                "IsString": true
+              }
+            },
+            {
+              "Variable": "$.bool",
+              "IsBoolean": true
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "IsBoolean": true
+              }
+            },
+            {
+              "Variable": "$.timestamp",
+              "IsTimestamp": true
+            },
+            {
+              "Not": {
+                "Variable": "$.bool",
+                "IsTimestamp": true
+              }
+            },
+            {
+              "Not": {
+                "Variable": "$.string",
+                "IsTimestamp": true
+              }
+            }
+          ],
+          "Next": "OK"
+        }
+      ],
+      "Default": "NG"
+    },
+    "NG": {
+      "Type": "Pass",
+      "Result": [
+        {
+          "args": {
+            "Payload": "NG"
+          }
+        }
+      ],
+      "ResultPath": null,
+      "End": true
+    },
+    "OK": {
+      "Type": "Pass",
+      "Result": [
+        {
+          "args": {
+            "Payload": "OK"
+          }
+        }
+      ],
+      "ResultPath": null,
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,11 @@
+{
+  "StartAt": "Task State",
+  "States": {
+    "Task State": {
+      "End": true,
+      "Type": "Task",
+      "Resource": "script:_workflow/script/script1.sh"
+    }
+  },
+  "TimeoutSeconds": 0
+}

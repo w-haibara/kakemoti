@@ -1,0 +1,9 @@
+{
+  "StartAt": "Fail State",
+  "States": {
+    "Fail State": {
+      "Type": "Fail"
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,25 @@
+{
+  "StartAt": "Map State",
+  "States": {
+    "Map State": {
+      "Type": "Map",
+      "End": true,
+      "Iterator": {
+        "StartAt": "Pass State",
+        "States": {
+          "Pass State": {
+            "Type": "Pass",
+            "Parameters": {
+              "index.$": "$$.Map.Item.Index",
+              "value.$": "$$.Map.Item.Value"
+            },
+            "End": true
+          }
+        }
+      },
+      "ItemsPath": "$.inputForMap",
+      "MaxConcurrency": 3
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,17 @@
+{
+  "StartAt": "Pass State(result)",
+  "States": {
+    "Pass State(result)": {
+      "Type": "Pass",
+      "Result": {
+        "result": {
+          "aaa": 111,
+          "bbb": 222
+        }
+      },
+      "ResultPath": "$.resultpath",
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,10 @@
+{
+  "StartAt": "Pass State",
+  "States": {
+    "Pass State": {
+      "Type": "Pass",
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

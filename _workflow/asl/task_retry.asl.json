@@ -1,0 +1,33 @@
+{
+  "StartAt": "Chain",
+  "States": {
+    "Chain": {
+      "Type": "Parallel",
+      "End": true,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 0,
+          "MaxAttempts": 10,
+          "BackoffRate": 1
+        }
+      ],
+      "Branches": [
+        {
+          "StartAt": "Task State",
+          "States": {
+            "Task State": {
+              "End": true,
+              "Type": "Task",
+              "ResultPath": "$.args",
+              "Resource": "script:_workflow/script/script2.sh"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "TimeoutSeconds": 0
+}
