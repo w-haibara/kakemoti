@@ -48,65 +48,60 @@ func TestExec(t *testing.T) {
 		return
 	}
 
-	type fn func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error)
-	runTests := func(prefix string, f fn, tests []workflowExecTestCase) {
-		for _, tt := range tests {
-			t.Run(prefix+"_"+tt.name, func(t *testing.T) {
-				ctx := context.Background()
-				coj := new(compiler.CtxObj)
-				v, err := coj.SetByString("$.aaa", 111)
-				if err != nil {
-					t.Error("coj.Set() failed:", err)
-				}
-				coj = v
+	for _, tt := range workflowExecTests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			coj := new(compiler.CtxObj)
+			v, err := coj.SetByString("$.aaa", 111)
+			if err != nil {
+				t.Error("coj.Set() failed:", err)
+			}
+			coj = v
 
-				out, err := f(ctx, coj, tt)
-				if err != nil {
-					t.Error("WorkflowExec() failed:", err)
-					return
-				}
+			asl, err := os.ReadFile(filepath.Join("_workflow", "asl", tt.asl+".asl.json"))
+			if err != nil {
+				t.Error("compiler.Compile() failed:", err)
+				return
+			}
 
-				want, err := os.ReadFile(tt.wantFile)
-				if err != nil {
-					t.Error("os.ReadFile(tt.wantFile) failed:", err)
-					return
-				}
+			w, err := compiler.Compile(ctx, bytes.NewBuffer(asl))
+			if err != nil {
+				t.Error("compiler.Compile() failed:", err)
+				return
+			}
 
-				var v1, v2 interface{}
-				if err := json.Unmarshal(out, &v1); err != nil {
-					t.Error("json.Unmarshal(b1, &v1) failed:", err)
-					return
-				}
-				if err := json.Unmarshal(want, &v2); err != nil {
-					t.Error("json.Unmarshal(b2, &v2) failed:", err)
-					return
-				}
+			input, err := os.ReadFile(tt.inputFile)
+			if err != nil {
+				t.Error("os.ReadFile() failed:", err)
+				return
+			}
 
-				if d := cmp.Diff(v1, v2); d != "" {
-					t.Errorf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
-					return
-				}
-			})
-		}
+			out, err := Exec(ctx, coj, *w, bytes.NewBuffer(input))
+			if err != nil {
+				t.Error("WorkflowExec() failed:", err)
+				return
+			}
+
+			want, err := os.ReadFile(tt.wantFile)
+			if err != nil {
+				t.Error("os.ReadFile(tt.wantFile) failed:", err)
+				return
+			}
+
+			var v1, v2 interface{}
+			if err := json.Unmarshal(out, &v1); err != nil {
+				t.Error("json.Unmarshal(b1, &v1) failed:", err)
+				return
+			}
+			if err := json.Unmarshal(want, &v2); err != nil {
+				t.Error("json.Unmarshal(b2, &v2) failed:", err)
+				return
+			}
+
+			if d := cmp.Diff(v1, v2); d != "" {
+				t.Errorf("FATAL\nGOT:\n%s\n\nWANT:\n%s\n\nDIFF:\n%s", out, want, d)
+				return
+			}
+		})
 	}
-
-	f1 := func(ctx context.Context, coj *compiler.CtxObj, tt workflowExecTestCase) ([]byte, error) {
-		asl, err := os.ReadFile(filepath.Join("_workflow", "asl", tt.asl+".asl.json"))
-		if err != nil {
-			return nil, err
-		}
-
-		w, err := compiler.Compile(ctx, bytes.NewBuffer(asl))
-		if err != nil {
-			return nil, err
-		}
-
-		input, err := os.ReadFile(tt.inputFile)
-		if err != nil {
-			return nil, err
-		}
-
-		return Exec(ctx, coj, *w, bytes.NewBuffer(input))
-	}
-	runTests("ExecOnce", f1, workflowExecTests)
 }
