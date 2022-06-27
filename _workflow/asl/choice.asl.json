@@ -1,0 +1,23 @@
+{
+  "StartAt": "Choice State",
+  "States": {
+    "Choice State": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.bool",
+          "BooleanEquals": true,
+          "Next": "Succeed State"
+        }
+      ],
+      "Default": "Fail State"
+    },
+    "Fail State": {
+      "Type": "Fail"
+    },
+    "Succeed State": {
+      "Type": "Succeed"
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,27 @@
+{
+  "StartAt": "Task State",
+  "States": {
+    "Task State": {
+      "End": true,
+      "Type": "Task",
+      "InputPath": "$.inputpath",
+      "OutputPath": "$.resultpath",
+      "ResultPath": "$.resultpath.outputpath",
+      "ResultSelector": {
+        "bbb": 222,
+        "resultselector.$": "$"
+      },
+      "Resource": "script:_workflow/script/script1.sh",
+      "Parameters": {
+        "aaa": 111,
+        "old.$": "$.args",
+        "args": [
+          "param0",
+          "param1",
+          "param2"
+        ]
+      }
+    }
+  },
+  "TimeoutSeconds": 0
+}

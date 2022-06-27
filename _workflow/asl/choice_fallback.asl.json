@@ -1,0 +1,32 @@
+{
+  "StartAt": "State2",
+  "States": {
+    "State2": {
+      "Type": "Pass",
+      "Next": "Choice State"
+    },
+    "State1": {
+      "Type": "Pass",
+      "Result": {
+        "bool": false
+      },
+      "Next": "State2"
+    },
+    "Choice State": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.bool",
+          "BooleanEquals": false,
+          "Next": "State3"
+        }
+      ],
+      "Default": "State1"
+    },
+    "State3": {
+      "Type": "Pass",
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

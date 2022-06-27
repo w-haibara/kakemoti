@@ -1,0 +1,26 @@
+{
+  "StartAt": "P1",
+  "States": {
+    "P1": {
+      "Type": "Pass",
+      "Next": "P2"
+    },
+    "P2": {
+      "Type": "Pass",
+      "Next": "P3"
+    },
+    "P3": {
+      "Type": "Pass",
+      "Next": "P4"
+    },
+    "P4": {
+      "Type": "Pass",
+      "Next": "P5"
+    },
+    "P5": {
+      "Type": "Pass",
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

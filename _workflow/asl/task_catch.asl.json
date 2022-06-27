@@ -1,0 +1,23 @@
+{
+  "StartAt": "Task State",
+  "States": {
+    "Task State": {
+      "End": true,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Pass State1"
+        }
+      ],
+      "Type": "Task",
+      "Resource": "script:::"
+    },
+    "Pass State1": {
+      "Type": "Pass",
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}

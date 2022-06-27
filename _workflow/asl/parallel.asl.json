@@ -1,0 +1,29 @@
+{
+  "StartAt": "Parallel State",
+  "States": {
+    "Parallel State": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "Pass State",
+          "States": {
+            "Pass State": {
+              "Type": "Pass",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "Succeed State",
+          "States": {
+            "Succeed State": {
+              "Type": "Succeed"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "TimeoutSeconds": 0
+}

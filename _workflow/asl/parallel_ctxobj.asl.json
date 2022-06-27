@@ -1,0 +1,54 @@
+{
+  "StartAt": "Parallel State",
+  "States": {
+    "Parallel State": {
+      "Type": "Parallel",
+      "End": true,
+      "Branches": [
+        {
+          "StartAt": "S1",
+          "States": {
+            "S1": {
+              "Type": "Pass",
+              "ResultPath": "$.result.ctx",
+              "Parameters": {
+                "ctx_aaa.$": "$$.aaa"
+              },
+              "OutputPath": "$.result",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "S2",
+          "States": {
+            "S2": {
+              "Type": "Pass",
+              "ResultPath": "$.result.ctx",
+              "Parameters": {
+                "ctx_aaa.$": "$$.aaa"
+              },
+              "OutputPath": "$.result",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "S3",
+          "States": {
+            "S3": {
+              "Type": "Pass",
+              "ResultPath": "$.result.ctx",
+              "Parameters": {
+                "ctx_aaa.$": "$$.aaa"
+              },
+              "OutputPath": "$.result",
+              "End": true
+            }
+          }
+        }
+      ]
+    }
+  },
+  "TimeoutSeconds": 0
+}

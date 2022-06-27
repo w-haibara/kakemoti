@@ -1,0 +1,9 @@
+{
+  "StartAt": "Succeed State",
+  "States": {
+    "Succeed State": {
+      "Type": "Succeed"
+    }
+  },
+  "TimeoutSeconds": 0
+}

@@ -1,0 +1,21 @@
+{
+  "StartAt": "Pass State(intrinsic)",
+  "States": {
+    "Pass State(intrinsic)": {
+      "Type": "Pass",
+      "Parameters": {
+        "parameters": {
+          "aaa": 111,
+          "intrinsic": {
+            "format.$": "States.Format('Hello, my name is {}.', $.name)",
+            "stringToJson.$": "States.StringToJson($.string)",
+            "jsonToString.$": "States.JsonToString($.json)",
+            "array.$": "States.Array('start', $.json.aaa, $.json.bbb, 'end')"
+          }
+        }
+      },
+      "End": true
+    }
+  },
+  "TimeoutSeconds": 0
+}
